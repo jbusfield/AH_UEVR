@@ -1,0 +1,14 @@
+{
+    "leftHandDirectionOffset": 40.0,
+    "uevr_reticule_hide": false,
+    "uevr_reticule_update_distance": 284,
+    "uevr_reticule_update_scale": 0.828000009059906,
+    "uevr_ui_headLockedUI": true,
+    "uevr_ui_headLockedUIPosition": [
+        0.0,
+        0.0,
+        2.0
+    ],
+    "uevr_ui_headLockedUISize": 2.0,
+    "uevr_ui_reduceMotionSickness": true
+}

@@ -1,0 +1,28 @@
+{
+    "alignConfidenceThreshold": 0.800000011920929,
+    "minAngularDeviation": 50,
+    "uevr_input_adjustForAnimation": false,
+    "uevr_input_adjustForEyeOffset": true,
+    "uevr_input_aimMethod": 3,
+    "uevr_input_eyeOffset": -13.5,
+    "uevr_input_fixSpatialAudio": true,
+    "uevr_input_headBones": 1,
+    "uevr_input_headOffset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_input_isDisabledOverride": false,
+    "uevr_input_pawnPositionAnimationScale": 0.2,
+    "uevr_input_pawnPositionMode": 2,
+    "uevr_input_pawnPositionSweepMovement": true,
+    "uevr_input_pawnRotationMode": 5,
+    "uevr_input_rootOffset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_input_smoothTurnSpeed": 50,
+    "uevr_input_snapAngle": 45,
+    "uevr_input_useSnapTurn": true
+}

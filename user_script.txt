@@ -1,0 +1,8 @@
+r.Tonemapper.Quality=0
+r.TonemapperFilm=0
+r.VolumetricFog=0
+r.Fog=1
+r.Color.Max=2
+r.Color.Min=0
+r.TonemapperGamma=3.5
+r_SkeletalMeshLODBias=-1

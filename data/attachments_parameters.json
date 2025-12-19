@@ -1,0 +1,573 @@
+{
+    "attachmentOffsets": [
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Shved_Base",
+            "id": "BP_Shved_C_SK_Shved_Base",
+            "location": [
+                0.30000001192092896,
+                -3.200000047683716,
+                -0.10000000149011612
+            ],
+            "melee": true,
+            "parent": "BP_Shved_C",
+            "rotation": [
+                13.399999618530273,
+                -63.099998474121094,
+                10.800000190734863
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "shotgun",
+            "any_child": false,
+            "any_parent": true,
+            "child": "SK_ShotgunKS23_Base",
+            "id": "BP_ShotgunKS23_C_SK_ShotgunKS23_Base",
+            "location": [
+                0.30000001192092896,
+                -2.0,
+                -1.600000023841858
+            ],
+            "melee": false,
+            "parent": "BP_ShotgunKS23_C",
+            "rotation": [
+                13.0,
+                -90.0,
+                0.5
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "any_child": false,
+            "any_parent": false,
+            "child": "Mesh",
+            "id": "BP_EmptyHands_C_Mesh",
+            "location": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "melee": true,
+            "parent": "BP_EmptyHands_C",
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "electro",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Electro",
+            "id": "BP_Electro_C_SK_Electro",
+            "location": [
+                4.400000095367432,
+                -2.299999952316284,
+                -1.100000023841858
+            ],
+            "melee": false,
+            "parent": "BP_Electro_C",
+            "rotation": [
+                14.199999809265137,
+                -90.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "pm",
+            "any_child": false,
+            "any_parent": true,
+            "child": "SK_PM_Base0",
+            "id": "BP_PM_C_SK_PM_Base0",
+            "location": [
+                6.5,
+                -1.7000000476837158,
+                -2.0999999046325684
+            ],
+            "melee": false,
+            "parent": "BP_PM_C",
+            "rotation": [
+                18.0,
+                -90.5999984741211,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ak47",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_AK47_Base",
+            "id": "BP_AK47_C_SK_AK47_Base",
+            "location": [
+                5.599999904632568,
+                -4.099999904632568,
+                -6.400000095367432
+            ],
+            "melee": false,
+            "parent": "BP_AK47_C",
+            "rotation": [
+                23.799999237060547,
+                -90.69999694824219,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Lisa_HandleBase",
+            "id": "BP_Lisa_C_SK_Lisa_HandleBase",
+            "location": [
+                0.30000001192092896,
+                -4.599999904632568,
+                -0.10000000149011612
+            ],
+            "melee": true,
+            "parent": "BP_Lisa_C",
+            "rotation": [
+                10.0,
+                -94.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Pashtet",
+            "id": "BP_Pashtet_C_SK_Pashtet",
+            "location": [
+                -0.30000001192092896,
+                -4.900000095367432,
+                -2.700000047683716
+            ],
+            "melee": true,
+            "parent": "BP_Pashtet_C",
+            "rotation": [
+                18.600000381469727,
+                -104.19999694824219,
+                2.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Snejok_Base",
+            "id": "BP_Snejok_C_SK_Snejok_Base",
+            "location": [
+                0.30000001192092896,
+                -3.4000000953674316,
+                0.0
+            ],
+            "melee": true,
+            "parent": "BP_Snejok_C",
+            "rotation": [
+                9.800000190734863,
+                -92.0999984741211,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "dominator",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Dominator_Base",
+            "id": "BP_Dominator_C_SK_Dominator_Base",
+            "location": [
+                2.0,
+                -2.4000000953674316,
+                -1.7000000476837158
+            ],
+            "melee": false,
+            "parent": "BP_Dominator_C",
+            "rotation": [
+                15.300000190734863,
+                -91.4000015258789,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "dominator",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Krepysh_Base",
+            "id": "BP_Krepysh_C_SK_Krepysh_Base",
+            "location": [
+                -1.7999999523162842,
+                13.0,
+                -2.200000047683716
+            ],
+            "melee": false,
+            "parent": "BP_Krepysh_C",
+            "rotation": [
+                0.0,
+                180.0,
+                -13.100000381469727
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "dominator",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Railgun_Base",
+            "id": "BP_Railgun_C_SK_Railgun_Base",
+            "location": [
+                2.5999999046325684,
+                -2.4000000953674316,
+                -1.100000023841858
+            ],
+            "melee": false,
+            "parent": "BP_Railgun_C",
+            "rotation": [
+                14.0,
+                -90.5,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": true,
+            "child": "SK_ZvezdochkaBase",
+            "id": "BP_Zvezdochka_C_SK_ZvezdochkaBase",
+            "location": [
+                -0.4000000059604645,
+                -3.799999952316284,
+                -6.0
+            ],
+            "melee": true,
+            "parent": "BP_Zvezdochka_C",
+            "rotation": [
+                -14.399999618530273,
+                22.0,
+                10.399999618530273
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "scoped": false,
+            "two_handed": false
+        },
+        {
+            "animation": "ax",
+            "any_child": true,
+            "any_parent": false,
+            "child": "SK_Klusha_Handle01",
+            "id": "BP_Klusha_C_SK_Klusha_Handle01",
+            "location": [
+                0.0,
+                -2.700000047683716,
+                0.800000011920929
+            ],
+            "melee": true,
+            "parent": "BP_Klusha_C",
+            "rotation": [
+                13.100000381469727,
+                -90.0,
+                3.200000047683716
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "dominator",
+            "any_child": true,
+            "any_parent": false,
+            "child": "SK_Plasmagun_Cutter02",
+            "id": "BP_Plasmagun_C_SK_Plasmagun_Cutter02",
+            "location": [
+                15.600000381469727,
+                -6.300000190734863,
+                -11.0
+            ],
+            "parent": "BP_Plasmagun_C",
+            "rotation": [
+                15.5,
+                -90.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "pm",
+            "any_child": false,
+            "any_parent": true,
+            "child": "SK_PM_Handle",
+            "id": "BP_PM_DLC1_C_SK_PM_Handle",
+            "location": [
+                6.900000095367432,
+                -1.7000000476837158,
+                -1.7000000476837158
+            ],
+            "parent": "BP_PM_DLC1_C",
+            "rotation": [
+                18.0,
+                -90.5999984741211,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "any_child": false,
+            "any_parent": false,
+            "child": "Mesh",
+            "id": "BP_NewtonEmptyHands_C_Mesh",
+            "location": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "melee": true,
+            "parent": "BP_NewtonEmptyHands_C",
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Shved_Limbo_Base",
+            "id": "BP_Shved_Limbo_C_SK_Shved_Limbo_Base",
+            "location": [
+                0.30000001192092896,
+                -3.200000047683716,
+                -0.10000000149011612
+            ],
+            "melee": true,
+            "parent": "BP_Shved_Limbo_C",
+            "rotation": [
+                13.399999618530273,
+                -63.20000076293945,
+                10.899999618530273
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "ak47",
+            "any_child": false,
+            "any_parent": true,
+            "child": "SK_AK_Limbo_Base",
+            "id": "BP_AK47_Limbo_C_SK_AK_Limbo_Base",
+            "location": [
+                4.599999904632568,
+                -4.099999904632568,
+                -7.0
+            ],
+            "parent": "BP_AK47_Limbo_C",
+            "rotation": [
+                23.799999237060547,
+                -90.69999694824219,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_ZvezdochkaBase",
+            "id": "BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase",
+            "location": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "parent": "BP_Zvezdochka_DLC1_C",
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Plasmagun_Cutter01",
+            "id": "BP_Plasmagun_C_SK_Plasmagun_Cutter01",
+            "location": [
+                3.017544984817505,
+                17.09813690185547,
+                -2.916271209716797
+            ],
+            "parent": "BP_Plasmagun_C",
+            "rotation": [
+                -7.196498870849609,
+                4.937005043029785,
+                -84.93299102783203
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "ax",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Gromoverzec_Base02",
+            "id": "BP_Gromoverzhec_C_SK_Gromoverzec_Base02",
+            "location": [
+                1.0,
+                -2.299999952316284,
+                3.700000047683716
+            ],
+            "melee": true,
+            "parent": "BP_Gromoverzhec_C",
+            "rotation": [
+                18.600000381469727,
+                -96.9000015258789,
+                9.600000381469727
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "animation": "ak47",
+            "any_child": false,
+            "any_parent": false,
+            "child": "SK_Kuzmich_Base01",
+            "id": "BP_Kuzmich_C_SK_Kuzmich_Base01",
+            "location": [
+                -1.2000000476837158,
+                1.899999976158142,
+                0.699999988079071
+            ],
+            "melee": false,
+            "parent": "BP_Kuzmich_C",
+            "rotation": [
+                0.0,
+                0.6000000238418579,
+                -21.899999618530273
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        }
+    ]
+}

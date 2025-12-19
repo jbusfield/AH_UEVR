@@ -1,0 +1,16 @@
+{
+    "uevr_dev_material_filter": "",
+    "uevr_dev_material_list": 1,
+    "uevr_dev_mesh_filter": "",
+    "uevr_dev_mesh_list": 1,
+    "uevr_dev_mesh_nativescale": false,
+    "uevr_dev_mesh_relativescale": 1.0,
+    "uevr_dev_mesh_type": 1,
+    "uevr_dev_reticule_active": true,
+    "uevr_dev_reticule_filter": "",
+    "uevr_dev_reticule_list": 1,
+    "uevr_dev_widget_filter": "",
+    "uevr_dev_widget_list": 26,
+    "uevr_dev_widget_loop_toggle": true,
+    "uevr_dev_widget_user_only": false
+}

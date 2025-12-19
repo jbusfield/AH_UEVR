@@ -1,0 +1,51 @@
+{
+    "currentReticuleID": "f334706c-5650-496f-b11f-63f17fc2ca55",
+    "reticuleList": [
+        {
+            "class": "WidgetBlueprintGeneratedClass /Game/Core/UI/Widgets/WBP_Crosshair.WBP_Crosshair_C",
+            "id": "f334706c-5650-496f-b11f-63f17fc2ca55",
+            "label": "Crosshair",
+            "options": {
+                "collisionChannel": 0,
+                "ignorePawn": true,
+                "minHitDistance": 34,
+                "position_2d": [
+                    0.0,
+                    0.0
+                ],
+                "removeFromViewport": true,
+                "scale_2d": [
+                    1.0,
+                    1.0
+                ],
+                "twoSided": true
+            },
+            "type": "Widget"
+        },
+        {
+            "class": "StaticMesh /Engine/BasicShapes/Sphere.Sphere",
+            "id": "f6391b8d-98ae-4a6a-b90c-fb25190b39a4",
+            "label": "New Mesh",
+            "options": {
+                "collisionChannel": 0,
+                "ignorePawn": true,
+                "materialName": "Material /Engine/EngineMaterials/Widget3DPassThrough.Widget3DPassThrough",
+                "position_2d": [
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    0.032999999821186066,
+                    0.03099999949336052,
+                    0.03099999949336052
+                ],
+                "scale_2d": [
+                    1.0,
+                    1.0
+                ]
+            },
+            "type": "Mesh"
+        }
+    ],
+    "reticuleTargetMethod": 3
+}

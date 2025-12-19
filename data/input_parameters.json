@@ -1,0 +1,27 @@
+{
+    "adjustForAnimation": false,
+    "adjustForEyeOffset": true,
+    "aimMethod": 3,
+    "eyeOffset": -13.5,
+    "fixSpatialAudio": true,
+    "headBoneName": "",
+    "headOffset": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0
+    },
+    "isDisabledOverride": false,
+    "pawnPositionAnimationScale": 0.2,
+    "pawnPositionMode": 2,
+    "pawnPositionSweepMovement": true,
+    "pawnRotationMode": 5,
+    "rootBoneName": "",
+    "rootOffset": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0
+    },
+    "smoothTurnSpeed": 50,
+    "snapAngle": 45,
+    "useSnapTurn": true
+}

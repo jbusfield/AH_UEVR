@@ -1,0 +1,528 @@
+{
+    "attachment_BP_AK47_C_SK_AK47_Base_all_children": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_any_child": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_any_parent": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_grip_animation": 6,
+    "attachment_BP_AK47_C_SK_AK47_Base_is_melee": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_is_scoped": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_is_two_handed": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_position": [
+        5.599999904632568,
+        -4.099999904632568,
+        -6.400000095367432
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_rotation": [
+        23.799999237060547,
+        -90.69999694824219,
+        0.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_any_child": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_any_parent": true,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_grip_animation": 6,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_position": [
+        4.599999904632568,
+        -4.099999904632568,
+        -7.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_rotation": [
+        23.799999237060547,
+        -90.69999694824219,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_all_children": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_any_child": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_any_parent": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_grip_animation": 4,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_is_melee": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_is_scoped": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_is_two_handed": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_position": [
+        2.0,
+        -2.4000000953674316,
+        -1.7000000476837158
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_rotation": [
+        15.300000190734863,
+        -91.4000015258789,
+        0.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_all_children": false,
+    "attachment_BP_Electro_C_SK_Electro_any_child": false,
+    "attachment_BP_Electro_C_SK_Electro_any_parent": false,
+    "attachment_BP_Electro_C_SK_Electro_grip_animation": 3,
+    "attachment_BP_Electro_C_SK_Electro_is_melee": false,
+    "attachment_BP_Electro_C_SK_Electro_is_scoped": false,
+    "attachment_BP_Electro_C_SK_Electro_is_two_handed": false,
+    "attachment_BP_Electro_C_SK_Electro_position": [
+        4.400000095367432,
+        -2.299999952316284,
+        -1.100000023841858
+    ],
+    "attachment_BP_Electro_C_SK_Electro_rotation": [
+        14.199999809265137,
+        -90.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_all_children": false,
+    "attachment_BP_EmptyHands_C_Mesh_any_child": false,
+    "attachment_BP_EmptyHands_C_Mesh_any_parent": false,
+    "attachment_BP_EmptyHands_C_Mesh_grip_animation": 1,
+    "attachment_BP_EmptyHands_C_Mesh_is_melee": true,
+    "attachment_BP_EmptyHands_C_Mesh_is_scoped": false,
+    "attachment_BP_EmptyHands_C_Mesh_is_two_handed": false,
+    "attachment_BP_EmptyHands_C_Mesh_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_any_child": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_any_parent": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_grip_animation": 9,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_is_melee": true,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_position": [
+        1.0,
+        -2.299999952316284,
+        3.700000047683716
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_rotation": [
+        18.600000381469727,
+        -96.9000015258789,
+        9.600000381469727
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_child": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_parent": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_grip_animation": 9,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_is_melee": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_position": [
+        0.0,
+        -2.700000047683716,
+        0.800000011920929
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_rotation": [
+        13.100000381469727,
+        -90.0,
+        3.200000047683716
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_any_child": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_any_parent": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_grip_animation": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle02_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_all_children": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_any_child": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_any_parent": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_grip_animation": 4,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_melee": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_scoped": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_two_handed": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_position": [
+        -1.7999999523162842,
+        13.0,
+        -2.200000047683716
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_rotation": [
+        0.0,
+        180.0,
+        -13.100000381469727
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_any_child": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_any_parent": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_grip_animation": 6,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_is_melee": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_position": [
+        -1.2000000476837158,
+        1.899999976158142,
+        0.699999988079071
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_rotation": [
+        0.0,
+        0.6000000238418579,
+        -21.899999618530273
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_all_children": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_any_child": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_any_parent": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_grip_animation": 9,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_melee": true,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_scoped": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_two_handed": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_position": [
+        0.30000001192092896,
+        -4.599999904632568,
+        -0.10000000149011612
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_rotation": [
+        10.0,
+        -94.0,
+        0.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_any_child": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_any_parent": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_grip_animation": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_is_melee": true,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_all_children": true,
+    "attachment_BP_PM_C_SK_PM_Base0_any_child": false,
+    "attachment_BP_PM_C_SK_PM_Base0_any_parent": true,
+    "attachment_BP_PM_C_SK_PM_Base0_grip_animation": 8,
+    "attachment_BP_PM_C_SK_PM_Base0_is_melee": false,
+    "attachment_BP_PM_C_SK_PM_Base0_is_scoped": false,
+    "attachment_BP_PM_C_SK_PM_Base0_is_two_handed": false,
+    "attachment_BP_PM_C_SK_PM_Base0_position": [
+        6.5,
+        -1.7000000476837158,
+        -2.0999999046325684
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_rotation": [
+        18.0,
+        -90.5999984741211,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Handle_all_children": false,
+    "attachment_BP_PM_C_SK_PM_Handle_any_child": false,
+    "attachment_BP_PM_C_SK_PM_Handle_grip_animation": 9,
+    "attachment_BP_PM_C_SK_PM_Handle_position": [
+        6.5,
+        -1.7000000476837158,
+        -2.0999999046325684
+    ],
+    "attachment_BP_PM_C_SK_PM_Handle_rotation": [
+        18.200000762939453,
+        -90.0,
+        -0.5
+    ],
+    "attachment_BP_PM_C_SK_PM_Handle_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_any_child": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_any_parent": true,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_grip_animation": 8,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_position": [
+        6.900000095367432,
+        -1.7000000476837158,
+        -1.7000000476837158
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_rotation": [
+        18.0,
+        -90.5999984741211,
+        0.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_all_children": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_any_child": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_any_parent": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_grip_animation": 9,
+    "attachment_BP_Pashtet_C_SK_Pashtet_is_melee": true,
+    "attachment_BP_Pashtet_C_SK_Pashtet_is_scoped": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_is_two_handed": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_position": [
+        -0.30000001192092896,
+        -4.900000095367432,
+        -2.700000047683716
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_rotation": [
+        18.600000381469727,
+        -104.19999694824219,
+        2.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_any_child": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_any_parent": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_grip_animation": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_position": [
+        3.017544984817505,
+        17.09813690185547,
+        -2.916271209716797
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_rotation": [
+        -7.196498870849609,
+        4.937005043029785,
+        -84.93299102783203
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_child": true,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_parent": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_grip_animation": 4,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_position": [
+        15.600000381469727,
+        -6.300000190734863,
+        -11.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_rotation": [
+        15.5,
+        -90.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_all_children": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_any_child": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_any_parent": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_grip_animation": 4,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_is_melee": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_is_scoped": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_is_two_handed": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_position": [
+        2.5999999046325684,
+        -2.4000000953674316,
+        -1.100000023841858
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_rotation": [
+        14.0,
+        -90.5,
+        0.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_all_children": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_any_child": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_any_parent": true,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_grip_animation": 5,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_melee": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_scoped": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_two_handed": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_position": [
+        0.30000001192092896,
+        -2.0,
+        -1.600000023841858
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_rotation": [
+        13.0,
+        -90.0,
+        0.5
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_any_child": false,
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_any_parent": false,
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_grip_animation": 1,
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_all_children": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_any_child": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_any_parent": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_grip_animation": 9,
+    "attachment_BP_Shved_C_SK_Shved_Base_is_melee": true,
+    "attachment_BP_Shved_C_SK_Shved_Base_is_scoped": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_is_two_handed": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_position": [
+        0.30000001192092896,
+        -3.200000047683716,
+        -0.10000000149011612
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_rotation": [
+        13.399999618530273,
+        -63.099998474121094,
+        10.800000190734863
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_any_child": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_any_parent": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_grip_animation": 9,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_is_melee": true,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_position": [
+        0.30000001192092896,
+        -3.200000047683716,
+        -0.10000000149011612
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_rotation": [
+        13.399999618530273,
+        -63.20000076293945,
+        10.899999618530273
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_all_children": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_any_child": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_any_parent": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_grip_animation": 9,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_is_melee": true,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_is_scoped": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_is_two_handed": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_position": [
+        0.30000001192092896,
+        -3.4000000953674316,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_rotation": [
+        9.800000190734863,
+        -79.0999984741211,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_all_children": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_any_child": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_any_parent": true,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_grip_animation": 9,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_melee": true,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_scoped": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_two_handed": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_position": [
+        -0.4000000059604645,
+        -3.799999952316284,
+        -6.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_rotation": [
+        -14.399999618530273,
+        22.0,
+        10.399999618530273
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_any_child": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_any_parent": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_grip_animation": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "use_uevr_attachments_strip_parent_name_numeric_suffix": false
+}

@@ -1,0 +1,81 @@
+{
+    "_profileLabels": {
+        "default": "Default"
+    },
+    "_profileState": {
+        "currentEditingProfile": "default"
+    },
+    "default": {
+        "a_button": [
+            {
+                "actions": {
+                    "b_button": {
+                        "state": "on"
+                    }
+                },
+                "state": "on",
+                "unpress": true
+            }
+        ],
+        "left_shoulder": [
+            {
+                "actions": {
+                    "right_shoulder": {
+                        "state": "on"
+                    }
+                },
+                "state": "on",
+                "unpress": true
+            }
+        ],
+        "left_trigger": [
+            {
+                "actions": {
+                    "left_shoulder": {
+                        "state": "on"
+                    }
+                },
+                "state": "toggle_on",
+                "threshold": 100,
+                "unpress": true
+            },
+            {
+                "actions": {
+                    "left_shoulder": {
+                        "state": "on"
+                    }
+                },
+                "state": "toggle_off",
+                "threshold": 100,
+                "unpress": true
+            }
+        ],
+        "right_shoulder": [
+            {
+                "actions": {
+                    "left_trigger": {
+                        "state": "on",
+                        "value": 220
+                    }
+                },
+                "state": "on",
+                "unpress": true
+            },
+            {
+                "state": "off"
+            }
+        ],
+        "right_stick_y": [
+            {
+                "actions": {
+                    "a_button": {
+                        "state": "on"
+                    }
+                },
+                "state": "on",
+                "threshold": 30367,
+                "unpress": true
+            }
+        ]
+    }
+}

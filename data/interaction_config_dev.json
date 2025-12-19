@@ -1,0 +1,33 @@
+{
+    "allowMouseUpdate": false,
+    "enableHitTesting": true,
+    "interactionAttachment": 2,
+    "interactionDepthOffset": -9.375,
+    "interactionDistance": 313,
+    "interactionLocationOffset": [
+        12.100000381469727,
+        1.0,
+        0.20000000298023224
+    ],
+    "interactionRotationOffset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "interactionSource": 1,
+    "interactionType": 3,
+    "interactionZOffset": -1.0,
+    "laserColor": 4293983488,
+    "laserLengthOffset": 0.0,
+    "laserLocationOffset": 0.0,
+    "meshEnableHitTesting": true,
+    "meshInteractionDistance": 5688,
+    "meshTraceChannel": 11,
+    "pointerIndex": 1,
+    "showInteractionLaser": true,
+    "traceChannel": 23,
+    "uevr_interaction_meshIgnorePawn": 0,
+    "widgetEnableHitTesting": true,
+    "widgetInteractionDistance": 300,
+    "widgetTraceChannel": 23
+}

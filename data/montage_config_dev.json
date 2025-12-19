@@ -1,0 +1,19 @@
+{
+    "handsWhenActive": 1,
+    "handsWhenActivePriority": "0",
+    "knownMontageList": 1,
+    "lastMontagePlayed": "AM_PlayerCharacterHands_FrozenSkill_Unequip_PreparationCancelled",
+    "leftArmWhenActive": 1,
+    "leftArmWhenActivePriority": "0",
+    "motionSicknessCompensationWhenActive": 1,
+    "motionSicknessCompensationWhenActivePriority": "0",
+    "pawnArmBonesWhenActive": 1,
+    "pawnArmBonesWhenActivePriority": "0",
+    "pawnArmsWhenActive": 1,
+    "pawnArmsWhenActivePriority": "0",
+    "pawnBodyWhenActive": 1,
+    "pawnBodyWhenActivePriority": "0",
+    "recentMontagesPlayed": "AM_PlayerCharacterHands_ShvedFastUnequip\nAM_PlayerCharacterHands_ShvedEquip\nAnimMontage_35244\nAnimMontage_35241\nAnimMontage_35237\nAM_PlayerCharacterHands_ShvedFastUnequip\nAM_PlayerCharacterHands_ContinuousPickup_EndShort\nAM_PlayerCharacterHands_ContinuousPickup_Start\nAM_PlayerCharacterHands_FrozenSkill_Unequip_PreparationCancelled\nAM_PlayerCharacterHards_CastingActiveIdleShortLength",
+    "rightArmWhenActive": 1,
+    "rightArmWhenActivePriority": "0"
+}

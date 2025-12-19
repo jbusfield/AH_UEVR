@@ -1,0 +1,16 @@
+{
+    "hidePawnArmsAnimationMesh": false,
+    "hidePawnArmsBones": true,
+    "hidePawnArmsMesh": false,
+    "hidePawnBodyMesh": false,
+    "pawnArmsAnimationMeshList": 2,
+    "pawnArmsFOVFix": "",
+    "pawnArmsMeshList": 1,
+    "pawnBodyFOVFix": "",
+    "pawnBodyMeshList": 3,
+    "pawnUpperArmLeft": 7,
+    "pawnUpperArmRight": 7,
+    "selectedPawnArmsAnimationMesh": "Pawn.FPHandsMesh",
+    "selectedPawnArmsMesh": "Pawn.FPHandsPostProcessMesh",
+    "selectedPawnBodyMesh": "Pawn.FPLegsMesh"
+}

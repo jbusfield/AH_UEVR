@@ -1,0 +1,2 @@
+Renderer_r.DefaultFeature.AntiAliasing=0
+Renderer_r.LightCulling.Quality=0
