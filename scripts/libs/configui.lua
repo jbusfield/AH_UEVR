@@ -1232,6 +1232,7 @@ function M.setValue(widgetID, value, noCallbacks)
 	-- 		value = getVector4FromArray(value)
 	-- 	end
 	-- end
+	if type(value) == "table" and next(value) == nil then return end --check if the table is empty
 	doUpdate(M.getPanelID(widgetID), widgetID, getCleanValue(value), nil, noCallbacks)
 end
 

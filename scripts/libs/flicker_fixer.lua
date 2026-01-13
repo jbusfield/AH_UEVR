@@ -70,7 +70,7 @@ local function createFlickerFixerComponent(fov, rt)
 	return component
 end
 
-function triggerFlickerFixer()
+local function triggerFlickerFixer()
 	if configui.getValue("flicker_fixer_enable") == true and uevrUtils.getUEVRParam_int("VR_RenderingMethod") == 0 and uevrUtils.getUEVRParam_bool("VR_NativeStereoFix") then
 		if uevrUtils.validate_object(flickerFixerComponent) ~= nil then
 			flickerFixerComponent:SetVisibility(true)

@@ -164,7 +164,8 @@ local function createControllerComponent(parentActor, sourceName, handIndex)
 		local motionControllerComponent = uevrUtils.create_component_of_class("Class /Script/HeadMountedDisplay.MotionControllerComponent", true, uevrUtils.get_transform(), false, parentActor)
 		--local motionControllerComponent = parentActor:AddComponentByClass(uevrUtils.get_class("Class /Script/HeadMountedDisplay.MotionControllerComponent"), true, uevrUtils.get_transform(), false)
 		if motionControllerComponent ~= nil then
-			motionControllerComponent:SetCollisionEnabled(0, false)	
+			motionControllerComponent:SetCollisionEnabled(0, false)
+			--motionControllerComponent:SetCollisionResponseToAllChannels(0)
 			motionControllerComponent.MotionSource = uevrUtils.fname_from_string(sourceName)
 			if motionControllerComponent.Hand ~= nil then
 				motionControllerComponent.Hand = handIndex

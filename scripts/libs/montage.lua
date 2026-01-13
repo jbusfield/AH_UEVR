@@ -83,7 +83,7 @@ local isParametersDirty = false
 local montageList = {}
 local montageIDList = {}
 
-local montageState = {hands = nil, leftArm = nil, rightArm = nil, pawnBody = nil, pawnArms = nil, pawnArmBones = nil, motionSicknessCompensation = nil}
+local montageState = {hands = nil, leftArm = nil, rightArm = nil, pawnBody = nil, pawnArms = nil, pawnArmBones = nil, motionSicknessCompensation = nil, inputEnabled = nil}
 
 local stateConfig = {
     {stateKey = "hands", valueKey = "handsWhenActive"},
@@ -93,6 +93,7 @@ local stateConfig = {
     {stateKey = "pawnArms", valueKey = "pawnArmsWhenActive"},
     {stateKey = "pawnArmBones", valueKey = "pawnArmBonesWhenActive"},
     {stateKey = "motionSicknessCompensation", valueKey = "motionSicknessCompensationWhenActive"},
+    {stateKey = "inputEnabled", valueKey = "inputWhenActive"},
 }
 
 local currentLogLevel = LogLevel.Error
@@ -146,6 +147,22 @@ local developerWidgets = spliceableInlineArray{
 					widgetType = "input_text",
 					id = "handsWhenActivePriority",
 					label = " Hands Visibility",
+					initialValue = "0",
+					width = 35,
+				},
+				{
+					widgetType = "combo",
+					id = "inputWhenActive",
+					label = "",
+					selections = {"No effect", "Enable", "Disable"},
+					initialValue = 1,
+					width = 150,
+				},
+				{ widgetType = "same_line" },
+				{
+					widgetType = "input_text",
+					id = "inputWhenActivePriority",
+					label = " Input",
 					initialValue = "0",
 					width = 35,
 				},
@@ -399,6 +416,14 @@ local function updateStateIfHigherPriority(data, stateKey, valueKey)
 end
 
 uevrUtils.registerMontageChangeCallback(function(montage, montageName)
+	-- if montageState["inputEnabled"] == 3 and montageName == nil then
+	-- 	delay(3000, function()
+	-- 		montageState["inputEnabled"] = nil
+	-- 		montageState["inputEnabledPriority"] = 0
+	-- 	end)
+	-- 	return
+	-- end
+
 	for _, config in ipairs(stateConfig) do
 		montageState[config.stateKey] = nil
 		montageState[config.stateKey .. "Priority"] = 0
@@ -541,6 +566,10 @@ end)
 
 hands.registerIsHiddenCallback(function()
 	return montageState["hands"], montageState["handsPriority"]
+end)
+
+uevrUtils.registerUEVRCallback("is_input_disabled", function()
+	return montageState["inputEnabled"] ~= nil and (not montageState["inputEnabled"]) or nil, montageState["inputEnabledPriority"]
 end)
 
 -- Register update handlers for all state configs and their priorities

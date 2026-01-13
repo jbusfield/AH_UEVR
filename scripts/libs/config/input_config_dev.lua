@@ -16,6 +16,10 @@ M.PawnPositionMode = inputEnums.PawnPositionMode
 M.PawnRotationMode = inputEnums.PawnRotationMode
 
 local boneList = {}
+local pawnCameraList = {}
+
+local paramManager = nil
+
 
 --local configIDs = {"isDisabledOverride", "aimMethod", "fixSpatialAudio", "rootOffset", "useSnapTurn", "snapAngle", "smoothTurnSpeed", "pawnRotationMode", "pawnPositionMode", "pawnPositionSweepMovement", "pawnPositionAnimationScale", "headOffset", "adjustForAnimation", "adjustForEyeOffset", "eyeOffset"}
 -- local configDefaults = {
@@ -34,10 +38,12 @@ local boneList = {}
 --     adjustForAnimation = false,
 --     adjustForEyeOffset = false,
 --     eyeOffset = 0
+--     pawnControlRotationCamera = ""
 -- }
 local configDefaults = {}
 
-local function getConfigWidgets()
+local helpText = "This module provides advanced input configuration options for developers. Adjust settings such as aim method, turning behavior, body orientation, and roomscale movement to fine-tune the VR experience."
+local function getConfigWidgets(m_paramManager)
     return spliceableInlineArray {
 	{
 		widgetType = "checkbox",
@@ -61,6 +67,7 @@ local function getConfigWidgets()
 	-- {
 	-- 	widgetType = "tree_pop"
 	-- },
+	expandArray(m_paramManager.getProfilePreConfigurationWidgets, widgetPrefix),
 	{
 		widgetType = "tree_node",
 		id = widgetPrefix .. "aim_method_tree",
@@ -79,6 +86,13 @@ local function getConfigWidgets()
             id = widgetPrefix .. "advanced_aim_group",
             isHidden = false
         },
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "pawnControlRotationCameraList",
+				label = "Pawn Control Rotation Camera",
+				selections = {"None"},
+				initialValue = 1
+			},
             {
                 widgetType = "checkbox",
                 id = widgetPrefix .. "fixSpatialAudio",
@@ -139,13 +153,13 @@ local function getConfigWidgets()
 			widgetType = "tree_node",
 			id = widgetPrefix .. "movement_tree",
 			initialOpen = true,
-			label = "Movement Orientation"
+			label = "Body Orientation"
 		},
 				{
 					widgetType = "combo",
 					id = widgetPrefix .. "pawnRotationMode",
 					label = "Type",
-					selections = {"Game", "Right Controller", "Left Controller", "Head/HMD", "Follows Body (Simple)", "Follows Body (Advanced)"},
+					selections = {"Game", "Right Controller", "Left Controller", "Locked Head/HMD", "Follows Head (Simple)", "Follows Head (Advanced)"},
 					initialValue = configDefaults["pawnRotationMode"]
 				},
 				expandArray(bodyYaw.getConfigurationWidgets),
@@ -194,7 +208,7 @@ local function getConfigWidgets()
 				label = "Head Offset",
 				speed = .1,
 				range = {-200, 200},
-				initialValue = {configDefaults["headOffset"].X, configDefaults["headOffset"].Y, configDefaults["headOffset"].Z}
+				initialValue = {configDefaults["headOffset"] and configDefaults["headOffset"].X or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Y or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Z or 0}
 			},
 			{
 				widgetType = "checkbox",
@@ -229,6 +243,24 @@ local function getConfigWidgets()
 	{
 		widgetType = "end_group",
 	},
+	{ widgetType = "new_line" },
+	expandArray(m_paramManager.getProfilePostConfigurationWidgets, widgetPrefix),
+	{ widgetType = "new_line" },
+	{
+		widgetType = "tree_node",
+		id = widgetPrefix .. "help_tree",
+		initialOpen = true,
+		label = "Help"
+	},
+		{
+			widgetType = "text",
+			id = widgetPrefix .. "help",
+			label = helpText,
+			wrapped = true
+		},
+	{
+		widgetType = "tree_pop"
+	},
 	-- {
 		-- widgetType = "slider_float",
 		-- id = "neckOffset",
@@ -240,7 +272,7 @@ local function getConfigWidgets()
     }
 end
 local function updateSetting(key, value)
-    uevrUtils.executeUEVRCallbacks("on_input_config_param_change", key, value)
+    uevrUtils.executeUEVRCallbacks("on_input_config_param_change", key, value, true)
 end
 
 local function setCurrentHeadBone(value)
@@ -260,7 +292,7 @@ local function setBoneNames()
 	local mesh = pawnModule.getBodyMesh()
 	if mesh ~= nil then
 		boneList = uevrUtils.getBoneNames(mesh)
-		if boneList ~= nil and #boneList > 0 then 
+		if boneList ~= nil and #boneList > 0 then
 			configui.setSelections(widgetPrefix .. "headBones", boneList)
 		end
 	end
@@ -272,7 +304,7 @@ end
 
 local function updateUIState(key)
     local exKey = widgetPrefix .. key
-    if key == "aimMethod" then 
+    if key == "aimMethod" then
         configui.hideWidget(widgetPrefix .. "advanced_input_group", configui.getValue(exKey) == M.AimMethod.UEVR)
         configui.hideWidget(widgetPrefix .. "advanced_aim_group", configui.getValue(exKey) == M.AimMethod.UEVR)
     elseif key == "useSnapTurn" then
@@ -284,11 +316,46 @@ local function updateUIState(key)
     elseif key == "pawnPositionMode" then
         configui.hideWidget(widgetPrefix .. "pawnPositionAnimationScale", configui.getValue(exKey) ~= M.PawnPositionMode.ANIMATED)
         configui.hideWidget(widgetPrefix .. "pawnPositionSweepMovement", configui.getValue(exKey) ~= M.PawnPositionMode.FOLLOWS)
-    elseif key == "adjustForAnimation" then 
+    elseif key == "adjustForAnimation" then
         configui.hideWidget(widgetPrefix .. "headBones", not configui.getValue(exKey))
     elseif key == "adjustForEyeOffset" then
         configui.hideWidget(widgetPrefix .. "eyeOffset", not configui.getValue(exKey))
     end
+end
+
+local function setSelectedPawnCamera(currentCameraName, noCallbacks)
+	local selectedIndex = 1
+	for i = 1, #pawnCameraList do
+		if pawnCameraList[i] == currentCameraName then
+			selectedIndex = i
+			break
+		end
+	end
+	configui.setValue(widgetPrefix .. "pawnControlRotationCameraList", selectedIndex, noCallbacks)
+end
+
+
+local function setPawnCameraList(currentCameraName, noCallbacks)
+	--print("Setting pawn camera list")
+    pawnCameraList = uevrUtils.getObjectPropertyDescriptors(pawn, "Pawn", "Class /Script/Engine.CameraComponent", true)
+	--print("Found " .. #pawnCameraList .. " cameras")
+	table.insert(pawnCameraList, 1, "None")
+	-- for i, name in ipairs(pawnCameraList) do
+	-- 	print("Camera " .. i .. ": " .. name)
+	-- end
+
+	local listName = "pawnControlRotationCameraList"
+	--print("Updating camera list UI", widgetPrefix .. listName)
+	configui.setSelections(widgetPrefix .. listName, pawnCameraList)
+	-- local selectedIndex = 1
+	-- for i = 1, #pawnCameraList do
+	-- 	if pawnCameraList[i] == currentCameraName then
+	-- 		selectedIndex = i
+	-- 		break
+	-- 	end
+	-- end
+	-- configui.setValue(widgetPrefix .. listName, selectedIndex, noCallbacks)
+	setSelectedPawnCamera(currentCameraName, noCallbacks)
 end
 
 configui.onCreateOrUpdate(widgetPrefix .. "isDisabledOverride", function(value)
@@ -296,11 +363,14 @@ configui.onCreateOrUpdate(widgetPrefix .. "isDisabledOverride", function(value)
 end)
 
 configui.onUpdate(widgetPrefix .. "headOffset", function(value)
-    updateSetting("headOffset", {X=value[1],Y=value[2],Z=value[3]})
+	local arr = uevrUtils.getNativeValue(value)
+    updateSetting("headOffset", {X=arr[1],Y=arr[2],Z=arr[3]})
 end)
 
 configui.onUpdate(widgetPrefix .. "rootOffset", function(value)
-    updateSetting("rootOffset", {X=value[1],Y=value[2],Z=value[3]})
+    --updateSetting("rootOffset", {X=value[1],Y=value[2],Z=value[3]})
+	local arr = uevrUtils.getNativeValue(value)
+    updateSetting("rootOffset", {X=arr[1],Y=arr[2],Z=arr[3]})
 end)
 
 configui.onUpdate(widgetPrefix .. "headBones", function(value)
@@ -385,6 +455,13 @@ configui.onUpdate(widgetPrefix .. "fixSpatialAudio", function(value)
 	updateSetting("fixSpatialAudio", value)
 end)
 
+configui.onUpdate(widgetPrefix .. "pawnControlRotationCameraList", function(value)
+	--get the camera name from the selection
+	local cameraName = pawnCameraList[value]
+	updateSetting("pawnControlRotationCamera", cameraName)
+end)
+
+
 -- configui.onUpdate(widgetPrefix .. "handedness", function(value)
 -- 	uevrUtils.setHandedness(value-1)
 -- end)
@@ -394,7 +471,7 @@ uevrUtils.registerLevelChangeCallback(function(level)
 end)
 
 function M.getConfigurationWidgets(options)
-	return configui.applyOptionsToConfigWidgets(getConfigWidgets(), options)
+	return configui.applyOptionsToConfigWidgets(getConfigWidgets(paramManager), options)
 end
 
 function M.showConfiguration(saveFileName, options)
@@ -410,26 +487,45 @@ function M.showConfiguration(saveFileName, options)
 	configui.create(configDefinition)
 end
 
-function M.init(parameters)--paramManager)
+local function setUIValue(key, value)
+	if key == "pawnControlRotationCamera" then
+		--select from the list
+		--setPawnCameraList(value, true)
+		setSelectedPawnCamera(value, true)
+		--configui.setValue(widgetPrefix .. "pawnControlRotationCameraList", 1, true)
+	else
+		configui.setValue(widgetPrefix .. key, value, true)
+	end
+	updateUIState(key)
+end
+
+local function updateUI(params)
+	for key, value in pairs(params) do
+		setUIValue(key, value)
+	end
+end
+
+function M.init(m_paramManager)
     --M.loadParameters(parametersFileName)
-    configDefaults = parameters
+    configDefaults = m_paramManager and m_paramManager:getAllActiveProfileParams() or {}
+	paramManager = m_paramManager
     M.showConfiguration(configFileName)
-    for key, value in pairs(parameters) do
-        print(key,value)
-        --if key ~= "rootOffset" and key ~= "headOffset" then
-            configui.setValue(widgetPrefix .. key, value, true)
-            updateUIState(key)
-        --end
-    end
+
+	paramManager:initProfileHandler(widgetPrefix, function(profileParams)
+		updateUI(profileParams)
+		setPawnCameraList(profileParams["pawnControlRotationCamera"])
+	end)
+
+	--updateUI(parameters)
 end
 
-function M.updateUI(key, value)
-	configui.setValue(widgetPrefix .. key, value, true)
-end
+uevrUtils.registerUEVRCallback("on_input_config_param_change", function(key, value)
+	setUIValue(key, value)
+end)
 
-function M.registerParameterChangedCallback(callback)
-    uevrUtils.registerUEVRCallback("on_input_config_param_change", callback)
-end
+-- function M.registerParameterChangedCallback(callback)
+--     uevrUtils.registerUEVRCallback("on_input_config_param_change", callback)
+-- end
 
 -- uevrUtils.registerHandednessChangeCallback(function(handed)
 -- 	configui.setValue(widgetPrefix .. "handedness", handed + 1, true)

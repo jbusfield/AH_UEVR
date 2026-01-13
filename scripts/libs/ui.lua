@@ -40,6 +40,12 @@ Usage
         example:
             ui.setIsInMotionSicknessCausingScene(true)
 
+    ui.setRequireWidgetOpenState(value) - sets whether to require widget's GetOpenState() to consider it active
+        In some games widgets will act like they are active even though they are not actually open
+        Set this to true to require that the widget's GetOpenState() returns 0 (open) for it to be considered active
+        example:
+            ui.setRequireWidgetOpenState(true)
+
     ui.registerIsInMotionSicknessCausingSceneCallback(func) - registers a callback for motion sickness scene changes
         Second param  is an optional priority. Higher priority callbacks override lower priority ones.
         If the second param is not provided it defaults to 0.
@@ -84,6 +90,11 @@ local reduceMotionSickness = false
 local isInMotionSicknessCausingScene = false
 
 local currentWidgetViewportState = {}
+local currentCustomViewportWidgets = {}
+
+--In some games widgets will act like they are active even though they are not actually open
+--Set this to true to require that the widget's GetOpenState() returns 0 (open) for it to be considered active
+local requireWidgetOpenState = false
 
 local uiState = {viewLocked = nil, screen2D = nil, decouplePitch = nil, inputEnabled = nil, handsEnabled = nil}
 
@@ -208,7 +219,11 @@ local function updateUI(force)
     end
 end
 
-input.registerIsDisabledCallback(function()
+-- input.registerIsDisabledCallback(function()
+-- 	return uiState["inputEnabled"] ~= nil and (not uiState["inputEnabled"]) or nil, uiState["inputEnabledPriority"]
+-- end)
+
+uevrUtils.registerUEVRCallback("is_input_disabled", function()
 	return uiState["inputEnabled"] ~= nil and (not uiState["inputEnabled"]) or nil, uiState["inputEnabledPriority"]
 end)
 
@@ -273,10 +288,22 @@ local function updateUIState()
         ---@diagnostic disable-next-line: undefined-field
         WidgetBlueprintLibrary:GetAllWidgetsOfClass(uevrUtils.get_world(), foundWidgets, widgetClass, true)
         --print("Found widgets: " .. #foundWidgets)
+
+        --append currentCustomViewportWidgets to foundWidgets
+        for _, widget in ipairs(currentCustomViewportWidgets) do
+            if uevrUtils.getValid(widget) ~= nil then
+                table.insert(foundWidgets, widget)
+            else
+                M.removeViewportWidget(widget)
+            end
+        end
+
         for index, widget in pairs(foundWidgets) do
-            if widget:IsInViewport() then --check not really needed since GetAllWidgetsOfClass with the last param true should only return viewport widgets
+            --if widget:IsInViewport() then --check not really needed since GetAllWidgetsOfClass with the last param true should only return viewport widgets.also currentCustomViewportWidgets might not be in viewport
+            if requireWidgetOpenState == false or widget:GetOpenState() == 0 then
                 --get the widget data from the configurations
                 local id = widget:get_class():get_full_name()
+                --print(id, widget:IsInteractable(), widget:IsVisible(), widget:HasUserFocus(), widget:GetVisibility(), widget:GetIsEnabled(), widget:GetIsVisible(), widget:GetOpenState())
                 local data = widgetList[id]
                 if data ~= nil then
                     if data["label"] ~= nil then
@@ -289,15 +316,16 @@ local function updateUIState()
                     uevrUtils.setWidgetLayout(widget, data["scale"], data["alignment"])
                     --updateCurrentWidgetChangeCallbackState(data["label"], true)
                 end
+            end
             -- else
             --     print ("Widget " .. id .. " not in viewport")
-            end
+            --end
         end
         updateWidgetChangeCallbacks()
     end
     setCurrentViewportWidgetsStr(currentViewportWidgetsStr)
 
-    local currentGameStateText = "Current Game State: "
+    local currentGameStateText = "Current Game Statex: "
     local isInCutscene = uevrUtils.isInCutscene()
     local isPaused = uevrUtils.isGamePaused()
     local isCharacterHidden = uevrUtils.getValid(pawn,{ "Controller", "Character", "bHidden"}) or false
@@ -403,6 +431,25 @@ local createConfigMonitor = doOnce(function()
 	end
 end, Once.EVER)
 
+function M.addViewportWidget(widget)
+    if uiConfigDev ~= nil then 
+        uiConfigDev.registerViewportWidget(widget:get_class():get_full_name(), uevrUtils.getShortName(widget:get_class()))
+    end
+    --add uniquely to currentCustomViewportWidgets array
+    local index = uevrUtils.indexOf(currentCustomViewportWidgets, widget)
+    if index == nil then
+        table.insert(currentCustomViewportWidgets, widget)
+    end
+end
+
+function M.removeViewportWidget(widget)
+    --remove from currentCustomViewportWidgets array
+    local index = uevrUtils.indexOf(currentCustomViewportWidgets, widget)
+    if index ~= nil then
+        table.remove(currentCustomViewportWidgets, index)
+    end
+end
+
 function M.getConfigurationWidgets(options)
 	if uiConfig == nil then
 		uiConfig = require("libs/config/ui_config")
@@ -453,6 +500,10 @@ function M.setIsInMotionSicknessCausingScene(value)
     if reduceMotionSickness then
         uevrUtils.enableCameraLerp(isInMotionSicknessCausingScene, true, true, true)
     end
+end
+
+function M.setRequireWidgetOpenState(value)
+    requireWidgetOpenState = value
 end
 
 local function executeIsInMotionSicknessCausingSceneCallback(...)

@@ -297,7 +297,7 @@ function M.showConfiguration(saveFileName, options)
 end
 
 function M.setDisabled(val)
-	print("Input Disabled:", val)
+	--print("Input Disabled:", val)
 	isDisabledOverride = val
 	if isDisabledOverride then
 		--this ensures the camera gets reset to the current pawn orientation when input is re-enabled

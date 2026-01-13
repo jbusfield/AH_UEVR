@@ -779,12 +779,30 @@ function M.getReticuleIDList()
 	return list
 end
 
-function M.setActiveReticule(id)
-	if parameters ~= nil then
+function M.setActiveReticule(id, force)
+	if parameters ~= nil and id ~= nil and (parameters["currentReticuleID"] ~= id or force) then
 		parameters["currentReticuleID"] = id
 		M.destroy()
 		M.reset()
 		setReticuleAutoCreationTypeFromParameters()
+	end
+end
+
+function M.setActiveReticuleByLabel(label, force)
+	local newID = nil
+	if parameters ~= nil then
+		for i=1, #parameters["reticuleList"] do
+			if parameters["reticuleList"][i].label == label then
+				newID = parameters["reticuleList"][i].id
+				break
+			end
+		end
+		if newID ~= nil and (parameters["currentReticuleID"] ~= newID or force) then
+			parameters["currentReticuleID"] = newID
+			M.destroy()
+			M.reset()
+			setReticuleAutoCreationTypeFromParameters()
+		end
 	end
 end
 

@@ -45,7 +45,7 @@ local function getConfigWidgets()
 		initialOpen = true,
 		label = "Game State Configuration"
 	},
-		{ widgetType = "text", id = "currentGameStateText", label = "Current Game State:"},
+		{ widgetType = "text", id = widgetPrefix .. "currentGameStateText", label = "Current Game State:"},
         {
             widgetType = "combo",
             id = widgetPrefix .. "gameStateList",
@@ -450,7 +450,7 @@ local function updateViewportWidgetList()
     end
 end
 
-local function registerViewportWidget(widgetClassName, widgetShortName)
+function M.registerViewportWidget(widgetClassName, widgetShortName)
    if widgetClassName ~= nil and widgetClassName ~= "" then
         if parameters["widgetlist"] == nil or parameters["widgetlist"][widgetClassName] == nil then
             updateSetting({"widgetlist", widgetClassName, "label"}, widgetShortName)
@@ -466,7 +466,7 @@ local function registerViewportWidgets()
     WidgetBlueprintLibrary:GetAllWidgetsOfClass(uevrUtils.get_world(), foundWidgets, widgetClass, true)
 	for index, widget in pairs(foundWidgets) do
 		--print(widget:get_full_name(), widget:get_class():get_full_name(), widget:IsInViewport())
-        registerViewportWidget(widget:get_class():get_full_name(), uevrUtils.getShortName(widget:get_class()))
+        M.registerViewportWidget(widget:get_class():get_full_name(), uevrUtils.getShortName(widget:get_class()))
  	end
 end
 

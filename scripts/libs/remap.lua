@@ -213,12 +213,12 @@ local parametersFileName = "remap_parameters"
 local isParametersDirty = false
 
 local parameters = {}
-parameters["remap"] = {
-    right_shoulder = {{state = M.InputState.ON, unpress = true}, {state = M.InputState.OFF, actions = {}}},
-    left_shoulder = {{state = M.InputState.ON, unpress = true, actions = {right_shoulder = {state = M.ActionState.ON}}}},
-    left_trigger = {{state = M.InputState.ON, unpress = true, threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD, actions = {left_shoulder = {state = M.ActionState.ON}}}},
-    right_trigger = {{state = M.InputState.ON, unpress = true, threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD, actions = {}}},
-}
+-- parameters["remap"] = {
+--     right_shoulder = {{state = M.InputState.ON, unpress = true}, {state = M.InputState.OFF, actions = {}}},
+--     left_shoulder = {{state = M.InputState.ON, unpress = true, actions = {right_shoulder = {state = M.ActionState.ON}}}},
+--     left_trigger = {{state = M.InputState.ON, unpress = true, threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD, actions = {left_shoulder = {state = M.ActionState.ON}}}},
+--     right_trigger = {{state = M.InputState.ON, unpress = true, threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD, actions = {}}},
+-- }
 
 -- Mapping of input names to XINPUT constants and state locations
 local inputMapping = {
