@@ -863,6 +863,12 @@ function M.updatePanel(panelDefinition)
 		end
 	end
 
+	--cant update because it doesnt exist yet. Create it instead
+	if configValues[panelID] == nil then
+		M.createPanel(panelDefinition)
+		return
+	end
+
 	layoutDefinitions[panelID] = panelDefinition["layout"]
 
 	panelList[panelID] = {isDirty=false, timeSinceLastSave=0, fileName=fileName, isHidden=panelDefinition["isHidden"]}
@@ -886,7 +892,6 @@ function M.updatePanel(panelDefinition)
 			item.label_wrapped = wrapTextOnWordBoundary(item.label, item.textWidth)
 		end
 	end
-
 
 	M.load(panelID, fileName)
 end
@@ -914,7 +919,6 @@ function M.createPanel(panelDefinition)
 	--print("[configui] Creating panel", label, fileName)
 	if configValues[panelID] == nil then
 		configValues[panelID] = {}
-
 		if label == "__default__" then
 			--table.insert(defaultPanelList, panelID)
 			uevr.sdk.callbacks.on_draw_ui(function()

@@ -504,7 +504,7 @@ end
 local function getCurrentSelectedWidget()
     local id = getCurrentSelectedWidgetClass()
     if id ~= "" then
-        print(id)
+        --print(id)
         return uevrUtils.find_first_of(id, false)
     end
 end

@@ -12,8 +12,9 @@ local interaction = require('libs/interaction')
 local ui = require('libs/ui')
 local remap = require('libs/remap')
 local gestures = require('libs/gestures')
+local gunstock = require('libs/gunstock')
 
--- uevrUtils.setLogLevel(LogLevel.Debug)
+--uevrUtils.setLogLevel(LogLevel.Debug)
 -- reticule.setLogLevel(LogLevel.Debug)
 -- -- input.setLogLevel(LogLevel.Debug)
 -- attachments.setLogLevel(LogLevel.Debug)
@@ -21,9 +22,11 @@ local gestures = require('libs/gestures')
 -- ui.setLogLevel(LogLevel.Debug)
 -- remap.setLogLevel(LogLevel.Debug)
 -- --hands.setLogLevel(LogLevel.Debug)
+--interaction.setLogLevel(LogLevel.Debug)
 
--- uevrUtils.setDeveloperMode(true)
---hands.enableConfigurationTool()
+
+uevrUtils.setDeveloperMode(true)
+-- hands.enableConfigurationTool()
 
 ui.init()
 montage.init()
@@ -34,6 +37,7 @@ reticule.init()
 pawnModule.init()
 remap.init()
 input.init()
+gunstock.showConfiguration()
 
 local wasArmsAnimating = false
 local isInAnimationCutscene = false
@@ -43,8 +47,12 @@ local materialUtils = nil
 local leftHandDirectionOffset = 40
 local activateCassetteMenu = false
 local isGrabbingCassette = false
+local jumpTurnDeadzone = 32000
 
-local versionTxt = "v1.0.2"
+--temp debug param
+--local socketList = {"None"}
+
+local versionTxt = "v1.0.3"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -74,16 +82,35 @@ local configDefinition = {
 					range = {-90, 90},
 					initialValue = leftHandDirectionOffset
 				},
+				{
+					widgetType = "drag_int",
+					id = "jumpTurnDeadzone",
+					label = "Jump/Turn Deadzone",
+					speed = 1,
+					range = {0, 100},
+					initialValue = 0
+				},
+				-- {
+				-- 	widgetType = "combo",
+				-- 	id = "handle_socket_right",
+				-- 	label = "Handle Socket Right",
+				-- 	selections = socketList,
+				-- 	initialValue = 1
+				-- },
+				-- {
+				-- 	widgetType = "combo",
+				-- 	id = "handle_socket_left",
+				-- 	label = "Handle Socket Left Hand",
+				-- 	selections = socketList,
+				-- 	initialValue = 1
+				-- },
 			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
 		}
 	}
 }
-configui.create(configDefinition)
-configui.onCreateOrUpdate("leftHandDirectionOffset", function(value)
-	leftHandDirectionOffset = value
-end)
 
+local status = {}
 local function setInCar(value)
 	isInCar = value
 	pawnModule.hideArmsBones(not isInCar)
@@ -127,20 +154,17 @@ attachments.registerOnGripUpdateCallback(function()
 				end
 			end
 
-			if string.find(uevrUtils.getShortName(currentWeapon), "BP_Krepysh") then
-				--Big boy injures you when attached to mesh
-				return currentWeapon.RootComponent
-			elseif string.find(uevrUtils.getShortName(currentWeapon), "BP_Kuzmich") then
+			-- if string.find(uevrUtils.getShortName(currentWeapon), "BP_Krepysh") then
+			-- 	return currentWeapon.RootComponent
+			if string.find(uevrUtils.getShortName(currentWeapon), "BP_Kuzmich") then
 				--secondary floating magazine needs to be hidden
 				currentWeapon.SK_Kuzmich_Magazine:call("SetRenderCustomDepth", false)
 				currentWeapon.SK_Kuzmich_Magazine:call("SetRenderInMainPass", false)
-
-				--DLC shotgun hits the pawn when connected to the hand mesh so connect to the raw controller (I didnt feel like redoing all other attachments to match)
-				--Unfortunately when doing this, the secondary shock weapon fires from origin points that are not located on the gun itself although generally points in the right direction. Havent figured out why
-				return currentWeapon.RootComponent
+				currentWeapon.Barrel.RelativeLocation.X = 50 --move barrel forward to avoid firing into the capsule component
+				return currentWeapon.RootComponent, controllers.getController(Handed.Right), nil, nil, nil, nil, true
 			else
-				return currentWeapon.RootComponent, hand, nil, nil, nil, nil, true
-				--return currentWeapon.RootComponent, controllers.getController(Handed.Right)
+				--return currentWeapon.RootComponent, hand, nil, nil, nil, nil, true
+				return currentWeapon.RootComponent, controllers.getController(Handed.Right), nil, nil, nil, nil, true
 			end
 		end
 	end
@@ -159,6 +183,33 @@ attachments.registerAttachmentChangeCallback(function()
 	-- Reduces processing when no melee weapon is equipped
 	gestures.autoDetectGesture(gestures.Gesture.SWIPE_RIGHT, attachments.isActiveAttachmentMelee(Handed.Right))
 	gestures.autoDetectGesture(gestures.Gesture.SWIPE_LEFT, attachments.isActiveAttachmentMelee(Handed.Right))
+
+	-- if currentWeapon ~= nil and currentWeapon.Handle ~= nil then
+	-- 	uevrUtils.getSocketNames(currentWeapon.Handle, function(names)
+	-- 		if names == nil then
+	-- 			print("No socket names received")
+	-- 			return
+	-- 		end
+	-- 		socketList = names
+	-- 		configui.setSelections("handle_socket_right", socketList)
+	-- 		configui.setSelections("handle_socket_left", socketList)
+	-- 		-- for i, name in ipairs(names) do
+	-- 		-- 	print("Socket " .. i .. ": " .. tostring(name))
+	-- 		-- end
+	-- 	end)
+	-- end
+
+	-- if currentWeapon ~= nil and currentWeapon.Handle ~= nil then
+	-- 	local names = currentWeapon.Handle:GetAllSocketNames()
+	-- 	if names == nil then
+	-- 		print("No sockets found on weapon handle", currentWeapon.Handle.Sockets)
+	-- 	else
+	-- 		for _, name in pairs(names) do
+	-- 			uevrUtils.print("Socket: " .. tostring(name))
+	-- 		end
+	-- 	end
+	-- end
+
 end)
 
 local function isPlayerPlaying()
@@ -253,16 +304,17 @@ local function setDefaultTargeting(handed)
 	if handed == Handed.Left then
 		input.setAimMethod(input.AimMethod.LEFT_CONTROLLER)
 		input.setAimRotationOffset({Pitch=0, Yaw=leftHandDirectionOffset, Roll=0})
-		--if we were using reticule Camera Targetting method we wouldnt need this
-		--but in this game Camera Targetting is not accurate
-		reticule.setTargetRotationOffset({Pitch=0, Yaw=leftHandDirectionOffset, Roll=0})
+		input.setAimCameraOverride(true)
 		reticule.setTargetMethod(reticule.ReticuleTargetMethod.LEFT_CONTROLLER)
+		reticule.setTargetRotationOffset({Pitch=0, Yaw=leftHandDirectionOffset, Roll=0})
 	else
-		input.setAimMethod(input.AimMethod.RIGHT_CONTROLLER)
+		input.setAimMethod(input.AimMethod.RIGHT_WEAPON)
 		input.setAimRotationOffset({Pitch=0, Yaw=0, Roll=0})
+		input.setAimCameraOverride(false)
+		reticule.setTargetMethod(reticule.ReticuleTargetMethod.CAMERA)
 		reticule.setTargetRotationOffset()
-		reticule.setTargetMethod(reticule.ReticuleTargetMethod.RIGHT_CONTROLLER)
 	end
+	status["currentTargetingHand"] = handed
 end
 --won't callback unless an updateDeferral hasnt been called in the last 1000ms
 uevrUtils.createDeferral("melee_attack", 1000, function()
@@ -288,10 +340,15 @@ local function animateMelee(direction) -- 0-left, 1-right
 	--print("Animating melee in direction:", direction)
 	if attachments.isActiveAttachmentMelee(Handed.Right) == true then
 		--print("Melee attack started")
-		input.setAimMethod(input.AimMethod.RIGHT_CONTROLLER)
-		input.setAimRotationOffset(uevrUtils.rotator(40,25,0)) --adjust reticule during melee to match the melee weapon head
-		reticule.setTargetMethod(reticule.ReticuleTargetMethod.CAMERA)
-		reticule.setTargetRotationOffset()
+		input.setAimMethod(input.AimMethod.RIGHT_WEAPON)
+		local offset = attachments.getActiveAttachmentMeleeRotationOffset(Handed.Right)
+		input.setAimRotationOffset(offset) --adjust reticule during melee to match the melee weapon head
+		--input.setAimRotationOffset(uevrUtils.rotator(40,-65,0)) --adjust reticule during melee to match the melee weapon head
+		--reticule.setTargetRotationOffset(offset)
+
+		-- reticule.setTargetMethod(reticule.ReticuleTargetMethod.CAMERA)
+		-- reticule.setTargetRotationOffset(uevrUtils.rotator(40,25,0))
+
 		--reticule.setHidden(true)
 		uevr.api:get_player_controller(0):EquippedItemPrimaryInputPressed(1.0) -- Trigger melee attack
 
@@ -333,8 +390,18 @@ local function handleVehicle(montageName)
 	end
 end
 
-function on_montage_change(montage, montageName)
+function on_montage_change(montageObject, montageName)
 	handleVehicle(montageName)
+
+	-- if montageName == "AM_PlayerCharacterHands_AK_ReloadTactical_Montage" then
+	-- 	montage.setPlaybackRate(montageObject, "", 0.1)
+	-- end
+	-- if montageName == "AM_PlayerCharacterHands_PM_CassetteReInstall_Montage" or montageName == "AM_PlayerCharacterHands_PM_CasseteRemove_Montage" then
+	-- 	montage.pause(montageObject)
+	-- 	delay(2500, function()
+	-- 		montage.stop(montageObject, "", 0.0)
+	-- 	end)
+	-- end
 
 	--fixes a bug in the game
 	if montageName == "AM_PlayerCharacterHands_ClimbingMantle" then
@@ -343,7 +410,8 @@ function on_montage_change(montage, montageName)
 		return
 	end
 
-	local isArmsAnimating = string.sub(montageName, 1, 3) == "AM_"
+	--all montages that start with AM_ will make the left hand animate (unless overriden in the Montages UI)
+	local isArmsAnimating = string.sub(montageName, 1, 3) == "AM_" or string.sub(montageName, 1, 3) == "AS_" or string.sub(montageName, 1, 2) == "A_"
 	if isArmsAnimating ~= wasArmsAnimating then
 		wasArmsAnimating = isArmsAnimating
 	end
@@ -354,6 +422,31 @@ function on_montage_change(montage, montageName)
 		uevrUtils.print("Montage playing " .. montageName)
 		isInAnimationCutscene = true
 	end
+
+	-- if montageName == "AM_PlayerCharacterHands_Plasmagun_ReloadFast" or montageName == "AM_PlayerCharacterHands_Plasmagun_Reload" then
+	-- 	-- local rightHand = hands.getHandComponent(Handed.Right)
+	-- 	-- if rightHand ~= nil then
+	-- 	-- 	local currentWeapon = pawn:GetCurrentWeapon()
+	-- 	-- 	if currentWeapon ~= nil and currentWeapon.Handle ~= nil then
+	-- 	-- 		print(currentWeapon:get_full_name())
+	-- 	-- 		local socketName = socketList[configui.getValue("handle_socket_right")]
+	-- 	-- 		print("Attaching handle to socket: " .. tostring(socketName))
+	-- 	-- 		rightHand:K2_AttachTo(currentWeapon.Handle, uevrUtils.fname_from_string(socketName), EAttachmentRule.KeepWorld, false)
+	-- 	-- 		--uevrUtils.set_component_relative_transform(rightHand)
+	-- 	-- 	end
+	-- 	-- end
+	-- 	local leftHand = hands.getHandComponent(Handed.Left)
+	-- 	if leftHand ~= nil then
+	-- 		local currentWeapon = pawn:GetCurrentWeapon()
+	-- 		if currentWeapon ~= nil and currentWeapon.Handle ~= nil then
+	-- 			print(currentWeapon:get_full_name())
+	-- 			local socketName = socketList[configui.getValue("handle_socket_left")]
+	-- 			print("Attaching handle to socket: " .. tostring(socketName))
+	-- 			leftHand:K2_AttachTo(currentWeapon.Mesh, uevrUtils.fname_from_string(socketName), EAttachmentRule.SnapToTarget, false)
+	-- 			--uevrUtils.set_component_relative_transform(leftHand)
+	-- 		end
+	-- 	end
+	-- end
 end
 
 local function getActiveLockOfType(lockType)
@@ -408,6 +501,11 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		end
 	end
 
+	-- prevent annoying accidental snap turn when jumping
+	if state.Gamepad.sThumbRY >= jumpTurnDeadzone or state.Gamepad.sThumbRY <= -jumpTurnDeadzone then
+		state.Gamepad.sThumbRX = 0
+	end
+
 	if activateCassetteMenu then
 		--pull the left stick down momentarily so that it selects the cassette radial item
 		state.Gamepad.sThumbLY = -32000
@@ -457,30 +555,58 @@ function on_post_engine_tick(engine, delta)
 		end
 	end
 end
-local function checkWidgets()
-		local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
-		if allWidgets ~= nil then
-			print("Checking widgets")
-			for index, widget in pairs(allWidgets) do
-				--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
-			end
-		end
-end
+-- local function checkWidgets()
+-- 		local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
+-- 		if allWidgets ~= nil then
+-- 			print("Checking widgets")
+-- 			for index, widget in pairs(allWidgets) do
+-- 				--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
+-- 			end
+-- 		end
+-- end
 
-register_key_bind("F1", function()
-	hands.setInitialTransform(Handed.Left)
-	hands.setInitialTransform(Handed.Right)
+configui.onCreateOrUpdate("leftHandDirectionOffset", function(value)
+	leftHandDirectionOffset = value
+	setDefaultTargeting(status["currentTargetingHand"])
+end)
+configui.onCreateOrUpdate("jumpTurnDeadzone", function(value)
+	print("Configured deadzone")
+	jumpTurnDeadzone = 32000 - (value / 100 * 32000)
 end)
 
-register_key_bind("F2", function()
-	print("F2 pressed")
-	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
-end)
+configui.create(configDefinition)
 
-register_key_bind("F3", function()
-	print("F3 pressed")
-	checkWidgets()
-end)
+-- configui.onCreateOrUpdate("handle_socket", function(value)
+-- 	leftHandDirectionOffset = value
+-- 	setDefaultTargeting(status["currentTargetingHand"])
+-- end)
+
+
+-- register_key_bind("F1", function()
+-- 	uevrUtils.getSocketNames(pawn.Mesh, function(names)
+-- 		if names == nil then
+-- 			print("No socket names received")
+-- 			return
+-- 		end
+-- 		for i, name in ipairs(names) do
+-- 			print("Socket " .. i .. ": " .. tostring(name))
+-- 		end
+-- 	end)
+-- 	-- hands.setInitialTransform(Handed.Left)
+-- 	-- hands.setInitialTransform(Handed.Right)
+-- 	--uevr.api:dispatch_custom_event("GetTArray:FName" .. ":" .. pawn.Mesh:get_full_name() .. ":" .. "GetAllSocketNames")
+-- 	--uevr.api:dispatch_custom_event("GetTArray:FName" .. ":" .. pawn.Mesh:get_full_name() .. ":" .. "GetAllSocketNames", "")
+-- end)
+
+-- register_key_bind("F2", function()
+-- 	print("F2 pressed")
+-- 	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
+-- end)
+
+-- register_key_bind("F3", function()
+-- 	print("F3 pressed")
+-- 	checkWidgets()
+-- end)
 
 hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEPlay", true, nil,
 	function(fn, obj, locals, result)

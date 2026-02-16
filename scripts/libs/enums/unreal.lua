@@ -16,6 +16,32 @@ ECollisionEnabled =
 	ECollisionEnabled_MAX                    = 4,
 }
 
+ECollisionResponse =
+{
+	Ignore                                   = 0,
+	Overlap                                  = 1,
+	Block                                    = 2,
+	ECollisionResponse_MAX                   = 3,
+}
+
+EPSCPoolMethod =
+{
+	None                                     = 0,
+	AutoRelease                              = 1,
+	ManualRelease                            = 2,
+	ManualRelease_OnComplete                 = 3,
+	FreeInPool                               = 4,
+	EPSCPoolMethod_MAX                       = 5,
+}
+
+EAttachLocation =
+{
+	KeepRelativeOffset                       = 0,
+	KeepWorldPosition                        = 1,
+	SnapToTarget                             = 2,
+	EAttachLocation_MAX                      = 3,
+}
+
 ERendererStencilMask =
 {
 	ERSM_Default                             = 0,
@@ -31,3 +57,9 @@ ERendererStencilMask =
 	ERSM_MAX                                 = 10,
 }
 
+ETriState = 
+{
+	DEFAULT									= 1,
+	TRUE                                    = 2,
+	FALSE                                   = 3,
+}

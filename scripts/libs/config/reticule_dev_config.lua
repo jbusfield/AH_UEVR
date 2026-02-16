@@ -263,7 +263,7 @@ local developerWidgets = spliceableInlineArray{
             {
                 widgetType = "checkbox",
                 id = widgetPrefix .. "delete_widget_override",
-                label = "Confirm",
+                label = "Allow Delete",
                 initialValue = false,
                 isHidden = true
             },
@@ -713,7 +713,7 @@ local createDevMonitor = doOnce(function()
     end)
 
 	uevrUtils.registerLevelChangeCallback(function(level)
-		print("Level changed, updating reticule list")
+		--print("Level changed, updating reticule list")
 	end)
 end, Once.EVER)
 
@@ -870,7 +870,7 @@ end
 local function resetVisibilityTestWidget()
 	if visibilityTestReticuleWidget ~= nil and uevrUtils.getValid(visibilityTestReticuleWidget) ~= nil then
 		--reset previous widget visibility
-		if visibilityTestReticuleWidgetDefaultVisibility ~= nil then
+		if visibilityTestReticuleWidget.SetVisibility ~= nil and visibilityTestReticuleWidgetDefaultVisibility ~= nil then
 			visibilityTestReticuleWidget:SetVisibility(visibilityTestReticuleWidgetDefaultVisibility)
 		end
 		visibilityTestReticuleWidget = nil
@@ -931,7 +931,7 @@ local function populateMaterialSearchList()
 end
 
 function M.setCurrentReticleParameter(paramName, value)
-    print("Setting reticule parameter " .. paramName .. " to " .. tostring(value))
+    --print("Setting reticule parameter " .. paramName .. " to " .. tostring(value))
     local currentReticuleID = parameters["currentReticuleID"]
     local reticuleParameters = getReticuleParametersByID(currentReticuleID)
     if reticuleParameters ~= nil then
@@ -993,7 +993,7 @@ local function getUniqueName(reticuleType)
 end
 
 configui.onCreateOrUpdate(widgetPrefix .. "list", function(value)
-    print("Reticule selection changed to index " .. tostring(value), #reticuleIDList)
+    --print("Reticule selection changed to index " .. tostring(value), #reticuleIDList)
     if #reticuleIDList >= value then
         if reticuleIDList[value].id == "_new_widget" then
             M.addDefaultWidgetReticule(getUniqueName("Widget"), "", true)

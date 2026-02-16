@@ -202,7 +202,7 @@ local configDefinition = {
 				{ widgetType = "text", label = "Step 2 of 4: Set the correct orientation"},
 				{ widgetType = "indent", width = 20 },
 				{ widgetType = "new_line" },
-				{ widgetType = "text", wrapped = true, label = "The mesh should now be attached to your hand and facing forward when your hand is pointing forward. If it is not facing forward, adjust the rotation until it is. Usually this is done with the second entry box below"},
+				{ widgetType = "text", wrapped = true, label = "The mesh should now be attached to your hand and facing forward when your hand is pointing forward. If it is not facing forward, adjust the rotation until it is. Usually this is done with the second entry box below. If you have issues with the mesh always changing angles on restarts, check the 'Ignore Relative Rotation' box."},
 				{
 					widgetType = "drag_float3",
 					id = "mesh_rotation",
@@ -210,6 +210,12 @@ local configDefinition = {
 					speed = 45,
 					range = {-180, 180},
 					initialValue = {0.0, 0.0, 0.0}
+				},
+				{
+					widgetType = "checkbox",
+					id = "mesh_rotation_ignore_relative",
+					label = "Ignore Relative Rotation",
+					initialValue = false
 				},
 				{ widgetType = "unindent", width = 20 },
 			{
@@ -1501,6 +1507,7 @@ local function updateHands()
 			if rot ~= nil then
 				hands.setOffset({X=0, Y=0, Z=0, Pitch=rot.X, Yaw=rot.Y, Roll=rot.Z})
 			end
+			hands.setIgnoreRelativeOffset(configui.getValue("ignore_relative_offset"))
 			hands.debug(getMeshComponent(), nil, nil, true)
 
 			local fovParam = configui.getValue("fov_param_name")
@@ -2222,8 +2229,15 @@ end)
 
 
 configui.onUpdate("mesh_rotation", function(value)
-	hands.updateOffset(getMeshComponent(), {X=0, Y=0, Z=0, Pitch=value.X, Yaw=value.Y, Roll=value.Z})
+	hands.updateOffset(getMeshComponent(), {X=0, Y=0, Z=0, Pitch=value.X, Yaw=value.Y, Roll=value.Z}, configui.getValue("mesh_rotation_ignore_relative"))
 end)
+configui.onUpdate("mesh_rotation_ignore_relative", function(value)
+	local currentRotation = configui.getValue("mesh_rotation")
+	if currentRotation ~= nil then
+		hands.updateOffset(getMeshComponent(), {X=0, Y=0, Z=0, Pitch=currentRotation.X, Yaw=currentRotation.Y, Roll=currentRotation.Z}, value)
+	end
+end)
+
 
 configui.onUpdate("exit_button_config", function(value)
 	delay(500, function ()
@@ -2661,6 +2675,10 @@ end
 
 local function loadMesh(index)
 	selectedMeshName = profileMeshNames[index]
+	if configuration["profiles"][selectedProfileName] == nil then
+		configuration["profiles"][selectedProfileName] = {}
+		isConfigurationDirty = true
+	end
 	if configuration["profiles"][selectedProfileName][selectedMeshName] == nil then
 		configuration["profiles"][selectedProfileName][selectedMeshName] = {}
 		isConfigurationDirty = true
@@ -2807,6 +2825,7 @@ print("Current Step",currentStep)
 		if configuration["profiles"][selectedProfileName][selectedMeshName]["Offset"] ~= nil then
 			local offset = configuration["profiles"][selectedProfileName][selectedMeshName]["Offset"]
 			configui.setValue("mesh_rotation", {offset.Pitch,offset.Yaw,offset.Roll})
+			configui.setValue("mesh_rotation_ignore_relative", configuration["profiles"][selectedProfileName][selectedMeshName]["IgnoreRelativeOffset"] == true)
 		end
 	end
 	if currentStep == 7 then
@@ -2815,6 +2834,7 @@ print("Current Step",currentStep)
 			local offset = configui.getValue("mesh_rotation")
 			if offset ~= nil then
 				configuration["profiles"][selectedProfileName][selectedMeshName]["Offset"] = {X=0, Y=0, Z=0, Pitch=offset.X, Yaw=offset.Y, Roll=offset.Z}
+				configuration["profiles"][selectedProfileName][selectedMeshName]["IgnoreRelativeOffset"] = configui.getValue("mesh_rotation_ignore_relative")
 				isConfigurationDirty = true
 			end
 		end

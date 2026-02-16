@@ -21,6 +21,11 @@ local parametersFileName = "gunstock_parameters"
 local parameters = {}
 local isParametersDirty = false
 
+local configFileName = "gunstock_config"
+local configTabLabel = "Gunstock Config"
+local widgetPrefix = "uevr_gunstock_"
+
+
 local disableGunstockConfiguration = false
 local activeAttachmentID = nil
 -- parameters["attachments"] = {
@@ -52,10 +57,10 @@ end
 
 
 local function getDefaultConfig(saveFileName)
-    if saveFileName == nil then saveFileName = "gunstock_config" end
+    if saveFileName == nil then saveFileName = configFileName end
 	return  {
 		{
-			panelLabel = "Gunstock Config",
+			panelLabel = configTabLabel,
 			saveFile = saveFileName,
 			layout =
 			{
@@ -69,7 +74,7 @@ local function updateConfigUI(configDefinition)
 	table.insert(configDefinition[1]["layout"],
         {
             widgetType = "checkbox",
-            id = "disable_gunstock_configuration",
+            id = widgetPrefix .. "disable_configuration",
             label = "Disable",
             initialValue = disableGunstockConfiguration
         }
@@ -78,28 +83,74 @@ local function updateConfigUI(configDefinition)
 	table.insert(configDefinition[1]["layout"],
 		{
 			widgetType = "tree_node",
-			id = "gunstock_configuration",
+			id = widgetPrefix .. "configuration",
 			initialOpen = true,
 			label = "Gunstock Configuration"
 		}
 	)
 
+    table.insert(configDefinition[1]["layout"],
+        {
+            widgetType = "tree_node",
+            id = widgetPrefix .. "default",
+            initialOpen = true,
+            label = "Default"
+        }
+    )
+    table.insert(configDefinition[1]["layout"],
+        {
+            id = widgetPrefix .. "default_rotation", label = "Rotation",
+            widgetType = "drag_float3", speed = .1, range = {-360, 360}, initialValue = {0,0,0}
+        }
+    )
+    table.insert(configDefinition[1]["layout"],
+        {
+            id = widgetPrefix .. "default_offhand_location_offset", label = "Offhand Location Offset",
+            widgetType = "drag_float3", speed = .1, range = {-100, 100}, initialValue = {0,0,0}
+        }
+    )
+    table.insert(configDefinition[1]["layout"],
+        {
+            widgetType = "tree_pop"
+        }
+    )
+
     for i = 1, #attachmentList do
 		local id = attachmentList[i]["id"]
 		local label = attachmentList[i]["label"]
 		local rot = attachmentList[i]["rotation"]
+		local offhand_location_offset = attachmentList[i]["offhand_location_offset"]
+
         table.insert(configDefinition[1]["layout"],
             {
                 widgetType = "tree_node",
-                id = "gunstock_" .. id,
+                id = widgetPrefix .. id,
                 initialOpen = false,
                 label = label
             }
         )
 		table.insert(configDefinition[1]["layout"],
             {
-                id = "gunstock_" .. id .. "_rotation", label = "Rotation",
+                id = widgetPrefix .. id .. "_use_default", label = "Use Default Rotation",
+                widgetType = "checkbox", initialValue = true
+            }
+		)
+		table.insert(configDefinition[1]["layout"],
+            {
+                id = widgetPrefix .. id .. "_rotation", label = "Rotation",
                 widgetType = "drag_float3", speed = .1, range = {-360, 360}, initialValue = rot
+            }
+		)
+		table.insert(configDefinition[1]["layout"],
+            {
+                id = widgetPrefix .. id .. "_use_default_offhand_location_offset", label = "Use Default Offhand Location Offset",
+                widgetType = "checkbox", initialValue = true
+            }
+		)
+		table.insert(configDefinition[1]["layout"],
+            {
+                id = widgetPrefix .. id .. "_offhand_location_offset", label = "Offhand Location Offset",
+                widgetType = "drag_float3", speed = .1, range = {-100, 100}, initialValue = offhand_location_offset
             }
 		)
 		table.insert(configDefinition[1]["layout"],
@@ -108,8 +159,17 @@ local function updateConfigUI(configDefinition)
             }
 		)
 
-        configui.onUpdate("gunstock_" .. id .. "_rotation", function(value)
-			M.updateAttachmentTransform(nil, value, nil, id)
+        configui.onUpdate(widgetPrefix .. id .. "_rotation", function(value)
+			M.updateTransforms(id, nil, value, nil)
+		end)
+        configui.onUpdate(widgetPrefix .. id .. "_offhand_location_offset", function(value)
+			M.updateTransforms(id, nil, nil, nil, value)
+		end)
+        configui.onCreateOrUpdate(widgetPrefix .. id .. "_use_default", function(value)
+			configui.setHidden(widgetPrefix .. id .. "_rotation", value)
+		end)
+        configui.onCreateOrUpdate(widgetPrefix .. id .. "_use_default_offhand_location_offset", function(value)
+			configui.setHidden(widgetPrefix .. id .. "_offhand_location_offset", value)
 		end)
 
     end
@@ -137,6 +197,7 @@ local createMonitor = doOnce(function()
 end, Once.EVER)
 
 local function getAttachment(id)
+    if id == nil then return nil end
     if parameters ~= nil and parameters["attachments"] ~= nil then
         for i = 1, #parameters["attachments"] do
             if id == parameters["attachments"][i].id then
@@ -182,7 +243,12 @@ function M.addAdjustment(attachment)
                 attachment.label = attachment.id
             end
             if attachment.rotation == nil then
-                attachment.rotation = {0,0,0}
+                local rot = configui.getValue(widgetPrefix .. "default_rotation")
+                if rot ~= nil then attachment.rotation =  {rot.x, rot.y, rot.z} end
+            end
+            if attachment.offhand_location_offset == nil then
+                local loc = configui.getValue(widgetPrefix .. "default_offhand_location_offset")
+                if loc ~= nil then attachment.offhand_location_offset =  {loc.x, loc.y, loc.z} end
             end
             table.insert(parameters["attachments"], attachment)
             isParametersDirty = true
@@ -197,48 +263,103 @@ end
 -- function M.registerUpdateCallback(func)
 -- 	uevrUtils.registerUEVRCallback("gunstock_update", func)
 -- end
+local function broadcastUpdate(id, attachmentParams)
+    local rot = attachmentParams["rotation"] or {x=0, y=0, z=0}
+    local offhandLocationOffset = attachmentParams["offhand_location_offset"] or {x=0, y=0, z=0}
+    if disableGunstockConfiguration == false and id == activeAttachmentID then
+        executeTransformChange(id, nil, uevrUtils.rotator(rot), uevrUtils.vector(offhandLocationOffset))
+    end
+end
 
-function M.updateAttachmentTransform(pos, rot, scale, id)
+function M.updateTransforms(id, pos, rot, scale, offhandLocationOffset)
 	if id ~= nil then
         for i = 1, #parameters["attachments"] do
             if id == parameters["attachments"][i].id then
-                parameters["attachments"][i].rotation = {rot.x, rot.y, rot.z}
+                if rot ~= nil then parameters["attachments"][i].rotation = {rot.x, rot.y, rot.z} end
+                if offhandLocationOffset ~= nil then parameters["attachments"][i].offhand_location_offset = {offhandLocationOffset.x, offhandLocationOffset.y, offhandLocationOffset.z} end
                 isParametersDirty = true
-                if disableGunstockConfiguration == false and id == activeAttachmentID then
-                    executeTransformChange(id, nil, uevrUtils.rotator(rot.x, rot.y, rot.z))
-                end
+
+                broadcastUpdate(id, parameters["attachments"][i])
+                -- if disableGunstockConfiguration == false and id == activeAttachmentID then
+                --     executeTransformChange(id, nil, uevrUtils.rotator(rot.x, rot.y, rot.z), uevrUtils.vector(offhandLocationOffset.x, offhandLocationOffset.y, offhandLocationOffset.z))
+                -- end
                 break
             end
         end
 	end
 end
 
+local function updateDefaultAttachmentTransforms(pos, rot, scale, offhandLocationOffset)
+    for i = 1, #parameters["attachments"] do
+        local id = parameters["attachments"][i].id
+        local useDefault = configui.getValue(widgetPrefix .. id .. "_use_default")
+        local useDefaultOffhandOffset = configui.getValue(widgetPrefix .. id .. "_use_default_offhand_location_offset")
+        if useDefault == true and rot ~= nil then
+            parameters["attachments"][i].rotation = {rot.x, rot.y, rot.z}
+            configui.setValue(widgetPrefix .. id .. "_rotation", parameters["attachments"][i].rotation, true)
+            isParametersDirty = true
+        end
+        if useDefaultOffhandOffset == true and offhandLocationOffset ~= nil then
+            parameters["attachments"][i].offhand_location_offset = {offhandLocationOffset.x, offhandLocationOffset.y, offhandLocationOffset.z}
+            configui.setValue(widgetPrefix .. id .. "_offhand_location_offset", parameters["attachments"][i].offhand_location_offset, true)
+            isParametersDirty = true
+        end
+
+        broadcastUpdate(id, parameters["attachments"][i])
+            -- if disableGunstockConfiguration == false and id == activeAttachmentID then
+            --     executeTransformChange(id, nil, uevrUtils.rotator(rot.x, rot.y, rot.z))
+            -- end
+    end
+end
+
+local function updateSelectedColors(id)
+	for i = 1, #parameters["attachments"] do
+		local p_id = parameters["attachments"][i].id
+		configui.setColor(widgetPrefix .. p_id, "#FFFFFFFF")
+	end
+
+    if id ~= nil then
+	    configui.setColor(widgetPrefix .. id, "#0088FFFF")
+    end
+end
+
 function M.setActive(id)
+    updateSelectedColors(id)
+    if id == nil then return end
     activeAttachmentID = id
 
     local rot = nil
+    local offhandLocationOffset = nil
     if disableGunstockConfiguration == false then
-        local attachment  = getAttachment(id)
+        local attachment = getAttachment(id)
         if attachment ~= nil then
             rot = uevrUtils.rotator(attachment.rotation)
+            offhandLocationOffset = uevrUtils.vector(attachment.offhand_location_offset)
             --print("Setting gunstock rotation for " .. id .. " to " .. tostring(rot.Pitch) .. ", " .. tostring(rot.Yaw) .. ", " .. tostring(rot.Roll))
             --input.setAimRotationOffset(rot)
         end
     end
     if rot == nil then rot = uevrUtils.rotator(0,0,0) end
+    if offhandLocationOffset == nil then offhandLocationOffset = uevrUtils.vector(0,0,0) end
     --executeAimRotationOffsetChangeCallback(rot)
-    executeTransformChange(id, nil, rot)
+    executeTransformChange(id, nil, rot, offhandLocationOffset)
     return rot
 end
 
 function M.disable(val)
     disableGunstockConfiguration = val
-    configui.setValue("disable_gunstock_configuration", val, true)
+    configui.setValue(widgetPrefix .. "disable_configuration", val, true)
     M.setActive(activeAttachmentID)
 end
 
-configui.onCreateOrUpdate("disable_gunstock_configuration", function(value)
+configui.onCreateOrUpdate(widgetPrefix .. "disable_configuration", function(value)
     M.disable(value)
+end)
+configui.onUpdate(widgetPrefix .. "default_rotation", function(value)
+    updateDefaultAttachmentTransforms(nil, value, nil)
+end)
+configui.onUpdate(widgetPrefix .. "default_offhand_location_offset", function(value)
+    updateDefaultAttachmentTransforms(nil, nil, nil, value)
 end)
 
 uevrUtils.registerUEVRCallback("attachment_grip_changed", function(id, gripHand)

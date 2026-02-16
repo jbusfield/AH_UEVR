@@ -857,7 +857,7 @@ local createDevMonitor = doOnce(function()
     end)
 
 	uevrUtils.registerLevelChangeCallback(function(level)
-		print("Level changed, updating reticule list")
+		--print("Level changed, updating reticule list")
 		updatePossibileReticuleList()
 	end)
 end, Once.EVER)

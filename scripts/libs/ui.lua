@@ -222,13 +222,17 @@ end
 -- input.registerIsDisabledCallback(function()
 -- 	return uiState["inputEnabled"] ~= nil and (not uiState["inputEnabled"]) or nil, uiState["inputEnabledPriority"]
 -- end)
+function M.isRemapDisabled()
+    return uiState["remapEnabled"] ~= nil and (not uiState["remapEnabled"]) or nil, uiState["remapEnabledPriority"]
+end
 
 uevrUtils.registerUEVRCallback("is_input_disabled", function()
 	return uiState["inputEnabled"] ~= nil and (not uiState["inputEnabled"]) or nil, uiState["inputEnabledPriority"]
 end)
 
 uevrUtils.registerUEVRCallback("is_remap_disabled", function()
-	return uiState["remapEnabled"] ~= nil and (not uiState["remapEnabled"]) or nil, uiState["remapEnabledPriority"]
+    return M.isRemapDisabled()
+	--return uiState["remapEnabled"] ~= nil and (not uiState["remapEnabled"]) or nil, uiState["remapEnabledPriority"]
 end)
 
 uevrUtils.registerUEVRCallback("is_hands_hidden", function()
@@ -300,7 +304,7 @@ local function updateUIState()
 
         for index, widget in pairs(foundWidgets) do
             --if widget:IsInViewport() then --check not really needed since GetAllWidgetsOfClass with the last param true should only return viewport widgets.also currentCustomViewportWidgets might not be in viewport
-            if requireWidgetOpenState == false or widget:GetOpenState() == 0 then
+            if requireWidgetOpenState == false or (widget.GetOpenState ~= nil and widget:GetOpenState() == 0) then
                 --get the widget data from the configurations
                 local id = widget:get_class():get_full_name()
                 --print(id, widget:IsInteractable(), widget:IsVisible(), widget:HasUserFocus(), widget:GetVisibility(), widget:GetIsEnabled(), widget:GetIsVisible(), widget:GetOpenState())
@@ -325,7 +329,7 @@ local function updateUIState()
     end
     setCurrentViewportWidgetsStr(currentViewportWidgetsStr)
 
-    local currentGameStateText = "Current Game Statex: "
+    local currentGameStateText = "Current Game State: "
     local isInCutscene = uevrUtils.isInCutscene()
     local isPaused = uevrUtils.isGamePaused()
     local isCharacterHidden = uevrUtils.getValid(pawn,{ "Controller", "Character", "bHidden"}) or false
@@ -407,7 +411,11 @@ function M.init(isDeveloperMode, logLevel)
 		end)
     end
 
-    createGameStateMonitor()
+    enableCutsceneDetection()
+    enablePauseDetection()
+    enableCharacterHiddenDetection()
+
+    --createGameStateMonitor()
 end
 
 local createConfigMonitor = doOnce(function()

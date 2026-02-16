@@ -14,6 +14,7 @@ local widgetPrefix = "uevr_input_"
 M.AimMethod = inputEnums.AimMethod
 M.PawnPositionMode = inputEnums.PawnPositionMode
 M.PawnRotationMode = inputEnums.PawnRotationMode
+--M.MovementMethod = inputEnums.MovementMethod
 
 local boneList = {}
 local pawnCameraList = {}
@@ -31,14 +32,18 @@ local paramManager = nil
 --     snapAngle = 30,
 --     smoothTurnSpeed = 50,
 --     pawnPositionMode = M.PawnPositionMode.FOLLOWS,
---     pawnRotationMode = M.PawnRotationMode.RIGHT_CONTROLLER,
+--     pawnRotationMode = M.PawnRotationMode.LOCKED,
 --     pawnPositionSweepMovement = true,
 --     pawnPositionAnimationScale = 0.2,
 --     headOffset = {X=0,Y=0,Z=0},
 --     adjustForAnimation = false,
 --     adjustForEyeOffset = false,
 --     eyeOffset = 0
---     pawnControlRotationCamera = ""
+--     aimCamera = ""
+--	   useControllerRotationPitch = 1
+--	   useControllerRotationYaw = 1
+--	   useControllerRotationRoll = 1
+--     usePawnControlRotation = 1
 -- }
 local configDefaults = {}
 
@@ -88,10 +93,18 @@ local function getConfigWidgets(m_paramManager)
         },
 			{
 				widgetType = "combo",
-				id = widgetPrefix .. "pawnControlRotationCameraList",
-				label = "Pawn Control Rotation Camera",
+				id = widgetPrefix .. "aimCameraList",
+				label = "Aim Camera",
 				selections = {"None"},
 				initialValue = 1
+			},
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "usePawnControlRotation",
+				label = "camera.usePawnControlRotation",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
 			},
             {
                 widgetType = "checkbox",
@@ -151,6 +164,38 @@ local function getConfigWidgets(m_paramManager)
 		},
 		{
 			widgetType = "tree_node",
+			id = widgetPrefix .. "movement_orientation_tree",
+			initialOpen = false,
+			label = "Movement Orientation"
+		},
+			-- {
+			-- 	widgetType = "combo",
+			-- 	id = widgetPrefix .. "movementMethod",
+			-- 	label = "Type",
+			-- 	selections = {"UEVR", "Head/HMD", "Right Controller", "Left Controller"},
+			-- 	initialValue = configDefaults["movementMethod"]
+			-- },
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "orientRotationToMovement",
+				label = "pawn.CharacterMovement.bOrientRotationToMovement",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
+			},
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "useControllerDesiredRotation",
+				label = "pawn.CharacterMovement.bUseControllerDesiredRotation",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
+			},
+		{
+			widgetType = "tree_pop"
+		},
+		{
+			widgetType = "tree_node",
 			id = widgetPrefix .. "movement_tree",
 			initialOpen = true,
 			label = "Body Orientation"
@@ -202,6 +247,30 @@ local function getConfigWidgets(m_paramManager)
 			initialOpen = true,
 			label = "Player Body"
 		},
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "useControllerRotationPitch",
+				label = "pawn.bUseControllerRotationPitch",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
+			},
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "useControllerRotationYaw",
+				label = "pawn.bUseControllerRotationYaw",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
+			},
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "useControllerRotationRoll",
+				label = "pawn.bUseControllerRotationRoll",
+				selections = {"Default", "True", "False"},
+				initialValue = 1,
+				width = 100
+			},
 			{
 				widgetType = "drag_float3",
 				id = widgetPrefix .. "headOffset",
@@ -305,7 +374,7 @@ end
 local function updateUIState(key)
     local exKey = widgetPrefix .. key
     if key == "aimMethod" then
-        configui.hideWidget(widgetPrefix .. "advanced_input_group", configui.getValue(exKey) == M.AimMethod.UEVR)
+       -- configui.hideWidget(widgetPrefix .. "advanced_input_group", configui.getValue(exKey) == M.AimMethod.UEVR)
         configui.hideWidget(widgetPrefix .. "advanced_aim_group", configui.getValue(exKey) == M.AimMethod.UEVR)
     elseif key == "useSnapTurn" then
         configui.hideWidget(widgetPrefix .. "snapAngle", not configui.getValue(exKey))
@@ -320,6 +389,8 @@ local function updateUIState(key)
         configui.hideWidget(widgetPrefix .. "headBones", not configui.getValue(exKey))
     elseif key == "adjustForEyeOffset" then
         configui.hideWidget(widgetPrefix .. "eyeOffset", not configui.getValue(exKey))
+	elseif key == "aimCameraList" then
+		 configui.hideWidget(widgetPrefix .. "usePawnControlRotation", configui.getValue(exKey) == 1)
     end
 end
 
@@ -331,7 +402,7 @@ local function setSelectedPawnCamera(currentCameraName, noCallbacks)
 			break
 		end
 	end
-	configui.setValue(widgetPrefix .. "pawnControlRotationCameraList", selectedIndex, noCallbacks)
+	configui.setValue(widgetPrefix .. "aimCameraList", selectedIndex, noCallbacks)
 end
 
 
@@ -344,7 +415,7 @@ local function setPawnCameraList(currentCameraName, noCallbacks)
 	-- 	print("Camera " .. i .. ": " .. name)
 	-- end
 
-	local listName = "pawnControlRotationCameraList"
+	local listName = "aimCameraList"
 	--print("Updating camera list UI", widgetPrefix .. listName)
 	configui.setSelections(widgetPrefix .. listName, pawnCameraList)
 	-- local selectedIndex = 1
@@ -381,6 +452,11 @@ configui.onUpdate(widgetPrefix .. "aimMethod", function(value)
 	updateSetting("aimMethod", value)
     updateUIState("aimMethod")
 end)
+
+-- configui.onUpdate(widgetPrefix .. "movementMethod", function(value)
+-- 	updateSetting("movementMethod", value)
+--     updateUIState("movementMethod")
+-- end)
 
 configui.onCreate(widgetPrefix .. "aimMethod", function(value)
 	updateUIState("aimMethod")
@@ -455,10 +531,36 @@ configui.onUpdate(widgetPrefix .. "fixSpatialAudio", function(value)
 	updateSetting("fixSpatialAudio", value)
 end)
 
-configui.onUpdate(widgetPrefix .. "pawnControlRotationCameraList", function(value)
+configui.onUpdate(widgetPrefix .. "useControllerRotationPitch", function(value)
+	updateSetting("useControllerRotationPitch", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "useControllerRotationYaw", function(value)
+	updateSetting("useControllerRotationYaw", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "useControllerRotationRoll", function(value)
+	updateSetting("useControllerRotationRoll", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "orientRotationToMovement", function(value)
+	updateSetting("orientRotationToMovement", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "useControllerDesiredRotation", function(value)
+	updateSetting("useControllerDesiredRotation", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "usePawnControlRotation", function(value)
+	updateSetting("usePawnControlRotation", value)
+end)
+
+
+
+configui.onUpdate(widgetPrefix .. "aimCameraList", function(value)
 	--get the camera name from the selection
 	local cameraName = pawnCameraList[value]
-	updateSetting("pawnControlRotationCamera", cameraName)
+	updateSetting("aimCamera", cameraName)
 end)
 
 
@@ -488,11 +590,11 @@ function M.showConfiguration(saveFileName, options)
 end
 
 local function setUIValue(key, value)
-	if key == "pawnControlRotationCamera" then
+	if key == "aimCamera" then
 		--select from the list
 		--setPawnCameraList(value, true)
 		setSelectedPawnCamera(value, true)
-		--configui.setValue(widgetPrefix .. "pawnControlRotationCameraList", 1, true)
+		--configui.setValue(widgetPrefix .. "aimCameraList", 1, true)
 	else
 		configui.setValue(widgetPrefix .. key, value, true)
 	end
@@ -513,7 +615,7 @@ function M.init(m_paramManager)
 
 	paramManager:initProfileHandler(widgetPrefix, function(profileParams)
 		updateUI(profileParams)
-		setPawnCameraList(profileParams["pawnControlRotationCamera"])
+		setPawnCameraList(profileParams["aimCamera"], true)
 	end)
 
 	--updateUI(parameters)

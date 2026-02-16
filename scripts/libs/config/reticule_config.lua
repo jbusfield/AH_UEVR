@@ -9,6 +9,8 @@ local isHidden = false
 local reticuleUpdateDistance = 200
 local reticuleUpdateScale = 1.0
 local reticuleUpdateRotation = {0.0, 0.0, 0.0}
+local eyeDominanceOffset = 0
+local eyeDominance = 1
 
 local M = {}
 
@@ -36,6 +38,21 @@ local parameterConfigs = {
 		range = {0.01, 5.0},
 		initialValue = reticuleUpdateScale
 	},
+	{
+		name = "eye_dominance",
+		label = "Eye Dominance",
+		widgetType = "combo",
+		selections = {"None", "Left", "Right"},
+		initialValue = eyeDominance
+	},
+	{
+		name = "eye_dominance_offset",
+		label = "Interpupillary Distance (mm)",
+		widgetType = "slider_float",
+		speed = 0.1,
+		range = {0, 100},
+		initialValue = eyeDominanceOffset
+	},
 	-- {
 	-- 	name = "update_rotation",
 	-- 	label = "Rotation",
@@ -57,6 +74,7 @@ for _, config in ipairs(parameterConfigs) do
 	if config.speed then widget.speed = config.speed end
 	if config.range then widget.range = config.range end
 	if config.isHidden then widget.isHidden = config.isHidden end
+	if config.selections then widget.selections = config.selections end
 	table.insert(configWidgets, widget)
 end
 

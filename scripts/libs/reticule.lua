@@ -194,6 +194,8 @@ Usage
 
 local uevrUtils = require("libs/uevr_utils")
 local controllers = require("libs/controllers")
+local linetracer = require("libs/linetracer")
+
 --local hands = require("libs/hands")
 
 local M = {}
@@ -218,6 +220,12 @@ M.ReticuleTargetMethod = {
 	LEFT_ATTACHMENT = 4,
 	RIGHT_ATTACHMENT = 5,
 }
+M.ReticuleEyeDominance = {
+	NONE = 1,
+	LEFT = 2,
+	RIGHT = 3,
+}
+
 
 
 local reticuleTargetMethod = M.ReticuleTargetMethod.CAMERA
@@ -228,6 +236,9 @@ local autoHandleInput = true -- unless an external call is made to update(), in 
 
 local reticuleComponent = nil
 local restoreWidgetPosition = nil
+
+local hideWhenScopeActive = false
+local scopeHidden = false
 
 --this should be the options structure
 -- local reticuleRotation = nil
@@ -246,6 +257,8 @@ local isHidden = false
 local reticuleUpdateDistance = 200
 local reticuleUpdateScale = 1.0
 local reticuleUpdateRotation = {0.0, 0.0, 0.0}
+local reticuleUpdateEyeDominance = 1
+local reticuleUpdateEyeDominanceOffset = 0
 
 local currentLogLevel = LogLevel.Error
 function M.setLogLevel(val)
@@ -316,7 +329,7 @@ local function initOptionsDefaults(options_in, isWidget)
 		else
 			options.scale = uevrUtils.vector(-0.1,-0.1,0.1)
 		end
-		
+
 		options.removeFromViewport = options_in.removeFromViewport
 		options.twoSided = options_in.twoSided
 	else
@@ -342,6 +355,43 @@ local function initOptionsDefaults(options_in, isWidget)
 	return options
 end
 
+local lastTargetLocation = uevrUtils.vector(0,0,0)
+local function lineTracerCallback(hitResult, targetLocation)
+	-- Update reticule position based on hit
+	if targetLocation then
+		lastTargetLocation = targetLocation
+	end
+end
+
+local lineTracerSubscribed = false
+local function updateLineTracerSubscription()
+	local lineTracerType = reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA and linetracer.TraceType.CAMERA or (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and linetracer.TraceType.LEFT_CONTROLLER or linetracer.TraceType.RIGHT_CONTROLLER)
+	local options = {
+		collisionChannel = currentReticuleOptions.collisionChannel,
+		traceComplex = currentReticuleOptions.traceComplex,
+		minHitDistance = currentReticuleOptions.minHitDistance,
+		ignoreActors = currentReticuleOptions.ignoreActors
+	}
+	if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
+		options.rotationOffset = nil
+	else
+		options.rotationOffset = reticuleTargetRotationOffset
+	end
+
+	if lineTracerSubscribed then --if already subscribed, just update options
+		linetracer.updateOptions("reticule_module", lineTracerType, options)
+	else
+		lineTracerSubscribed = true
+		linetracer.subscribe("reticule_module", lineTracerType, lineTracerCallback, options, 10)
+	end
+end
+
+local function unsubscribeFromLineTracer()
+	if lineTracerSubscribed then
+		linetracer.unsubscribeAll("reticule_module")
+		lineTracerSubscribed = false
+	end
+end
 
 function M.setParametersFileName(fileName)
     parametersFileName = fileName
@@ -355,6 +405,7 @@ local createDevConfigMonitor = doOnce(function()
 				if options ~= nil then
 					M.print("Reticule parameters changed via config UI, updating parameters of current reticule")
 					currentReticuleOptions = initOptionsDefaults(options, reticuleAutoCreationType == M.ReticuleType.WIDGET)
+					updateLineTracerSubscription()
 				else
 					M.print("Reticule parameters changed via config UI, creating new reticule")
 					M.destroy()
@@ -375,6 +426,10 @@ local createConfigMonitor = doOnce(function()
 				reticuleUpdateDistance = paramValue
 			elseif paramName == "update_scale" then
 				reticuleUpdateScale = paramValue
+			elseif paramName == "eye_dominance" then
+				reticuleUpdateEyeDominance = paramValue
+			elseif paramName == "eye_dominance_offset" then
+				reticuleUpdateEyeDominanceOffset = paramValue
 			-- elseif paramName == "update_rotation" then
 			--     reticuleUpdateRotation = paramValue
 			end
@@ -470,6 +525,16 @@ function M.setDistance(value)
 	if reticuleConfig ~= nil then reticuleConfig.setValue("update_distance", value, true) end
 end
 
+function M.setEyeDominance(value)
+	reticuleUpdateEyeDominance = value
+	if reticuleConfig ~= nil then reticuleConfig.setValue("eye_dominance", value, true) end
+end
+
+function M.setEyeDominanceOffset(value)
+	reticuleUpdateEyeDominanceOffset = value
+	if reticuleConfig ~= nil then reticuleConfig.setValue("eye_dominance_offset", value, true) end
+end
+
 function M.setScale(value)
 	reticuleUpdateScale = value
 	if reticuleConfig ~= nil then reticuleConfig.setValue("update_scale", value, true) end
@@ -481,10 +546,21 @@ end
 
 function M.setTargetMethod(value)
 	reticuleTargetMethod = value
+
+	unsubscribeFromLineTracer()
+	updateLineTracerSubscription()
 end
 
 function M.setTargetRotationOffset(value)
 	reticuleTargetRotationOffset = value and uevrUtils.rotator(value) or uevrUtils.rotator({0,0,0})
+	updateLineTracerSubscription()
+
+	-- local lineTracerType = reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA and linetracer.TraceType.CAMERA or (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and linetracer.TraceType.LEFT_CONTROLLER or linetracer.TraceType.RIGHT_CONTROLLER)
+	-- if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
+	-- 	linetracer.setRotationOffset("reticule_module", lineTracerType, nil)
+	-- else
+	-- 	linetracer.setRotationOffset("reticule_module", lineTracerType, reticuleTargetRotationOffset)
+	-- end
 end
 
 function M.reset()
@@ -510,6 +586,7 @@ end
 -- widget can be string or object
 -- options can be removeFromViewport, twoSided, drawSize, scale, rotation, position, collisionChannel, ignoreActors, traceComplex, minHitDistance
 function M.createFromWidget(widget, options)
+	if isHidden then return end
 	M.print("Creating reticule from widget")
 	M.destroy()
 
@@ -524,6 +601,8 @@ function M.createFromWidget(widget, options)
 
 			uevrUtils.set_component_relative_transform(reticuleComponent, currentReticuleOptions.position, currentReticuleOptions.rotation, currentReticuleOptions.scale)
 
+			updateLineTracerSubscription()
+
 			M.print("Created widget reticule " .. reticuleComponent:get_full_name())
 		end
 	else
@@ -536,6 +615,7 @@ end
 -- mesh can be string or object
 -- options can be materialName, scale, rotation, position, collisionChannel
 function M.createFromMesh(mesh, options)
+	if isHidden then return end
 	M.print("Creating reticule from mesh")
 	M.destroy()
 
@@ -565,6 +645,8 @@ function M.createFromMesh(mesh, options)
 		reticuleComponent.BoundsScale = 10 -- without this object can disappear when small
 
 		uevrUtils.set_component_relative_transform(reticuleComponent, currentReticuleOptions.position, currentReticuleOptions.rotation, currentReticuleOptions.scale)
+
+		updateLineTracerSubscription()
 
 		M.print("Created mesh reticule " .. reticuleComponent:get_full_name())
 	else
@@ -640,8 +722,9 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 	end
 
 	if uevrUtils.getValid(reticuleComponent) ~= nil then
-		if isHidden then
+		if isHidden or scopeHidden then
 			reticuleComponent:SetVisibility(false)
+			unsubscribeFromLineTracer()
 			return
 		end
 
@@ -652,45 +735,89 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 		if rotation == nil then rotation = reticuleUpdateRotation end
 		rotation = uevrUtils.rotator(rotation)
 
-		if originLocation == nil or targetLocation == nil then
-			local playerCameraManager = nil
-			if reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA then
-				local playerController = uevr.api:get_player_controller(0)
-				if playerController ~= nil then
-					playerCameraManager = playerController.PlayerCameraManager
-				end
-			end
---TODO add options to target from camera, target from controllers, or target from attachment
--- default to from controllers
-			if originLocation == nil then
-				if playerCameraManager ~= nil and playerCameraManager.GetCameraLocation ~= nil then
-					originLocation = playerCameraManager:GetCameraLocation()
-				elseif reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
-					originLocation = M.getOriginPositionFromController()
-				end
-			end
+		-- if targetLocation == nil then
+			-- if reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA then
+			-- 	local playerController = uevr.api:get_player_controller(0)
+			-- 	if playerController ~= nil then
+			-- 		local playerCameraManager = playerController.PlayerCameraManager
+			-- 		if playerCameraManager ~= nil and playerCameraManager.GetCameraRotation ~= nil then
+			-- 			local originDirection = kismet_math_library:GetForwardVector(playerCameraManager:GetCameraRotation())
+			-- 			targetLocation = uevrUtils.getTargetLocation(playerCameraManager:GetCameraLocation(), originDirection, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
+			-- 		end
+			-- 	end
+			-- elseif reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
+			-- 	local handedness = (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and Handed.Left or Handed.Right)
+			-- 	targetLocation = M.getTargetLocationFromController(handedness, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
+			-- end
+		-- end
 
-			if targetLocation == nil then
-				if playerCameraManager ~= nil and playerCameraManager.GetCameraRotation ~= nil then
-					local direction = kismet_math_library:GetForwardVector(playerCameraManager:GetCameraRotation())
-					targetLocation = M.getTargetLocation(originLocation, direction, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
-				elseif reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
-					local handedness = (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and Handed.Left or Handed.Right)
-					targetLocation = M.getTargetLocationFromController(handedness, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
-				end
-			end
+		if targetLocation == nil then
+			--updateLineTracerSubscription() -- targetLocation will be correct on the next tick
+			targetLocation = lastTargetLocation
+		else
+			unsubscribeFromLineTracer()
 		end
 
+		if originLocation == nil then
+			originLocation = M.getOriginPositionFromController()
+		end
+
+-- 		if originLocation == nil or targetLocation == nil then
+-- 			local playerCameraManager = nil
+-- 			if reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA then
+-- 				local playerController = uevr.api:get_player_controller(0)
+-- 				if playerController ~= nil then
+-- 					playerCameraManager = playerController.PlayerCameraManager
+-- 				end
+-- 			end
+-- --TODO add options to target from camera, target from controllers, or target from attachment
+-- -- default to from controllers
+-- 			if originLocation == nil then
+-- 				if playerCameraManager ~= nil and playerCameraManager.GetCameraLocation ~= nil then
+-- 					originLocation = playerCameraManager:GetCameraLocation()
+-- 				elseif reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
+-- 					originLocation = M.getOriginPositionFromController()
+-- 				end
+-- 			end
+
+-- 			if targetLocation == nil then
+-- 				if playerCameraManager ~= nil and playerCameraManager.GetCameraRotation ~= nil then
+-- 					local direction = kismet_math_library:GetForwardVector(playerCameraManager:GetCameraRotation())
+-- 					targetLocation = M.getTargetLocation(originLocation, direction, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
+-- 				elseif reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
+-- 					local handedness = (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and Handed.Left or Handed.Right)
+-- 					targetLocation = M.getTargetLocationFromController(handedness, currentReticuleOptions.collisionChannel, currentReticuleOptions.ignoreActors, currentReticuleOptions.traceComplex, currentReticuleOptions.minHitDistance)
+-- 				end
+-- 			end
+-- 		end
+
+			-- local eyeDominanceOffset = uevrUtils.rotator(0,0,0)
+			-- if reticuleUpdateEyeDominance ~= M.ReticuleEyeDominance.NONE then
+			-- 	eyeDominanceOffset.Yaw = eyeDominanceOffset.Yaw + ((reticuleUpdateEyeDominance == M.ReticuleEyeDominance.LEFT and -1 or 1) * reticuleUpdateEyeDominanceOffset)
+			-- end
+
 		if originLocation ~= nil and targetLocation ~= nil then
+			if reticuleUpdateEyeDominance ~= M.ReticuleEyeDominance.NONE then
+				local originRotation = controllers.getControllerRotation(2)
+				if originRotation ~= nil then
+					--reticuleUpdateEyeDominanceOffset is interpupillary distance in mm, divide by 2 and convert to cm
+					local distance = reticuleUpdateEyeDominanceOffset / 20
+					originLocation = kismet_math_library:Add_VectorVector(originLocation, kismet_math_library:Multiply_VectorFloat(kismet_math_library:GetRightVector(originRotation), (reticuleUpdateEyeDominance == M.ReticuleEyeDominance.LEFT and -1 or 1) * distance))
+				end
+			end
+
 			local distanceToTarget = kismet_math_library:Vector_Distance(uevrUtils.vector(originLocation), uevrUtils.vector(targetLocation))
 			--print(maxDistance)
 			local hmdToTargetDirection = kismet_math_library:GetDirectionUnitVector(uevrUtils.vector(originLocation), uevrUtils.vector(targetLocation))
 			if drawDistance > distanceToTarget - reticuleCollisionOffset then drawDistance = distanceToTarget - reticuleCollisionOffset end --move target distance back slightly so reticule doesnt go through the target
 			temp_vec3f:set(hmdToTargetDirection.X,hmdToTargetDirection.Y,hmdToTargetDirection.Z)
+
+			--this rotation is the relative rotation that keeps the reticule facing the user
 			local rot = kismet_math_library:Conv_VectorToRotator(temp_vec3f)
 			rot = uevrUtils.sumRotators(rot, currentReticuleOptions.rotation, rotation)
 
             temp_vec3f:set(originLocation.X + (hmdToTargetDirection.X * drawDistance), originLocation.Y + (hmdToTargetDirection.Y * drawDistance), originLocation.Z + (hmdToTargetDirection.Z * drawDistance))
+
 			local adjustedPosition = getOffsetWorldPosition(temp_vec3f, rot, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y)
 			reticuleComponent:K2_SetWorldLocationAndRotation(adjustedPosition, rot, false, reusable_hit_result, false)
 			if scale ~= nil then
@@ -703,6 +830,7 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 		reticuleComponent:SetVisibility(originLocation ~= nil and targetLocation ~= nil)
 	else
 		--M.print("Update failed component not valid")
+		unsubscribeFromLineTracer()
 	end
 end
 ----------------------------------- End Reticule Rendering ---------------------------
@@ -789,6 +917,13 @@ function M.setActiveReticule(id, force)
 end
 
 function M.setActiveReticuleByLabel(label, force)
+	if label == "None" then
+		parameters["currentReticuleID"] = nil
+		M.destroy()
+		M.reset()
+		setReticuleAutoCreationTypeFromParameters()
+		return
+	end
 	local newID = nil
 	if parameters ~= nil then
 		for i=1, #parameters["reticuleList"] do
@@ -822,6 +957,19 @@ uevrUtils.setInterval(1000, function()
 		end
 	end
 end)
+
+uevrUtils.registerUEVRCallback("scope_active_change", function(isActive)
+	if hideWhenScopeActive then
+		scopeHidden = isActive
+	else
+		scopeHidden = false
+	end
+	--M.setHidden(isActive)
+end)
+
+function M.setHiddenWhenScopeActive(value)
+	hideWhenScopeActive = value
+end
 
 uevrUtils.registerPreLevelChangeCallback(function(level)
 	M.print("Pre-Level changed in reticule")
