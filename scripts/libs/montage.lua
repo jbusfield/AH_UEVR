@@ -64,12 +64,14 @@ Usage
             local widgets = montage.getDeveloperConfigurationWidgets()
 ]]--
 
+--TODO add a filter to get rid of random number montages
+
 local uevrUtils = require("libs/uevr_utils")
 local configui = require("libs/configui")
 local hands = require("libs/hands")
 local ui = require("libs/ui")
 local pawnModule = require("libs/pawn")
-local accessories = require("libs/accessories")
+local accessoriesConfig = require("libs/config/accessories_config_dev")
 
 local M = {}
 
@@ -112,10 +114,11 @@ local function refreshAccessorySelections()
 	accessorySelectionGuids = {}
 
 	local map = nil
-	if accessories ~= nil and type(accessories.getAccessories) == "function" then
-		map = accessories.getAccessories()
+	if accessoriesConfig ~= nil and type(accessoriesConfig.getAccessories) == "function" then
+		map = accessoriesConfig.getAccessories()
 	end
 
+	--print("Map", map)
 	if map ~= nil then
 		local guids = {}
 		for guid, _ in pairs(map) do
@@ -187,6 +190,7 @@ local helpText = "This module allows you to configure how montages (animations) 
 local configWidgets = spliceableInlineArray{
 }
 
+local widgetPrefix = "uevr_montage_"
 local developerWidgets = spliceableInlineArray{
 	{
 		widgetType = "tree_node",
@@ -375,6 +379,12 @@ local developerWidgets = spliceableInlineArray{
         {
             widgetType = "end_group",
         },
+		{
+			widgetType = "checkbox",
+			id = widgetPrefix .. "ignore_generic",
+			label = "Ignore Unnamed Montages",
+			initialValue = true
+		},
 		{ widgetType = "new_line" },
        	{
             widgetType = "input_text_multiline",
@@ -517,11 +527,15 @@ local createDevMonitor = doOnce(function()
 				isParametersDirty = true
 			end
 			if parameters["montagelist"][montageName] == nil then
-				parameters["montagelist"][montageName] = {}
-				parameters["montagelist"][montageName]["label"] = label .. " " .. montageName
-				parameters["montagelist"][montageName]["class_name"] = montageObject:get_full_name()
-				isParametersDirty = true
-				updateMontageList()
+				if configui.getValue(widgetPrefix .. "ignore_generic") == true and uevrUtils.startsWith(montageName, "AnimMontage_") then
+					--dont save generic named montage
+				else
+					parameters["montagelist"][montageName] = {}
+					parameters["montagelist"][montageName]["label"] = label .. " " .. montageName
+					parameters["montagelist"][montageName]["class_name"] = montageObject:get_full_name()
+					isParametersDirty = true
+					updateMontageList()
+				end
 			elseif parameters["montagelist"][montageName]["class_name"] == nil then
 				parameters["montagelist"][montageName]["class_name"] = montageObject:get_full_name()
 				isParametersDirty = true
@@ -606,7 +620,8 @@ local function executeMontageChange(...)
 	uevrUtils.executeUEVRCallbacks("on_module_montage_change", table.unpack({...}))
 end
 
-local function handleMontageChanged(montage, montageName, label)
+local function handleMontageChanged(montage, montageName, label, animInstance)
+	--print("Montage changed: " .. tostring(montageName))
 	for _, config in ipairs(stateConfig) do
 		montageState[config.stateKey] = nil
 		montageState[config.stateKey .. "Priority"] = 0
@@ -623,11 +638,11 @@ local function handleMontageChanged(montage, montageName, label)
 		end
 	end
 
-	executeMontageChange(montage, montageName, label)
+	executeMontageChange(montage, montageName, label, animInstance)
 end
 
-uevrUtils.registerMontageChangeCallback(function(montage, montageName)
-	handleMontageChanged(montage, montageName, "Pawn")
+uevrUtils.registerMontageChangeCallback(function(montage, montageName, animInstance)
+	handleMontageChanged(montage, montageName, "Pawn", animInstance)
 	-- if montageState["inputEnabled"] == 3 and montageName == nil then
 	-- 	delay(3000, function()
 	-- 		montageState["inputEnabled"] = nil
@@ -724,6 +739,8 @@ local function getAnimInstanceForMontage(montageObject, label)
 		end
 	end
 	if label == nil or label == "" or label == "Pawn" then
+		--there's a possibility Mesh doesnt exist. In that case we need to scan for all mesh children and I guess pick the first one
+		--same goes for the check in uevrUtils
 		return uevrUtils.getValid(pawn, {"Mesh","AnimScriptInstance"}), montageObject
 	else
 		for descriptor, monitor in pairs(meshMonitors) do
@@ -743,7 +760,16 @@ function M.setPlaybackRate(montage, label, rate)
 	local animInstance, montageObject = getAnimInstanceForMontage(montage, label)
 	if animInstance ~= nil then
 		animInstance:Montage_SetPlayRate(montageObject, rate or 1.0)
-		print("Set playback rate to " .. tostring(rate) .. " for montage " .. montageObject:get_full_name() .. " on " .. tostring(label))
+		--print("Set playback rate to " .. tostring(rate) .. " for montage " .. montageObject:get_full_name() .. " on " .. tostring(label))
+	end
+end
+
+function M.getPosition(montage, label)
+	local animInstance, montageObject = getAnimInstanceForMontage(montage, label)
+	if animInstance ~= nil then
+		local position = animInstance:Montage_GetPosition(montageObject)
+		--print("Current position for montage " .. montageObject:get_full_name() .. " on " .. tostring(label) .. " is " .. tostring(position))
+		return position
 	end
 end
 
@@ -793,10 +819,11 @@ local function checkMonitoredMeshes()
 			local animInstance = monitor.meshObject.AnimScriptInstance
 			if animInstance ~= nil then
 				local playingMontage = animInstance:GetCurrentActiveMontage()
+				--print("Checking monitored mesh " .. monitor.label .. " for montage changes. Current: " .. tostring(monitor["currentMontage"] and monitor["currentMontage"]:get_full_name() or "nil") .. " New: " .. tostring(playingMontage and playingMontage:get_full_name() or "nil"))
 				if monitor["currentMontage"] ~= playingMontage then
 					monitor["currentMontage"] = playingMontage
 					local montageName = playingMontage and uevrUtils.getShortName(playingMontage) or ""
-					handleMontageChanged(playingMontage, montageName, monitor.label)
+					handleMontageChanged(playingMontage, montageName, monitor.label, animInstance)
 				end
 			end
 		end
@@ -902,7 +929,7 @@ function M.playMontage(montageName, speed)
 		local className = parameters["montagelist"][montageName]["class_name"]
 		if className ~= nil then
 			--this should be get_class so it caches
-			local montage = uevrUtils.find_required_object(className)
+			local montage = uevrUtils.get_class(className)
 			if montage ~= nil then
 				local result = pawn:PlayAnimMontage(montage, speed or 1.0, uevrUtils.fname_from_string(""))
 			end
@@ -912,6 +939,12 @@ end
 -- Returns recent montages as a newline-delimited string
 function M.getRecentMontagesAsString()
     return table.concat(recentMontages, "\n")
+end
+function M.getMontageClassName(montageName)
+	if parameters ~= nil and montageName ~= nil and montageName ~= "" and parameters["montagelist"][montageName] ~= nil then
+		return parameters["montagelist"][montageName]["class_name"]
+	end
+	return nil
 end
 
 hands.registerIsAnimatingFromMeshCallback(function(hand)
@@ -976,12 +1009,7 @@ configui.onUpdate("knownMontageList", function(value)
 end)
 
 uevrUtils.registerPreLevelChangeCallback(function(level)
-	--disableMeshMonitoring added to help prevent crash but I dont think it actually does anything
-	disableMeshMonitoring = true
 	M.reset()
-	delay(10000, function()
-		disableMeshMonitoring = false
-	end)
 end)
 
 uevr.sdk.callbacks.on_pre_engine_tick(function(engine, delta)

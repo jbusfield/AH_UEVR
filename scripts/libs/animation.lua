@@ -404,11 +404,13 @@ local function lerpAnimation(animID, animName, alpha)
 				end
 				if startPose ~= nil and endPose ~= nil then
 					for boneName, angles in pairs(startPose) do
-						local startRotator = uevrUtils.rotator(angles[1], angles[2], angles[3])
-						local endRotator = uevrUtils.rotator(endPose[boneName][1], endPose[boneName][2], endPose[boneName][3])
-						--M.print("Lerping " .. boneName .. " " .. alpha, LogLevel.Info)
-						local localRotator = kismet_math_library:RLerp(startRotator, endRotator, alpha, true)
-						M.setBoneSpaceLocalRotator(component, uevrUtils.fname_from_string(boneName), localRotator, boneSpace)
+						if endPose[boneName] ~= nil then
+							local startRotator = uevrUtils.rotator(angles[1], angles[2], angles[3])
+							local endRotator = uevrUtils.rotator(endPose[boneName][1], endPose[boneName][2], endPose[boneName][3])
+							--M.print("Lerping " .. boneName .. " " .. alpha, LogLevel.Info)
+							local localRotator = kismet_math_library:RLerp(startRotator, endRotator, alpha, true)
+							M.setBoneSpaceLocalRotator(component, uevrUtils.fname_from_string(boneName), localRotator, boneSpace)
+						end
 					end
 				end
 			end
@@ -449,12 +451,18 @@ function M.initializeBones(skeletalMeshComponent, initialTransform)
 			--print("Scale",scale.X,scale.Y,scale.Z)
 			if transforms["rotation"] ~= nil then
 				rotation = uevrUtils.rotator(transforms["rotation"][1], transforms["rotation"][2], transforms["rotation"][3])
+			else
+				rotation = uevrUtils.rotator(rotation)
 			end
 			if transforms["location"] ~= nil then
 				location = uevrUtils.vector(transforms["location"][1], transforms["location"][2], transforms["location"][3])
+			else
+				location = uevrUtils.vector(location)
 			end
 			if transforms["scale"] ~= nil then
 				scale = uevrUtils.vector(transforms["scale"][1], transforms["scale"][2], transforms["scale"][3])
+			else
+				scale = uevrUtils.vector(scale)
 			end
 			-- print(rotation.Pitch,rotation.Yaw,rotation.Roll)
 			-- print(location.X,location.Y,location.Z)
@@ -493,9 +501,18 @@ function M.initialize(animID, skeletalMeshComponent)
 end
 
 function M.add(animID, skeletalMeshComponent, animationDefinitions)
+	--print("Adding animation definitions for " .. animID, "\n")
 	animations[animID] = {}
 	animations[animID]["component"] = skeletalMeshComponent
 	animations[animID]["definitions"] = animationDefinitions
+end
+
+function M.setComponent(animID, skeletalMeshComponent)
+	if animations and animations[animID] ~= nil then
+		animations[animID]["component"] = skeletalMeshComponent
+	else
+		M.print("Animation ID " .. animID .. " not found in setComponent", LogLevel.Warning)
+	end
 end
 
 -- function lerpCallback(animID, animName, alpha)
@@ -834,16 +851,73 @@ function M.getDescendantBones(component, targetBoneName, includeRoot)
 	return boneNames
 end
 
-function M.getAncestorBones(component, boneName)
-	if component == nil then return {} end
-	if boneName == nil or boneName == "" then return {component:GetBoneName(1)} end
-	local boneNames = {}
-	local fName = uevrUtils.fname_from_string(boneName)
-	while fName:to_string() ~= "None" do
-		table.insert(boneNames, fName:to_string())
-		fName = component:GetParentBone(fName)
+-- Expects sourceComponent to be skeletalMeshComponent but should work with poseable components too
+-- targetComponent must be a poseableMeshComponent
+local descendantBoneList = {}
+function M.copyDescendantTransforms(sourceComponent, targetComponent, startBoneName, includeRoot)
+	if includeRoot == nil then includeRoot = true end
+	if uevrUtils.getValid(sourceComponent) == nil or uevrUtils.getValid(targetComponent) == nil or startBoneName == nil then
+		M.print("copyDescendantTransforms: invalid params", LogLevel.Warning)
+		return false
 	end
-	return boneNames
+	if sourceComponent.GetSocketTransform == nil then
+		M.print("copyDescendantTransforms: source component does not support GetSocketTransform", LogLevel.Warning)
+		return false
+	end
+	if targetComponent.SetBoneTransformByName == nil then
+		M.print("copyDescendantTransforms: target component does not support SetBoneTransformByName", LogLevel.Warning)
+		return false
+	end
+
+	local cacheKey = sourceComponent:get_full_name() .. "-" .. startBoneName .. "-" .. tostring(includeRoot)
+	if descendantBoneList[cacheKey] == nil then
+		descendantBoneList[cacheKey] = M.getDescendantBones(sourceComponent, startBoneName, includeRoot)
+	end
+	local boneNames = descendantBoneList[cacheKey]
+	if boneNames == nil or #boneNames == 0 then
+		return true
+	end
+
+	local startFName = uevrUtils.fname_from_string(startBoneName)
+	local sourceRootTransform = sourceComponent:GetSocketTransform(startFName, 2)
+	local targetRootTransform = nil
+	if targetComponent.GetBoneTransformByName ~= nil then
+		targetRootTransform = targetComponent:GetBoneTransformByName(startFName, EBoneSpaces.ComponentSpace)
+	elseif targetComponent.GetSocketTransform ~= nil then
+		targetRootTransform = targetComponent:GetSocketTransform(startFName, 2)
+	end
+	if sourceRootTransform == nil or targetRootTransform == nil then
+		M.print("copyDescendantTransforms: failed to get root transforms for alignment", LogLevel.Warning)
+		return false
+	end
+	local inverseSourceRoot = kismet_math_library:InvertTransform(sourceRootTransform)
+	local sourceToTargetTransform = kismet_math_library:ComposeTransforms(inverseSourceRoot, targetRootTransform)
+
+	for _, boneName in ipairs(boneNames) do
+		local fName = uevrUtils.fname_from_string(boneName)
+		local socketTransform = sourceComponent:GetSocketTransform(fName, 2)
+		if socketTransform ~= nil then
+			local alignedTransform = kismet_math_library:ComposeTransforms(socketTransform, sourceToTargetTransform)
+			targetComponent:SetBoneTransformByName(fName, alignedTransform, EBoneSpaces.ComponentSpace)
+		else
+			M.print("copyDescendantTransforms: failed to read transform for " .. boneName, LogLevel.Debug)
+		end
+	end
+
+	return true
+end
+
+function M.getAncestorBones(component, boneName)
+	return uevrUtils.getAncestorBones(component, boneName)
+	-- if component == nil then return {} end
+	-- if boneName == nil or boneName == "" then return {component:GetBoneName(1)} end
+	-- local boneNames = {}
+	-- local fName = uevrUtils.fname_from_string(boneName)
+	-- while fName:to_string() ~= "None" do
+	-- 	table.insert(boneNames, fName:to_string())
+	-- 	fName = component:GetParentBone(fName)
+	-- end
+	-- return boneNames
 end
 
 function M.logDescendantBoneTransforms(component, targetBoneName, includeRotation, includeLocation, includeScale)

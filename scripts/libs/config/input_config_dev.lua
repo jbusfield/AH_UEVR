@@ -25,6 +25,7 @@ local paramManager = nil
 --local configIDs = {"isDisabledOverride", "aimMethod", "fixSpatialAudio", "rootOffset", "useSnapTurn", "snapAngle", "smoothTurnSpeed", "pawnRotationMode", "pawnPositionMode", "pawnPositionSweepMovement", "pawnPositionAnimationScale", "headOffset", "adjustForAnimation", "adjustForEyeOffset", "eyeOffset"}
 -- local configDefaults = {
 --     isDisabledOverride = false,
+--     useRootOffset = true,
 --     aimMethod = M.AimMethod.UEVR,
 --     fixSpatialAudio = true,
 --     rootOffset = {X=0,Y=0,Z=0},
@@ -74,6 +75,26 @@ local function getConfigWidgets(m_paramManager)
 	-- },
 	expandArray(m_paramManager.getProfilePreConfigurationWidgets, widgetPrefix),
 	{
+		widgetType = "checkbox",
+		id = widgetPrefix .. "fixSpatialAudio",
+		label = "Fix Spatial Audio",
+		initialValue = configDefaults["fixSpatialAudio"]
+	},
+	{
+		widgetType = "checkbox",
+		id = widgetPrefix .. "useRootOffset",
+		label = "Use HMD Offset",
+		initialValue = configDefaults["useRootOffset"] or true
+	},
+	{
+		widgetType = "drag_float3",
+		id = widgetPrefix .. "rootOffset",
+		label = "HMD Offset",
+		speed = .1,
+		range = {-200, 200},
+		initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
+	},
+	{
 		widgetType = "tree_node",
 		id = widgetPrefix .. "aim_method_tree",
 		initialOpen = true,
@@ -98,6 +119,7 @@ local function getConfigWidgets(m_paramManager)
 				selections = {"None"},
 				initialValue = 1
 			},
+			{ widgetType = "indent", width = 10} ,
 			{
 				widgetType = "combo",
 				id = widgetPrefix .. "usePawnControlRotation",
@@ -106,20 +128,14 @@ local function getConfigWidgets(m_paramManager)
 				initialValue = 1,
 				width = 100
 			},
-            {
-                widgetType = "checkbox",
-                id = widgetPrefix .. "fixSpatialAudio",
-                label = "Fix Spatial Audio",
-                initialValue = configDefaults["fixSpatialAudio"]
-            },
-            {
-                widgetType = "drag_float3",
-                id = widgetPrefix .. "rootOffset",
-                label = "Root Offset",
-                speed = .1,
-                range = {-200, 200},
-                initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
-            },
+			{
+				widgetType = "combo",
+				id = widgetPrefix .. "cameraResetAction",
+				label = "On Camera Deactivation",
+				selections = {"Do not reset location and rotation", "Set to parent's location and rotation"}, --  "Zero location and rotation"},
+				initialValue = 1,
+			},
+			{ widgetType = "unindent", width = 10} ,
         {
             widgetType = "end_group",
         },
@@ -207,6 +223,35 @@ local function getConfigWidgets(m_paramManager)
 					selections = {"Game", "Right Controller", "Left Controller", "Locked Head/HMD", "Follows Head (Simple)", "Follows Head (Advanced)"},
 					initialValue = configDefaults["pawnRotationMode"]
 				},
+				{ widgetType = "same_line"},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "optimizeBodyRotationCalculations",
+					label = "Optimize",
+					initialValue = configDefaults["optimizeBodyRotationCalculations"]
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "pawnRotationModeDisableRotation",
+					label = "Disable Rotation",
+					initialValue = configDefaults["pawnRotationModeDisableRotation"]
+				},
+				{ widgetType = "same_line"},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "pawnRotationModeDisableInEarlyUpdate",
+					label = "Disable In Early Update",
+					initialValue = configDefaults["pawnRotationModeDisableInEarlyUpdate"]
+				},
+				{
+					widgetType = "slider_float",
+					id = widgetPrefix .. "pawnRotationLockedSmoothTime",
+					label = "Smoothing",
+					speed = .01,
+					range = {0, 1},
+					initialValue = configDefaults["pawnRotationLockedSmoothTime"],
+					isHidden = true
+				},
 				expandArray(bodyYaw.getConfigurationWidgets),
 		{
 			widgetType = "tree_pop"
@@ -223,6 +268,13 @@ local function getConfigWidgets(m_paramManager)
 				label = "Type",
 				selections = {"None", "Follows HMD", "Follows HMD With Animation"},
 				initialValue = configDefaults["pawnPositionMode"]
+			},
+			{ widgetType = "same_line"},
+			{
+				widgetType = "checkbox",
+				id = widgetPrefix .. "optimizeBodyLocationCalculations",
+				label = "Optimize",
+				initialValue = configDefaults["optimizeBodyLocationCalculations"]
 			},
 			{
 				widgetType = "checkbox",
@@ -274,11 +326,17 @@ local function getConfigWidgets(m_paramManager)
 			{
 				widgetType = "drag_float3",
 				id = widgetPrefix .. "headOffset",
-				label = "Head Offset",
+				label = "Mesh Offset",
 				speed = .1,
 				range = {-200, 200},
 				initialValue = {configDefaults["headOffset"] and configDefaults["headOffset"].X or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Y or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Z or 0}
 			},
+            {
+                widgetType = "checkbox",
+                id = widgetPrefix .. "useMeshHeightForHeadOffset",
+                label = "Use Mesh Height",
+                initialValue = configDefaults["useMeshHeightForHeadOffset"]
+            },
 			{
 				widgetType = "checkbox",
 				id = widgetPrefix .. "adjustForAnimation",
@@ -345,6 +403,11 @@ local function updateSetting(key, value)
 end
 
 local function setCurrentHeadBone(value)
+	print("Setting current head bone to index " .. value)
+	if #boneList < value then
+		print("Invalid head bone index")
+		return
+	end
 	local headBoneName = boneList[value]
     updateSetting("headBoneName", headBoneName)
 	local mesh = pawnModule.getBodyMesh()
@@ -382,6 +445,7 @@ local function updateUIState(key)
     elseif key == "pawnRotationMode" then
         configui.hideWidget("minAngularDeviation", not (configui.getValue(exKey) == M.PawnRotationMode.SIMPLE or configui.getValue(exKey) == M.PawnRotationMode.ADVANCED))
         configui.hideWidget("alignConfidenceThreshold",  configui.getValue(exKey) ~= M.PawnRotationMode.ADVANCED)
+        configui.hideWidget(widgetPrefix .. "pawnRotationLockedSmoothTime",  configui.getValue(exKey) == M.PawnRotationMode.NONE)
     elseif key == "pawnPositionMode" then
         configui.hideWidget(widgetPrefix .. "pawnPositionAnimationScale", configui.getValue(exKey) ~= M.PawnPositionMode.ANIMATED)
         configui.hideWidget(widgetPrefix .. "pawnPositionSweepMovement", configui.getValue(exKey) ~= M.PawnPositionMode.FOLLOWS)
@@ -390,7 +454,9 @@ local function updateUIState(key)
     elseif key == "adjustForEyeOffset" then
         configui.hideWidget(widgetPrefix .. "eyeOffset", not configui.getValue(exKey))
 	elseif key == "aimCameraList" then
-		 configui.hideWidget(widgetPrefix .. "usePawnControlRotation", configui.getValue(exKey) == 1)
+		print("@@@@@@@@@@@@@@@@@")
+		configui.hideWidget(widgetPrefix .. "usePawnControlRotation", configui.getValue(exKey) == 1)
+		configui.hideWidget(widgetPrefix .. "cameraResetAction", configui.getValue(exKey) == 1)
     end
 end
 
@@ -438,6 +504,15 @@ configui.onUpdate(widgetPrefix .. "headOffset", function(value)
     updateSetting("headOffset", {X=arr[1],Y=arr[2],Z=arr[3]})
 end)
 
+configui.onUpdate(widgetPrefix .. "useRootOffset", function(value)
+	updateSetting("useRootOffset", value)
+	configui.hideWidget(widgetPrefix .. "rootOffset", not value)
+end)
+
+configui.onCreate(widgetPrefix .. "useRootOffset", function(value)
+	configui.hideWidget(widgetPrefix .. "rootOffset", not value)
+end)
+
 configui.onUpdate(widgetPrefix .. "rootOffset", function(value)
     --updateSetting("rootOffset", {X=value[1],Y=value[2],Z=value[3]})
 	local arr = uevrUtils.getNativeValue(value)
@@ -475,6 +550,22 @@ configui.onUpdate(widgetPrefix .. "snapAngle", function(value)
 	updateSetting("snapAngle", value)
 end)
 
+configui.onUpdate(widgetPrefix .. "optimizeBodyRotationCalculations", function(value)
+	updateSetting("optimizeBodyRotationCalculations", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "pawnRotationModeDisableRotation", function(value)
+	updateSetting("pawnRotationModeDisableRotation", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "pawnRotationModeDisableInEarlyUpdate", function(value)
+	updateSetting("pawnRotationModeDisableInEarlyUpdate", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "optimizeBodyLocationCalculations", function(value)
+	updateSetting("optimizeBodyLocationCalculations", value)
+end)
+
 configui.onUpdate(widgetPrefix .. "smoothTurnSpeed", function(value)
 	updateSetting("smoothTurnSpeed", value)
 end)
@@ -482,6 +573,10 @@ end)
 configui.onUpdate(widgetPrefix .. "pawnRotationMode", function(value)
 	updateSetting("pawnRotationMode", value)
     updateUIState("pawnRotationMode")
+end)
+
+configui.onUpdate(widgetPrefix .. "pawnRotationLockedSmoothTime", function(value)
+	updateSetting("pawnRotationLockedSmoothTime", value)
 end)
 
 configui.onCreate(widgetPrefix .. "pawnRotationMode", function(value)
@@ -509,6 +604,11 @@ end)
 configui.onCreate(widgetPrefix .. "adjustForAnimation", function(value)
     updateUIState("adjustForAnimation")
 end)
+
+configui.onUpdate(widgetPrefix .. "useMeshHeightForHeadOffset", function(value)
+    updateSetting("useMeshHeightForHeadOffset", value)
+end)
+
 
 configui.onUpdate(widgetPrefix .. "adjustForEyeOffset", function(value)
 	updateSetting("adjustForEyeOffset", value)
@@ -555,12 +655,17 @@ configui.onUpdate(widgetPrefix .. "usePawnControlRotation", function(value)
 	updateSetting("usePawnControlRotation", value)
 end)
 
+configui.onUpdate(widgetPrefix .. "cameraResetAction", function(value)
+	updateSetting("cameraResetAction", value)
+end)
+
 
 
 configui.onUpdate(widgetPrefix .. "aimCameraList", function(value)
 	--get the camera name from the selection
 	local cameraName = pawnCameraList[value]
 	updateSetting("aimCamera", cameraName)
+	updateUIState("aimCameraList")
 end)
 
 

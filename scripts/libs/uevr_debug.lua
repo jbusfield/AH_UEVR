@@ -106,6 +106,8 @@ local function dumpStruct(Value, level)
 		end
 	elseif string.match(string.format("%s",Value), "sol.glm::vec<3,float,0>*" ) then
 		ValueStr = string.format("<%s, %s, %s>", Value.X, Value.Y, Value.Z )
+	elseif string.match(string.format("%s",Value), "sol.glm::vec<3,double,0>*" ) then
+		ValueStr = string.format("<%s, %s, %s>", Value.X, Value.Y, Value.Z )
 	else
 		print("!!!Unknown Struct type found!!!",UEVR_UStruct.static_class(Value):get_full_name(), Value)
 		print(type(Value),Value:get_field_name())

@@ -37,8 +37,10 @@ Usage:
                     }}
                 },
                 left_stick_x = {
-                    {state = remap.InputState.ON, unpress = true, threshold = 4096, actions = {
+                    {state = remap.InputState.ON, unpress = true, positive_threshold = 4096, negative_threshold = 4096, positive_actions = {
                         a_button = {state = remap.ActionState.ON}
+                    }, negative_actions = {
+                        b_button = {state = remap.ActionState.ON}
                     }}
                 }
             })
@@ -312,6 +314,138 @@ local compiledActions = {}
 -- Previous state tracking for momentary input detection
 local previousInputStates = {}
 
+local function getAnalogPositiveThreshold(config)
+    if not config then return CONSTANTS.DEFAULT_ANALOG_THRESHOLD end
+    return config.positive_threshold or config.threshold or CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+end
+
+local function getAnalogNegativeThreshold(config)
+    if not config then return CONSTANTS.DEFAULT_ANALOG_THRESHOLD end
+    return config.negative_threshold or config.threshold or CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+end
+
+local function isAnalogPositiveActive(value, config)
+    return value > getAnalogPositiveThreshold(config)
+end
+
+local function isAnalogNegativeActive(value, config)
+    return value < -getAnalogNegativeThreshold(config)
+end
+
+local function isAnalogActive(value, config)
+    return isAnalogPositiveActive(value, config) or isAnalogNegativeActive(value, config)
+end
+
+local function getOnStateConfig(configs)
+    if not configs then return nil end
+    local configArray = configs
+    if not configs[1] then
+        configArray = {configs}
+    end
+    for _, config in ipairs(configArray) do
+        if config.state == M.InputState.ON then
+            return config
+        end
+    end
+    return configArray[1]
+end
+
+local function compileActionExecutors(actionsTable, inputName, mapping)
+    local executors = {}
+    if not actionsTable then return executors end
+
+    for actionName, actionConfig in pairs(actionsTable) do
+        local actionMapping = inputMapping[actionName]
+        if actionMapping then
+            local actionExecutor = nil
+
+            if actionConfig.state == M.ActionState.ON or actionConfig.state == M.ActionState.TOGGLE_ON then
+                if actionMapping.type == "button" then
+                    actionExecutor = function(state, sourceValues) uevrUtils.pressButton(state, actionMapping.constant) end
+                elseif actionMapping.type == "trigger" then
+                    local value = actionConfig.value or CONSTANTS.TRIGGER_MAX
+                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
+                elseif actionMapping.type == "analog" then
+                    local value = actionConfig.value or CONSTANTS.ANALOG_MAX
+                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
+                end
+            elseif actionConfig.state == M.ActionState.OFF or actionConfig.state == M.ActionState.TOGGLE_OFF then
+                if actionMapping.type == "button" then
+                    actionExecutor = function(state, sourceValues) uevrUtils.unpressButton(state, actionMapping.constant) end
+                elseif actionMapping.type == "trigger" then
+                    local value = actionConfig.value or 0
+                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
+                elseif actionMapping.type == "analog" then
+                    local value = actionConfig.value or 0
+                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
+                end
+            elseif actionConfig.state == M.ActionState.COPY_VALUE then
+                if actionMapping.type == "analog" and mapping.type == "analog" then
+                    actionExecutor = function(state, sourceValues)
+                        local sourceValue = sourceValues[inputName] or 0
+                        state.Gamepad[actionMapping.stateField] = sourceValue
+                    end
+                elseif actionMapping.type == "trigger" and mapping.type == "analog" then
+                    actionExecutor = function(state, sourceValues)
+                        local sourceValue = sourceValues[inputName] or 0
+                        local normalizedValue = math.max(0, sourceValue + math.abs(CONSTANTS.ANALOG_MIN)) / (CONSTANTS.ANALOG_MAX - CONSTANTS.ANALOG_MIN)
+                        state.Gamepad[actionMapping.stateField] = math.floor(normalizedValue * CONSTANTS.TRIGGER_MAX)
+                    end
+                end
+            end
+
+            if actionExecutor then
+                executors[actionName] = actionExecutor
+            end
+        end
+    end
+
+    return executors
+end
+
+local function setDirectionalActionUIValues(inputName, stateKey, stateConfig, direction)
+    local actionsTable = stateConfig.actions
+    if direction == "positive" then
+        actionsTable = stateConfig.positive_actions or stateConfig.actions
+    elseif direction == "negative" then
+        actionsTable = stateConfig.negative_actions or stateConfig.actions
+    end
+
+    local idSuffix = direction and ("_" .. direction) or ""
+
+    for _, actionName in ipairs(allActions) do
+        if actionName ~= inputName then
+            local currentActionStateIndex = 1
+
+            if actionsTable and actionsTable[actionName] then
+                local actionConfig = actionsTable[actionName]
+                if actionConfig and actionConfig.state then
+                    local actionMapping = inputMapping[actionName]
+                    local valueArray = actionStateValues
+                    if actionMapping then
+                        if actionMapping.type == "button" then
+                            valueArray = buttonActionStateValues
+                        elseif actionMapping.type == "trigger" then
+                            valueArray = triggerActionStateValues
+                        elseif actionMapping.type == "analog" then
+                            valueArray = analogActionStateValues
+                        end
+                    end
+
+                    for i, value in ipairs(valueArray) do
+                        if actionConfig.state == value then
+                            currentActionStateIndex = i
+                            break
+                        end
+                    end
+                end
+            end
+
+            configui.setValue("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. actionName .. "_state", currentActionStateIndex)
+        end
+    end
+end
+
 -- Pre-compile the remap configuration for optimal performance
 local function compileRemapConfig(remapConfig)
     compiledInputs = {}
@@ -333,60 +467,32 @@ local function compileRemapConfig(remapConfig)
                     state = config.state,
                     unpress = config.unpress,
                     threshold = config.threshold or (mapping.type == "analog" and CONSTANTS.DEFAULT_ANALOG_THRESHOLD or CONSTANTS.DEFAULT_TRIGGER_THRESHOLD),
-                    actionExecutors = {}  -- Pre-compiled action execution functions
+                    positive_threshold = getAnalogPositiveThreshold(config),
+                    negative_threshold = getAnalogNegativeThreshold(config),
+                    actionExecutors = {},
+                    positiveActionExecutors = {},
+                    negativeActionExecutors = {}
                 }
 
-                -- Pre-compile action executors for maximum runtime performance
-                if config.actions then
-                    for actionName, actionConfig in pairs(config.actions) do
-                        local actionMapping = inputMapping[actionName]
-                        if actionMapping then
-                            -- Create optimized action executor closures
-                            local actionExecutor = nil
-                            
-                            if actionConfig.state == M.ActionState.ON or actionConfig.state == M.ActionState.TOGGLE_ON then
-                                if actionMapping.type == "button" then
-                                    actionExecutor = function(state, sourceValues) uevrUtils.pressButton(state, actionMapping.constant) end
-                                elseif actionMapping.type == "trigger" then
-                                    local value = actionConfig.value or CONSTANTS.TRIGGER_MAX
-                                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
-                                elseif actionMapping.type == "analog" then
-                                    local value = actionConfig.value or CONSTANTS.ANALOG_MAX
-                                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
-                                end
-                            elseif actionConfig.state == M.ActionState.OFF or actionConfig.state == M.ActionState.TOGGLE_OFF then
-                                if actionMapping.type == "button" then
-                                    actionExecutor = function(state, sourceValues) uevrUtils.unpressButton(state, actionMapping.constant) end
-                                elseif actionMapping.type == "trigger" then
-                                    local value = actionConfig.value or 0
-                                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
-                                elseif actionMapping.type == "analog" then
-                                    local value = actionConfig.value or 0
-                                    actionExecutor = function(state, sourceValues) state.Gamepad[actionMapping.stateField] = value end
-                                end
-                            elseif actionConfig.state == M.ActionState.COPY_VALUE then
-                                if actionMapping.type == "analog" and mapping.type == "analog" then
-                                    actionExecutor = function(state, sourceValues) 
-                                        local sourceValue = sourceValues[inputName] or 0
-                                        state.Gamepad[actionMapping.stateField] = sourceValue
-                                    end
-                                elseif actionMapping.type == "trigger" and mapping.type == "analog" then
-                                    actionExecutor = function(state, sourceValues)
-                                        local sourceValue = sourceValues[inputName] or 0
-                                        local normalizedValue = math.max(0, sourceValue + math.abs(CONSTANTS.ANALOG_MIN)) / (CONSTANTS.ANALOG_MAX - CONSTANTS.ANALOG_MIN)
-                                        state.Gamepad[actionMapping.stateField] = math.floor(normalizedValue * CONSTANTS.TRIGGER_MAX)
-                                    end
-                                end
-                            end
-                            
-                            if actionExecutor then
-                                compiledConfig.actionExecutors[actionName] = actionExecutor
-                            end
-                        end
-                    end
+                if mapping.type == "analog" and config.state == M.InputState.ON then
+                    compiledConfig.positiveActionExecutors = compileActionExecutors(config.positive_actions or config.actions, inputName, mapping)
+                    compiledConfig.negativeActionExecutors = compileActionExecutors(config.negative_actions or config.actions, inputName, mapping)
+                else
+                    compiledConfig.actionExecutors = compileActionExecutors(config.actions, inputName, mapping)
                 end
 
                 table.insert(precompiledConfigs, compiledConfig)
+            end
+
+            local onCompiledConfig = nil
+            for _, config in ipairs(precompiledConfigs) do
+                if config.state == M.InputState.ON then
+                    onCompiledConfig = config
+                    break
+                end
+            end
+            if not onCompiledConfig then
+                onCompiledConfig = precompiledConfigs[1]
             end
 
             -- Pre-compile input detection info
@@ -394,8 +500,9 @@ local function compileRemapConfig(remapConfig)
                 mapping = mapping,
                 configs = precompiledConfigs,
                 rawStateVar = "raw" .. inputName:gsub("_(%l)", string.upper):gsub("^%l", string.upper) .. "Pressed",
-                -- Pre-compile activation threshold for previous state tracking
-                activationThreshold = precompiledConfigs[1] and precompiledConfigs[1].threshold or (mapping.type == "analog" and CONSTANTS.DEFAULT_ANALOG_THRESHOLD or CONSTANTS.DEFAULT_TRIGGER_THRESHOLD)
+                activationThreshold = onCompiledConfig and onCompiledConfig.threshold or (mapping.type == "analog" and CONSTANTS.DEFAULT_ANALOG_THRESHOLD or CONSTANTS.DEFAULT_TRIGGER_THRESHOLD),
+                activationPositiveThreshold = onCompiledConfig and onCompiledConfig.positive_threshold or CONSTANTS.DEFAULT_ANALOG_THRESHOLD,
+                activationNegativeThreshold = onCompiledConfig and onCompiledConfig.negative_threshold or CONSTANTS.DEFAULT_ANALOG_THRESHOLD
             }
         end
     end
@@ -438,48 +545,71 @@ local function processInputRemapping(state, remapConfig)
 
         -- Check each state configuration for this input
         for _, config in ipairs(configs) do
-            local isActivated = false
+            if mapping.type == "analog" and config.state == M.InputState.ON then
+                local isPositive = currentInputValue > config.positive_threshold
+                local isNegative = currentInputValue < -config.negative_threshold
 
-            -- Check activation state using pre-compiled threshold
-            if mapping.type == "button" then
-                isActivated = currentInputValue
-                if isActivated and config.unpress then
-                    uevrUtils.unpressButton(state, mapping.constant)
-                end
-            elseif mapping.type == "trigger" then
-                isActivated = currentInputValue > config.threshold
-                if isActivated and config.unpress then
+                if (isPositive or isNegative) and config.unpress then
                     state.Gamepad[mapping.stateField] = 0
                 end
-            elseif mapping.type == "analog" then
-                isActivated = math.abs(currentInputValue) > config.threshold
-                if isActivated and config.unpress then
-                    state.Gamepad[mapping.stateField] = 0
+
+                if isPositive then
+                    M[compiledInput.rawStateVar] = true
+                    for _, actionExecutor in pairs(config.positiveActionExecutors) do
+                        actionExecutor(state, sourceValues)
+                    end
                 end
-            end
 
-            -- Get previous state for momentary detection
-            local previousState = previousInputStates[inputName] or false
-            local shouldExecuteActions = false
+                if isNegative then
+                    M[compiledInput.rawStateVar] = true
+                    for _, actionExecutor in pairs(config.negativeActionExecutors) do
+                        actionExecutor(state, sourceValues)
+                    end
+                end
+            else
+                local isActivated = false
 
-            -- Determine if actions should be executed based on state logic
-            if config.state == M.InputState.ON and isActivated then
-                shouldExecuteActions = true
-            elseif config.state == M.InputState.OFF and not isActivated then
-                shouldExecuteActions = true
-            elseif config.state == M.InputState.TOGGLE_ON and isActivated and not previousState then
-                shouldExecuteActions = true
-            elseif config.state == M.InputState.TOGGLE_OFF and not isActivated and previousState then
-                shouldExecuteActions = true
-            end
+                -- Check activation state using pre-compiled threshold
+                if mapping.type == "button" then
+                    isActivated = currentInputValue
+                    if isActivated and config.unpress then
+                        uevrUtils.unpressButton(state, mapping.constant)
+                    end
+                elseif mapping.type == "trigger" then
+                    isActivated = currentInputValue > config.threshold
+                    if isActivated and config.unpress then
+                        state.Gamepad[mapping.stateField] = 0
+                    end
+                elseif mapping.type == "analog" then
+                    isActivated = isAnalogActive(currentInputValue, config)
+                    if isActivated and config.unpress then
+                        state.Gamepad[mapping.stateField] = 0
+                    end
+                end
 
-            if shouldExecuteActions then
-                -- Store raw state for external access
-                M[compiledInput.rawStateVar] = true
+                -- Get previous state for momentary detection
+                local previousState = previousInputStates[inputName] or false
+                local shouldExecuteActions = false
 
-                -- Execute all pre-compiled action executors for this config
-                for actionName, actionExecutor in pairs(config.actionExecutors) do
-                    actionExecutor(state, sourceValues)
+                -- Determine if actions should be executed based on state logic
+                if config.state == M.InputState.ON and isActivated then
+                    shouldExecuteActions = true
+                elseif config.state == M.InputState.OFF and not isActivated then
+                    shouldExecuteActions = true
+                elseif config.state == M.InputState.TOGGLE_ON and isActivated and not previousState then
+                    shouldExecuteActions = true
+                elseif config.state == M.InputState.TOGGLE_OFF and not isActivated and previousState then
+                    shouldExecuteActions = true
+                end
+
+                if shouldExecuteActions then
+                    -- Store raw state for external access
+                    M[compiledInput.rawStateVar] = true
+
+                    -- Execute all pre-compiled action executors for this config
+                    for _, actionExecutor in pairs(config.actionExecutors) do
+                        actionExecutor(state, sourceValues)
+                    end
                 end
             end
         end
@@ -496,7 +626,8 @@ local function processInputRemapping(state, remapConfig)
         elseif mapping.type == "trigger" then
             isCurrentlyActivated = currentValue > compiledInput.activationThreshold
         elseif mapping.type == "analog" then
-            isCurrentlyActivated = math.abs(currentValue) > compiledInput.activationThreshold
+            isCurrentlyActivated = currentValue > compiledInput.activationPositiveThreshold
+                or currentValue < -compiledInput.activationNegativeThreshold
         end
 
         previousInputStates[inputName] = isCurrentlyActivated
@@ -510,7 +641,7 @@ end
 --     -- User will provide the implementation details later
 -- end
 
-local helpText = "This module allows you to configure input remapping for VR controllers. You can remap buttons (pressed/unpressed), triggers (pressed/unpressed), and analog sticks (active/inactive) to different actions, set trigger and stick thresholds, and enable/disable specific inputs. The system processes input remapping on every frame for optimal responsiveness."
+local helpText = "This module allows you to configure input remapping for VR controllers. You can remap buttons (pressed/unpressed), triggers (pressed/unpressed), and analog sticks (active/inactive) to different actions, set trigger deadzones and separate positive/negative stick thresholds, and enable/disable specific inputs. The system processes input remapping on every frame for optimal responsiveness."
 
 -- Function to add FKEY actions UI
 -- local function addFKeyActionsUI(configDefinition)
@@ -712,13 +843,20 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
             table.insert(configDefinition[1]["layout"], treeNodeConfig)
 
             -- Helper function to add actions for a specific state
-            local function addActionsForState(stateType, stateLabel, stateConfig)
+            local function addActionsForState(stateType, stateLabel, stateConfig, direction)
                 -- Always show actions section when state is enabled, even if no config exists yet
+
+                local actionsTable = stateConfig and stateConfig.actions
+                if direction == "positive" then
+                    actionsTable = stateConfig and (stateConfig.positive_actions or stateConfig.actions)
+                elseif direction == "negative" then
+                    actionsTable = stateConfig and (stateConfig.negative_actions or stateConfig.actions)
+                end
 
                 -- Check if any actions are configured (not "None") for this state
                 local hasConfiguredActions = false
-                if stateConfig and stateConfig.actions then
-                    for actionName, actionConfig in pairs(stateConfig.actions) do
+                if actionsTable then
+                    for actionName, actionConfig in pairs(actionsTable) do
                         if actionConfig and actionConfig.state and actionConfig.state ~= M.ActionState.NONE then
                             hasConfiguredActions = true
                             break
@@ -726,9 +864,17 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                     end
                 end
 
+                local actionsIdSuffix = direction and ("_" .. direction) or ""
+                local actionsTreeLabel = "Actions"
+                if direction == "positive" then
+                    actionsTreeLabel = "Positive Actions"
+                elseif direction == "negative" then
+                    actionsTreeLabel = "Negative Actions"
+                end
+
                 local actionsTreeConfig = {
-                    id = "remap_" .. inputName .. "_" .. stateType .. "_actions",
-                    label = "Actions",
+                    id = "remap_" .. inputName .. "_" .. stateType .. actionsIdSuffix .. "_actions",
+                    label = actionsTreeLabel,
                     widgetType = "tree_node",
                     initialOpen = false,
                 }
@@ -744,7 +890,7 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                 for _, actionName in ipairs(allActions) do
                     -- Don't show an action targeting itself
                     if actionName ~= inputName then
-                        local actionConfig = stateConfig and stateConfig.actions and stateConfig.actions[actionName]
+                        local actionConfig = actionsTable and actionsTable[actionName]
                         local actionLabel = actionName:gsub("_", " "):gsub("^%l", string.upper)
                         local currentActionStateIndex = 1  -- Default to "None"
 
@@ -794,7 +940,7 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                         end
 
                         table.insert(configDefinition[1]["layout"], {
-                            id = "remap_" .. inputName .. "_" .. stateType .. "_action_" .. actionName .. "_state",
+                            id = "remap_" .. inputName .. "_" .. stateType .. actionsIdSuffix .. "_action_" .. actionName .. "_state",
                             label = " ",
                             widgetType = "combo",
                             selections = actionStateSelectionsToUse,
@@ -822,14 +968,14 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                             -- Always add value input wrapped in group, but may be hidden initially
                             table.insert(configDefinition[1]["layout"], {
                                 widgetType = "begin_group",
-                                id = "remap_" .. inputName .. "_" .. stateType .. "_action_" .. actionName .. "_value_group",
+                                id = "remap_" .. inputName .. "_" .. stateType .. actionsIdSuffix .. "_action_" .. actionName .. "_value_group",
                                 isHidden = isCurrentlyCopyValue or isCurrentlyNone  -- Hide if copy_value or none
                             })
                             table.insert(configDefinition[1]["layout"], {
                                 widgetType = "same_line",
                             })
                             table.insert(configDefinition[1]["layout"], {
-                                id = "remap_" .. inputName .. "_" .. stateType .. "_action_" .. actionName .. "_value",
+                                id = "remap_" .. inputName .. "_" .. stateType .. actionsIdSuffix .. "_action_" .. actionName .. "_value",
                                 label = label,
                                 widgetType = "input_text",
                                 initialValue = defaultValue,
@@ -891,13 +1037,26 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                             widgetType = "same_line"
                         })
                     elseif mapping.type == "analog" then
+                        local onConfig = stateConfig or getOnStateConfig(currentConfigArray)
                         table.insert(configDefinition[1]["layout"], {
-                            id = "remap_" .. inputName .. "_threshold",
-                            label = "Stick Threshold",
+                            id = "remap_" .. inputName .. "_positive_threshold",
+                            label = "Positive Threshold",
                             widgetType = "drag_int",
                             speed = 100,
                             range = {1, CONSTANTS.ANALOG_MAX},
-                            initialValue = (stateConfig and stateConfig.threshold) or CONSTANTS.DEFAULT_ANALOG_THRESHOLD,
+                            initialValue = getAnalogPositiveThreshold(onConfig),
+                            width = 120
+                        })
+                        table.insert(configDefinition[1]["layout"], {
+                            widgetType = "same_line"
+                        })
+                        table.insert(configDefinition[1]["layout"], {
+                            id = "remap_" .. inputName .. "_negative_threshold",
+                            label = "Negative Threshold",
+                            widgetType = "drag_int",
+                            speed = 100,
+                            range = {1, CONSTANTS.ANALOG_MAX},
+                            initialValue = getAnalogNegativeThreshold(onConfig),
                             width = 120
                         })
                         table.insert(configDefinition[1]["layout"], {
@@ -917,7 +1076,12 @@ function M.addRemapConfigToUI(configDefinition, m_remapConfig)
                 end
 
                 -- Add actions for this state (always add, visibility controlled by hideWidget)
-                addActionsForState(stateKey, stateLabel, stateConfig)
+                if mapping.type == "analog" and stateKey == M.InputState.ON then
+                    addActionsForState(stateKey, stateLabel, stateConfig, "positive")
+                    addActionsForState(stateKey, stateLabel, stateConfig, "negative")
+                else
+                    addActionsForState(stateKey, stateLabel, stateConfig)
+                end
 
                 table.insert(configDefinition[1]["layout"], {
                     widgetType = "unindent",
@@ -1245,8 +1409,11 @@ function M.registerUICallbacks()
                     M.updateRemapConfig(inputName, "threshold", value)
                 end)
             elseif mapping.type == "analog" then
-                configui.onUpdate("remap_" .. inputName .. "_threshold", function(value)
-                    M.updateRemapConfig(inputName, "threshold", value)
+                configui.onUpdate("remap_" .. inputName .. "_positive_threshold", function(value)
+                    M.updateRemapConfig(inputName, "positive_threshold", value)
+                end)
+                configui.onUpdate("remap_" .. inputName .. "_negative_threshold", function(value)
+                    M.updateRemapConfig(inputName, "negative_threshold", value)
                 end)
             end
 
@@ -1258,9 +1425,17 @@ function M.registerUICallbacks()
                     -- Generate callbacks for each possible state
                     for _, inputState in ipairs(inputStates) do
                         local stateKey = inputState.key
+                        local directionVariants = {{direction = nil}}
+                        if mapping.type == "analog" and stateKey == M.InputState.ON then
+                            directionVariants = {{direction = "positive"}, {direction = "negative"}}
+                        end
+
+                        for _, variant in ipairs(directionVariants) do
+                            local direction = variant.direction
+                            local idSuffix = direction and ("_" .. direction) or ""
 
                         -- State action combo callbacks
-                        configui.onUpdate("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_state", function(value)
+                        configui.onUpdate("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. actionName .. "_state", function(value)
                             if isRefreshing then return end
 
                             -- Use the correct value array based on action type
@@ -1277,12 +1452,12 @@ function M.registerUICallbacks()
                                 selectedState = actionStateValues[value] or M.ActionState.NONE
                             end
                             
-                            M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "state", selectedState)
+                            M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "state", selectedState, direction)
 
                             -- When enabling an action (not "none"), also set the current UI value
                             if selectedState ~= M.ActionState.NONE and selectedState ~= M.ActionState.COPY_VALUE then
                                 if actionMapping and (actionMapping.type == "trigger" or actionMapping.type == "analog") then
-                                    local currentUIValue = configui.getValue("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_value")
+                                    local currentUIValue = configui.getValue("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. actionName .. "_value")
                                     if currentUIValue then
                                         local numValue = tonumber(currentUIValue)
                                         if numValue then
@@ -1292,7 +1467,7 @@ function M.registerUICallbacks()
                                             else -- analog
                                                 numValue = math.max(CONSTANTS.ANALOG_MIN, math.min(CONSTANTS.ANALOG_MAX, numValue))
                                             end
-                                            M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "value", numValue)
+                                            M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "value", numValue, direction)
                                         end
                                     end
                                 end
@@ -1301,14 +1476,14 @@ function M.registerUICallbacks()
                             -- Show/hide value input based on selected state
                             if actionMapping and (actionMapping.type == "trigger" or actionMapping.type == "analog") then
                                 local shouldHide = (selectedState == M.ActionState.NONE or selectedState == M.ActionState.COPY_VALUE)
-                                configui.hideWidget("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_value_group", shouldHide)
+                                configui.hideWidget("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. actionName .. "_value_group", shouldHide)
                             end
 
                             -- Update actions tree node color based on current action states
                             local hasConfiguredActions = false
                             for _, checkActionName in ipairs(allActions) do
                                 if checkActionName ~= inputName then
-                                    local currentActionStateIndex = configui.getValue("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. checkActionName .. "_state") or 1
+                                    local currentActionStateIndex = configui.getValue("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. checkActionName .. "_state") or 1
                                     
                                     -- Use the correct value array based on action type
                                     local checkActionMapping = inputMapping[checkActionName]
@@ -1334,15 +1509,15 @@ function M.registerUICallbacks()
 
                             -- Update actions tree node color dynamically
                             if hasConfiguredActions then
-                                configui.setColor("remap_" .. inputName .. "_" .. stateKey .. "_actions", "#0088FFFF")
+                                configui.setColor("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_actions", "#0088FFFF")
                             else
-                                configui.setColor("remap_" .. inputName .. "_" .. stateKey .. "_actions", nil) -- Reset to default
+                                configui.setColor("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_actions", nil) -- Reset to default
                             end
                         end)
 
                         -- Value callback for trigger and analog actions
                         if actionMapping and (actionMapping.type == "trigger" or actionMapping.type == "analog") then
-                            configui.onUpdate("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_value", function(value)
+                            configui.onUpdate("remap_" .. inputName .. "_" .. stateKey .. idSuffix .. "_action_" .. actionName .. "_value", function(value)
                                 -- Convert text input to number and validate
                                 local numValue = tonumber(value)
                                 if numValue then
@@ -1352,9 +1527,10 @@ function M.registerUICallbacks()
                                     else -- analog
                                         numValue = math.max(CONSTANTS.ANALOG_MIN, math.min(CONSTANTS.ANALOG_MAX, numValue))
                                     end
-                                    M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "value", numValue)
+                                    M.updateStateSpecificActionConfig(inputName, stateKey, actionName, "value", numValue, direction)
                                 end
                             end)
+                        end
                         end
                     end
                 end
@@ -1380,7 +1556,8 @@ function M.addNewInputMapping(inputName)
             if mapping.type == "trigger" then
                 newConfig.threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD
             elseif mapping.type == "analog" then
-                newConfig.threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                newConfig.positive_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                newConfig.negative_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
             end
 
             -- Create array format with single configuration
@@ -1566,38 +1743,12 @@ function M.refreshUI()
                 local stateConfig = stateConfigs[stateKey]
 
                 if hasStateConfig and stateConfig then
-                    for _, actionName in ipairs(allActions) do
-                        if actionName ~= inputName then
-                            local currentActionStateIndex = 1  -- Default to "None"
-
-                            -- Check if action exists and get its state
-                            if stateConfig.actions and stateConfig.actions[actionName] then
-                                local actionConfig = stateConfig.actions[actionName]
-                                if actionConfig and actionConfig.state then
-                                    -- Use the correct value array based on action type
-                                    local actionMapping = inputMapping[actionName]
-                                    local valueArray = actionStateValues  -- default
-                                    if actionMapping then
-                                        if actionMapping.type == "button" then
-                                            valueArray = buttonActionStateValues
-                                        elseif actionMapping.type == "trigger" then
-                                            valueArray = triggerActionStateValues
-                                        elseif actionMapping.type == "analog" then
-                                            valueArray = analogActionStateValues
-                                        end
-                                    end
-                                    
-                                    for i, value in ipairs(valueArray) do
-                                        if actionConfig.state == value then
-                                            currentActionStateIndex = i
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-
-                            configui.setValue("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_state", currentActionStateIndex)
-                        end
+                    local mapping = inputMapping[inputName]
+                    if mapping and mapping.type == "analog" and stateKey == M.InputState.ON then
+                        setDirectionalActionUIValues(inputName, stateKey, stateConfig, "positive")
+                        setDirectionalActionUIValues(inputName, stateKey, stateConfig, "negative")
+                    else
+                        setDirectionalActionUIValues(inputName, stateKey, stateConfig, nil)
                     end
                 end
             end
@@ -1618,14 +1769,18 @@ function M.updateRemapConfig(inputName, configType, value)
             parameters[profile][inputName] = configs
         end
 
-        -- Update the first state configuration for now
-        local config = configs[1]
+        local config = getOnStateConfig(configs)
         if configType == "state" then
             config.state = value
         elseif configType == "unpress" then
             config.unpress = value
         elseif configType == "threshold" then
             config.threshold = value
+        elseif configType == "positive_threshold" then
+            config.positive_threshold = value
+            config.threshold = value
+        elseif configType == "negative_threshold" then
+            config.negative_threshold = value
         end
         isParametersDirty = true
         -- Force recompilation
@@ -1702,7 +1857,7 @@ function M.updateRemapActionConfig(inputName, actionName, configType, value)
     end
 end
 
-function M.updateStateSpecificActionConfig(inputName, stateType, actionName, configType, value)
+function M.updateStateSpecificActionConfig(inputName, stateType, actionName, configType, value, direction)
     if isRefreshing then return end
 
     local profile = currentEditingProfile or "default"
@@ -1733,6 +1888,13 @@ function M.updateStateSpecificActionConfig(inputName, stateType, actionName, con
         end
     end
 
+    local actionsKey = "actions"
+    if direction == "positive" then
+        actionsKey = "positive_actions"
+    elseif direction == "negative" then
+        actionsKey = "negative_actions"
+    end
+
     -- If no config exists for this state and we're setting an action, create one
     if not targetConfig and value ~= M.ActionState.NONE then
         local mapping = inputMapping[inputName]
@@ -1746,7 +1908,8 @@ function M.updateStateSpecificActionConfig(inputName, stateType, actionName, con
             if mapping.type == "trigger" then
                 targetConfig.threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD
             elseif mapping.type == "analog" then
-                targetConfig.threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                targetConfig.positive_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                targetConfig.negative_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
             end
 
             table.insert(configs, targetConfig)
@@ -1757,52 +1920,49 @@ function M.updateStateSpecificActionConfig(inputName, stateType, actionName, con
         if configType == "state" then
             if value == M.ActionState.NONE then
                 -- Remove the action if "None" is selected
-                if targetConfig.actions and targetConfig.actions[actionName] then
-                    targetConfig.actions[actionName] = nil
+                if targetConfig[actionsKey] and targetConfig[actionsKey][actionName] then
+                    targetConfig[actionsKey][actionName] = nil
 
                     -- If no actions remain, remove the actions table
-                    if next(targetConfig.actions) == nil then
-                        targetConfig.actions = nil
+                    if next(targetConfig[actionsKey]) == nil then
+                        targetConfig[actionsKey] = nil
                     end
 
                     -- UI will update on next user interaction (no automatic refresh to prevent loops)
                 end
             else
                 -- Add or update the action
-                if not targetConfig.actions then
-                    targetConfig.actions = {}
+                if not targetConfig[actionsKey] then
+                    targetConfig[actionsKey] = {}
                 end
 
-                local wasEnabled = targetConfig.actions[actionName] ~= nil
-                local currentState = wasEnabled and targetConfig.actions[actionName].state
-
-                if not targetConfig.actions[actionName] then
-                    targetConfig.actions[actionName] = {}
+                if not targetConfig[actionsKey][actionName] then
+                    targetConfig[actionsKey][actionName] = {}
 
                     -- Set default value for trigger and analog actions (but not for COPY_VALUE)
                     local actionMapping = inputMapping[actionName]
                     if actionMapping and (actionMapping.type == "trigger" or actionMapping.type == "analog") and value ~= M.ActionState.COPY_VALUE then
                         if actionMapping.type == "trigger" then
-                            targetConfig.actions[actionName].value = CONSTANTS.TRIGGER_MAX
+                            targetConfig[actionsKey][actionName].value = CONSTANTS.TRIGGER_MAX
                         else -- analog
-                            targetConfig.actions[actionName].value = CONSTANTS.ANALOG_MAX
+                            targetConfig[actionsKey][actionName].value = CONSTANTS.ANALOG_MAX
                         end
                     end
                 end
 
-                targetConfig.actions[actionName].state = value
+                targetConfig[actionsKey][actionName].state = value
                 
                 -- Remove value parameter when switching to COPY_VALUE since it's not needed
-                if value == M.ActionState.COPY_VALUE and targetConfig.actions[actionName].value then
-                    targetConfig.actions[actionName].value = nil
+                if value == M.ActionState.COPY_VALUE and targetConfig[actionsKey][actionName].value then
+                    targetConfig[actionsKey][actionName].value = nil
                 end
 
                 -- UI will update on next user interaction (no automatic refresh to prevent loops)
             end
         elseif configType == "value" then
             -- Update action value
-            if targetConfig.actions and targetConfig.actions[actionName] then
-                targetConfig.actions[actionName].value = value
+            if targetConfig[actionsKey] and targetConfig[actionsKey][actionName] then
+                targetConfig[actionsKey][actionName].value = value
             end
         end
 
@@ -1856,7 +2016,8 @@ function M.updateInputStateConfig(inputName, stateType, isEnabled)
                 if mapping.type == "trigger" then
                     newConfig.threshold = CONSTANTS.DEFAULT_TRIGGER_THRESHOLD
                 elseif mapping.type == "analog" then
-                    newConfig.threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                    newConfig.positive_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
+                    newConfig.negative_threshold = CONSTANTS.DEFAULT_ANALOG_THRESHOLD
                 end
 
                 table.insert(currentConfigs, newConfig)
@@ -2063,38 +2224,12 @@ function M.showDeveloperConfiguration()
             local stateConfig = stateConfigs[stateKey]
 
             if hasStateConfig and stateConfig then
-                for _, actionName in ipairs(allActions) do
-                    if actionName ~= inputName then
-                        local currentActionStateIndex = 1  -- Default to "None"
-
-                        -- Check if action exists and get its state
-                        if stateConfig.actions and stateConfig.actions[actionName] then
-                            local actionConfig = stateConfig.actions[actionName]
-                            if actionConfig and actionConfig.state then
-                                -- Use the correct value array based on action type
-                                local actionMapping = inputMapping[actionName]
-                                local valueArray = actionStateValues  -- default
-                                if actionMapping then
-                                    if actionMapping.type == "button" then
-                                        valueArray = buttonActionStateValues
-                                    elseif actionMapping.type == "trigger" then
-                                        valueArray = triggerActionStateValues
-                                    elseif actionMapping.type == "analog" then
-                                        valueArray = analogActionStateValues
-                                    end
-                                end
-                                
-                                for i, value in ipairs(valueArray) do
-                                    if actionConfig.state == value then
-                                        currentActionStateIndex = i
-                                        break
-                                    end
-                                end
-                            end
-                        end
-
-                        configui.setValue("remap_" .. inputName .. "_" .. stateKey .. "_action_" .. actionName .. "_state", currentActionStateIndex)
-                    end
+                local mapping = inputMapping[inputName]
+                if mapping and mapping.type == "analog" and stateKey == M.InputState.ON then
+                    setDirectionalActionUIValues(inputName, stateKey, stateConfig, "positive")
+                    setDirectionalActionUIValues(inputName, stateKey, stateConfig, "negative")
+                else
+                    setDirectionalActionUIValues(inputName, stateKey, stateConfig, nil)
                 end
             end
         end

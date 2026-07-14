@@ -33,7 +33,7 @@ end
 
 -- Loads parameters from JSON file
 function M:load(useProfileFormat)
-    uevrUtils.print("[parameters] Loading parameters from " .. self.fileName .. ".json")
+    --uevrUtils.print("[parameters] Loading parameters from " .. self.fileName .. ".json")
     local params = json.load_file(self.fileName .. ".json")
     if params ~= nil then
         self.parameters = params
@@ -45,18 +45,27 @@ end
 
 -- Sets a parameter value and marks as dirty for autosave
 function M:set(key, value, persist)
+--print("[parameters] Setting parameter before:", key, type(value), tostring(value), persist)
+    value = uevrUtils.getNativeValue(value)
+--print("[parameters] Setting parameter after:", key, tostring(value), persist)
     if type(key) == "table" then
         local field = self.parameters
-        for i = 1, #key-1 do
-            local k = key[i]
-            if type(field[k]) ~= "table" then
-                field[k] = {}   -- auto-create missing table
+        if field ~= nil then
+            for i = 1, #key-1 do
+                local k = key[i]
+                if k ~= nil then
+                    if type(field[k]) ~= "table" then
+                        field[k] = {}   -- auto-create missing table
+                    end
+                    field = field[k]
+                end
             end
-            field = field[k]
+            field[key[#key]] = value
         end
-        field[key[#key]] = value
     else
-        self.parameters[key] = value
+        if self.parameters ~= nil then
+            self.parameters[key] = value
+        end
     end
     self.isDirty = persist == nil and false or persist
 end
@@ -71,7 +80,7 @@ function M:get(key)
         end
         return field
     else
-        return self.parameters[key]
+        return self.parameters and self.parameters[key] or nil
     end
 end
 
@@ -159,44 +168,48 @@ function M:getAllActiveProfileParams()
 end
 
 function M:getFromActiveProfile(key)
-    return self:get({self:getActiveProfile(), key})
     -- if activeProfile == "default" and self:get(activeProfile) == nil then
     --     return self:get(key) -- Fallback to global if default profile not set
     -- else
     --     return self:get({activeProfile, key})
     -- end
-    -- if type(key) == "table" then
-    --     local fullKey = {activeProfile}
-    --     for _, k in ipairs(key) do
-    --         table.insert(fullKey, k)
-    --     end
-    --     return self:get(fullKey)
-    -- else
-    --     return self:get({activeProfile, key})
-    -- end
+
+    --return self:get({self:getActiveProfile(), key})
+    --Changed this and setInActiveProfile to allow for nested keys like {"channels", 5}
+    if type(key) == "table" then
+        local fullKey = {self:getActiveProfile()}
+        for _, k in ipairs(key) do
+            table.insert(fullKey, k)
+        end
+        return self:get(fullKey)
+    else
+        return self:get({self:getActiveProfile(), key})
+    end
 end
 
 function M:setInActiveProfile(key, value, persist)
-    self:set({self:getActiveProfile(), key}, value, persist)
-    -- if type(key) == "table" then
-    --     local fullKey = {activeProfile}
-    --     for _, k in ipairs(key) do
-    --         table.insert(fullKey, k)
-    --     end
-    --     self:set(fullKey, value, persist)
-    -- else
-    --     self:set({activeProfile, key}, value, persist)
-    -- end
+    --self:set({self:getActiveProfile(), key}, value, persist)
+
+    --This allows: setInActiveProfile({"channels", 5}, 2, true)
+    if type(key) == "table" then
+        local fullKey = {self:getActiveProfile()}
+        for _, k in ipairs(key) do
+            table.insert(fullKey, k)
+        end
+        self:set(fullKey, value, persist)
+    else
+        self:set({self:getActiveProfile(), key}, value, persist)
+    end
 end
 
-function M.getProfilePreConfigurationWidgets(widgetPrefix)
+function M.getProfilePreConfigurationWidgets(widgetPrefix, customLabel)
     return spliceableInlineArray{
 		{ widgetType = "indent", width = 10 },
 		{ widgetType = "new_line" },
 		{
 			widgetType = "combo",
 			id = widgetPrefix .. "active_profile",
-			label = "Current Profile",
+			label = "Current " .. (customLabel or "Profile"),
 			selections = {"None"},
 			initialValue = 1,
 			width = 200
@@ -231,24 +244,24 @@ function M.getProfilePreConfigurationWidgets(widgetPrefix)
     }
 end
 
-function M.getProfilePostConfigurationWidgets(widgetPrefix)
+function M.getProfilePostConfigurationWidgets(widgetPrefix, customLabel)
     return spliceableInlineArray{
 		{
 			widgetType = "button",
 			id = widgetPrefix .. "new_profile",
-			label = "New Profile"
+			label = "New " .. (customLabel or "Profile")
 		},
 		{ widgetType = "same_line" },
 		{
 			widgetType = "button",
 			id = widgetPrefix .. "duplicate_profile",
-			label = "Duplicate Profile"
+			label = "Duplicate " .. (customLabel or "Profile")
 		},
 		{ widgetType = "same_line" },
 		{
 			widgetType = "button",
 			id = widgetPrefix .. "delete_profile",
-			label = "Delete Profile"
+			label = "Delete " .. (customLabel or "Profile")
 		},
 		{ widgetType = "unindent", width = 10 },
     }
@@ -309,7 +322,7 @@ function M:setupProfileUpdateHandlers(widgetPrefix)
 
     configui.onUpdate(widgetPrefix .. "duplicate_profile", function()
         local activeProfileID = self:getActiveProfile()
-        local newProfileID = uevrUtils.generateUUID()
+        local newProfileID = uevrUtils.guid()
         self:createProfile(newProfileID, "Duplicate Profile")
 
         -- Copy all settings from active profile to new profile
@@ -339,6 +352,7 @@ end
 --local profileIDs = {}
 function M:updateProfileUI(noCallbacks)
 	local ids, names, current = self:getProfiles()
+    --print("Updating profile UI with profiles:", ids, names, current)
 	self.profileIDs = ids
 	configui.setSelections(self.widgetPrefix .. "active_profile", names)
 	configui.setValue(self.widgetPrefix .. "active_profile", current, noCallbacks)

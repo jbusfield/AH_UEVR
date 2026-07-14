@@ -348,7 +348,7 @@ end
 
 function Laser:setVisibility(isVisible)
     local c = uevrUtils.getValid(self.component)
-    if c ~= nil then
+    if c ~= nil and c.SetVisibility ~= nil then
         c:SetVisibility(isVisible, false)
     end
     if self.targetComponent ~= nil then

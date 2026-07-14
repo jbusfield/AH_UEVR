@@ -195,6 +195,8 @@ Usage
 local uevrUtils = require("libs/uevr_utils")
 local controllers = require("libs/controllers")
 local linetracer = require("libs/linetracer")
+local attachments = require("libs/attachments")
+local mathLib = require("libs/core/math_lib")
 
 --local hands = require("libs/hands")
 
@@ -219,6 +221,7 @@ M.ReticuleTargetMethod = {
 	RIGHT_CONTROLLER = 3,
 	LEFT_ATTACHMENT = 4,
 	RIGHT_ATTACHMENT = 5,
+	CUSTOM = 6,
 }
 M.ReticuleEyeDominance = {
 	NONE = 1,
@@ -230,6 +233,7 @@ M.ReticuleEyeDominance = {
 
 local reticuleTargetMethod = M.ReticuleTargetMethod.CAMERA
 local reticuleTargetRotationOffset = uevrUtils.rotator({0,0,0})
+local customTargetMethodCallback = nil
 
 local reticuleAutoCreationType = M.ReticuleType.NONE
 local autoHandleInput = true -- unless an external call is made to update(), in which case disable auto handling of input
@@ -364,25 +368,63 @@ local function lineTracerCallback(hitResult, targetLocation)
 end
 
 local lineTracerSubscribed = false
+local weaponLineTracerSubscribed = false
 local function updateLineTracerSubscription()
-	local lineTracerType = reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA and linetracer.TraceType.CAMERA or (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and linetracer.TraceType.LEFT_CONTROLLER or linetracer.TraceType.RIGHT_CONTROLLER)
-	local options = {
-		collisionChannel = currentReticuleOptions.collisionChannel,
-		traceComplex = currentReticuleOptions.traceComplex,
-		minHitDistance = currentReticuleOptions.minHitDistance,
-		ignoreActors = currentReticuleOptions.ignoreActors
-	}
-	if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
-		options.rotationOffset = nil
-	else
-		options.rotationOffset = reticuleTargetRotationOffset
-	end
+	if reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA or reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER or reticuleTargetMethod == M.ReticuleTargetMethod.RIGHT_CONTROLLER then
+		local lineTracerType = reticuleTargetMethod == M.ReticuleTargetMethod.CAMERA and linetracer.TraceType.CAMERA or (reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_CONTROLLER and linetracer.TraceType.LEFT_CONTROLLER or linetracer.TraceType.RIGHT_CONTROLLER)
+		local options = {
+			collisionChannel = currentReticuleOptions.collisionChannel,
+			traceComplex = currentReticuleOptions.traceComplex,
+			minHitDistance = currentReticuleOptions.minHitDistance,
+			ignoreActors = currentReticuleOptions.ignoreActors
+		}
+		if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
+			options.rotationOffset = nil
+		else
+			options.rotationOffset = reticuleTargetRotationOffset
+		end
 
-	if lineTracerSubscribed then --if already subscribed, just update options
-		linetracer.updateOptions("reticule_module", lineTracerType, options)
-	else
-		lineTracerSubscribed = true
-		linetracer.subscribe("reticule_module", lineTracerType, lineTracerCallback, options, 10)
+		if lineTracerSubscribed then --if already subscribed, just update options
+			linetracer.updateOptions("reticule_module", lineTracerType, options)
+		else
+			lineTracerSubscribed = true
+			linetracer.subscribe("reticule_module", lineTracerType, lineTracerCallback, options, 10)
+		end
+	else -- weapons traces are custom because they are not the typical camera or controller traces
+		local options = {
+				collisionChannel = currentReticuleOptions.collisionChannel,
+				traceComplex = currentReticuleOptions.traceComplex,
+				minHitDistance = currentReticuleOptions.minHitDistance,
+				ignoreActors = currentReticuleOptions.ignoreActors,
+				customCallback = function()
+					-- Return (location, rotation) for trace origin
+					if reticuleTargetMethod == M.ReticuleTargetMethod.CUSTOM then
+						if customTargetMethodCallback == nil then 
+							return uevrUtils.vector(0,0,0), uevrUtils.rotator(0,0,0)
+						else
+							return customTargetMethodCallback()
+						end
+					else
+						return attachments.getActiveAttachmentTransforms(reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_ATTACHMENT and Handed.Left or Handed.Right)
+					end
+					--local location, rotation = attachments.getActiveAttachmentTransforms(reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_ATTACHMENT and Handed.Left or Handed.Right)
+					--rotation = getAimOffsetAdjustedRotation(rotation)
+					--return location, rotation
+				end
+		}
+
+		if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
+			options.rotationOffset = nil
+		else
+			options.rotationOffset = reticuleTargetRotationOffset
+		end
+
+		if weaponLineTracerSubscribed then --if already subscribed, just update options
+			linetracer.updateOptions("reticule_module_weapon", "weapon_trace", options)
+		else
+			weaponLineTracerSubscribed = true
+			linetracer.subscribe("reticule_module_weapon", "weapon_trace", lineTracerCallback, options, 10)
+		end
 	end
 end
 
@@ -390,6 +432,10 @@ local function unsubscribeFromLineTracer()
 	if lineTracerSubscribed then
 		linetracer.unsubscribeAll("reticule_module")
 		lineTracerSubscribed = false
+	end
+	if weaponLineTracerSubscribed then
+		linetracer.unsubscribeAll("reticule_module_weapon")
+		weaponLineTracerSubscribed = false
 	end
 end
 
@@ -813,12 +859,20 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 			temp_vec3f:set(hmdToTargetDirection.X,hmdToTargetDirection.Y,hmdToTargetDirection.Z)
 
 			--this rotation is the relative rotation that keeps the reticule facing the user
+			--Conv_VectorToRotator returns pitch and yaw but not roll because a rotation from a direction vector cannot represent roll
+			--This is enough to keep the reticule always facing the player but not enough to apply a world offset to position_2d because roll
+			--is needed for that. position_2d therefore always applies world offset up/down left/right and not relative to the roll of the weapon
+			--in other words, that offset is basically useless unless the game is messed up in some way
 			local rot = kismet_math_library:Conv_VectorToRotator(temp_vec3f)
 			rot = uevrUtils.sumRotators(rot, currentReticuleOptions.rotation, rotation)
+			--rot = mathLib.composeRotators(rot, currentReticuleOptions.rotation, rotation)
 
             temp_vec3f:set(originLocation.X + (hmdToTargetDirection.X * drawDistance), originLocation.Y + (hmdToTargetDirection.Y * drawDistance), originLocation.Z + (hmdToTargetDirection.Z * drawDistance))
 
-			local adjustedPosition = getOffsetWorldPosition(temp_vec3f, rot, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y)
+			local vector = uevrUtils.rotateVector(uevrUtils.vector(0, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y), rot)
+			local adjustedPosition = kismet_math_library:Add_VectorVector(temp_vec3f, vector)
+
+			--local adjustedPosition = getOffsetWorldPosition(temp_vec3f, rot, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y)
 			reticuleComponent:K2_SetWorldLocationAndRotation(adjustedPosition, rot, false, reusable_hit_result, false)
 			if scale ~= nil then
 				local finalScale = kismet_math_library:Multiply_VectorVector(kismet_math_library:Multiply_VectorVector(uevrUtils.vector(scale), currentReticuleOptions.scale), uevrUtils.vector(1, currentReticuleOptions.scale_2d.X,  currentReticuleOptions.scale_2d.Y))
@@ -925,7 +979,7 @@ function M.setActiveReticuleByLabel(label, force)
 		return
 	end
 	local newID = nil
-	if parameters ~= nil then
+	if parameters ~= nil and parameters["reticuleList"] ~= nil then
 		for i=1, #parameters["reticuleList"] do
 			if parameters["reticuleList"][i].label == label then
 				newID = parameters["reticuleList"][i].id
@@ -943,6 +997,10 @@ end
 
 function M.registerOnCustomCreateCallback(callback)
 	uevrUtils.registerUEVRCallback("on_reticule_create", callback)
+end
+
+function M.registerCustomTargetCallback(callback)
+	customTargetMethodCallback = callback
 end
 
 uevrUtils.setInterval(1000, function()
@@ -963,6 +1021,9 @@ uevrUtils.registerUEVRCallback("scope_active_change", function(isActive)
 		scopeHidden = isActive
 	else
 		scopeHidden = false
+	end
+	if scopeHidden == false then
+		updateLineTracerSubscription()
 	end
 	--M.setHidden(isActive)
 end)

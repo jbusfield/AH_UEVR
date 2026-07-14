@@ -416,6 +416,7 @@ local function updateMesh()
 		currentComponent = uevrUtils.createStaticMeshComponent(meshNames[currentSelectionIndex])
 	elseif configui.getValue("uevr_dev_mesh_type") == 2 then
 		currentComponent = uevrUtils.createSkeletalMeshComponent(meshNames[currentSelectionIndex])
+		--currentComponent = uevrUtils.createPoseableMeshFromSkeletalMesh(meshNames[currentSelectionIndex], {parent=nil, useDefaultPose = true, showDebug = true})
 	end
 	
 	if uevrUtils.getValid(currentComponent) ~= nil then

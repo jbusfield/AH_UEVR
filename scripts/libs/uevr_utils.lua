@@ -781,8 +781,31 @@ Usage
 
 ]]--
 --Find orphaned prints: ^[^-]*[^.\w]print\(
-
+local uevrLib = require('libs/core/uevr_lib')
+local mathLib = require('libs/core/math_lib')
 require("libs/enums/unreal")
+local coreLerp = require("libs/core/lerp")
+local pluginExists, plugin = pcall(require, "libs/core/plugin")
+if pluginExists == false then plugin = nil end
+local function checkPluginExists()
+	if plugin == nil then
+		print("Plugin module not loaded. Ensure libs/core/plugin.lua exists and the uevr_utils.dll file is in the plugins folder")
+	end
+	return plugin ~= nil
+end
+-- No need for tArray, Plugin can handle everything tArray did
+-- TArray Support ----------------
+-- local tArrayExists, tArray = pcall(require, "libs/core/tarray")
+-- if tArrayExists == false then tArray = nil end
+-- local function checkTArrayExists()
+-- 	if tArray == nil then
+-- 		print("TArray module not loaded. Ensure libs/core/tarray.lua exists and the tarray_helper.dll file is in the plugins folder")
+-- 	end
+-- 	return tArray ~= nil
+-- end
+-- TArray Support ----------------
+---------------------------------
+
 -------------------------------
 -- Globals
 --  These exist for backwards compatability with existing scripts 
@@ -819,6 +842,7 @@ pawn = nil -- updated every tick
 ---@class Statics
 ---@field [any] any
 Statics = nil
+GameUserSettings = nil
 WidgetBlueprintLibrary = nil
 WidgetLayoutLibrary = nil
 ---@class kismet_system_library
@@ -950,12 +974,11 @@ KeyName = {
 	PS4_Special = "PS4_Special"
 }
 -------------------------------
-local coreLerp = require("libs/core/lerp")
 
 local M = {}
 
-local classCache = {}
-local structCache = {}
+-- local classCache = {}
+-- local structCache = {}
 local uevrCallbacks = {}
 local keyBindList = {}
 local usingLuaVR = false
@@ -965,6 +988,14 @@ local isCharacterHidden = false
 local isDeveloperMode = nil
 local handedness = Handed.Right --a way to track handedness in a unified way
 
+-- No need for tArray, Plugin can handle everything tArray did
+-- function M.checkTArrayExists()
+--     return checkTArrayExists()
+-- end
+
+function M.checkPluginExists()
+    return checkPluginExists()
+end
 
 function register_key_bind(keyName, callbackFunc)
 	keyBindList[keyName] = {}
@@ -985,7 +1016,7 @@ local function updateKeyPress()
 		if pc == nil then pc = uevr.api:get_player_controller(0) end -- dont allocate until we know its needed
 		if keyStruct == nil then keyStruct = M.get_reuseable_struct_object("ScriptStruct /Script/InputCore.Key") end
 		keyStruct.KeyName = M.fname_from_string(key)
-		if pc:IsInputKeyDown(keyStruct) then
+		if pc ~= nil and pc:IsInputKeyDown(keyStruct) then
 			if elem.isPressed == false then
 				elem.func()
 				elem.isPressed = true
@@ -1306,6 +1337,20 @@ local function updateLazyPoll(delta)
 	end
 end
 
+local function unregisterUEVRCallback(callbackName, callbackFunc)
+	if uevrCallbacks[callbackName] ~= nil then
+		for i, entry in ipairs(uevrCallbacks[callbackName]) do
+			if entry.func == callbackFunc then
+				table.remove(uevrCallbacks[callbackName], i)
+				break
+			end
+		end
+	end
+end
+function M.unregisterUEVRCallback(callbackName, callbackFunc)
+	unregisterUEVRCallback(callbackName, callbackFunc)
+end
+
 local function registerUEVRCallback(callbackName, callbackFunc, priority)
 	if priority == nil then priority = 0 end
 	if uevrCallbacks[callbackName] == nil then uevrCallbacks[callbackName] = {} end
@@ -1487,15 +1532,21 @@ local function updateCharacterHidden()
 	end
 end
 
-local isInCutsceneOverride = nil
+local cutsceneStatus = {}
+--local isInCutsceneOverride = nil
 function M.setIsInCutsceneOverride(override)
-	isInCutsceneOverride = override
+	cutsceneStatus.isInCutsceneOverride = override
+end
+function M.setCutsceneDetectionOptions(options)
+	cutsceneStatus.useTargetIsCine = options.useTargetIsCine
+	cutsceneStatus.useActiveCameraIsCine = options.useActiveCameraIsCine
+	cutsceneStatus.useCameraComponentIsCine = options.useCameraComponentIsCine
 end
 local function updateCutscene()
 	if on_cutscene_change ~= nil or hasUEVRCallbacks("on_cutscene_change") then --don't bother doing anything if nothing is listening
-		if isInCutsceneOverride ~= nil then
-			if isInCutscene ~= isInCutsceneOverride then
-				isInCutscene = isInCutsceneOverride
+		if cutsceneStatus.isInCutsceneOverride ~= nil then
+			if isInCutscene ~= cutsceneStatus.isInCutsceneOverride then
+				isInCutscene = cutsceneStatus.isInCutsceneOverride
 				if on_cutscene_change ~= nil then
 					on_cutscene_change(isInCutscene)
 				end
@@ -1510,12 +1561,15 @@ local function updateCutscene()
 				if cameraManager ~= nil then
 					local target = cameraManager.ViewTarget.Target
 					local m_isInCutscene = false
+					local useTargetIsCine = cutsceneStatus.useTargetIsCine ~= false
+					local useActiveCameraIsCine = cutsceneStatus.useActiveCameraIsCine ~= false
+					local useCameraComponentIsCine = cutsceneStatus.useCameraComponentIsCine ~= false
 					if target ~= nil then
-						if target:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraActor")) then
+						if useTargetIsCine and target:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraActor")) then
 							m_isInCutscene = true
-						elseif target.ActiveCamera ~= nil and target.ActiveCamera.Camera ~= nil and target.ActiveCamera.Camera:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraComponent")) then
+						elseif useActiveCameraIsCine and target.ActiveCamera ~= nil and target.ActiveCamera.Camera ~= nil and target.ActiveCamera.Camera:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraComponent")) then
 							m_isInCutscene = true
-						elseif target.CameraComponent ~= nil and target.CameraComponent:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraComponent")) then
+						elseif useCameraComponentIsCine and target.CameraComponent ~= nil and target.CameraComponent:is_a(M.get_class("Class /Script/CinematicCamera.CineCameraComponent")) then
 							m_isInCutscene = true
 						end
 					end
@@ -1544,7 +1598,9 @@ local function updateMontage()
 				if on_montage_change ~= nil then
 					on_montage_change(currentMontage, montageName)
 				end
-				executeUEVRCallbacks("on_montage_change", currentMontage, montageName)
+				--there's a possibility Mesh doesnt exist. In that case we need to scan for all mesh children and I guess pick the first one
+				--same goes for the check in montage.lua. Inefficient though probably need to cache
+				executeUEVRCallbacks("on_montage_change", currentMontage, montageName, M.getValid(pawn, {"Mesh","AnimScriptInstance"}))
 			end
 		end
 	end
@@ -1596,6 +1652,7 @@ function M.initUEVR(UEVR, callbackFunc)
 	kismet_string_library = M.find_default_instance("Class /Script/Engine.KismetStringLibrary")
 	kismet_rendering_library = M.find_default_instance("Class /Script/Engine.KismetRenderingLibrary")
 	Statics = M.find_default_instance("Class /Script/Engine.GameplayStatics")
+	GameUserSettings = M.find_default_instance("Class /Script/Engine.GameUserSettings")
 	WidgetBlueprintLibrary = M.find_default_instance("Class /Script/UMG.WidgetBlueprintLibrary")
     WidgetLayoutLibrary = M.find_default_instance("Class /Script/UMG.WidgetLayoutLibrary")
     
@@ -1713,7 +1770,12 @@ function M.setLogToFile(val)
 end
 
 function M.printStackTrace()
+--	local ok, result = pcall(function()
     print(debug.traceback())
+--	end)
+--	if not ok then
+--		M.print(result)
+--	end
 end
 
 function M.print(str, logLevel)
@@ -1810,6 +1872,10 @@ function M.setHandedness(val)
 	M.executeUEVRCallbacks("handedness_change", val)
 end
 
+M.registerUEVRCallback("recenter_view", function()
+	uevr.params.vr.recenter_view()
+end)
+
 function M.getHandedness()
 	return handedness
 end
@@ -1860,253 +1926,262 @@ end
 
 --function M.vector(x, y, z, reuseable)
 function M.vector(...)
-    local arg = {...}
-	local x=0.0
-	local y=0.0
-	local z=0.0
-	local reuseable = false
+	return mathLib.vector(...)
+    -- local arg = {...}
+	-- local x=0.0
+	-- local y=0.0
+	-- local z=0.0
+	-- local reuseable = false
 
-	if #arg == 1 or #arg == 2 then
-		if type(arg[1]) == "table" or type(arg[1]) == "userdata" then
-			x = (arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0))
-			y = (arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0))
-			z = (arg[1].Z ~= nil) and arg[1].Z or ((arg[1].z ~= nil) and arg[1].z or ((#arg[1] > 2) and arg[1][3] or 0.0))
-		else
-			M.print("Invalid argument 1 passed to vector function", LogLevel.Warning)
-		end
+	-- if #arg == 1 or #arg == 2 then
+	-- 	if type(arg[1]) == "table" or type(arg[1]) == "userdata" then
+	-- 		x = (arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0))
+	-- 		y = (arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0))
+	-- 		z = (arg[1].Z ~= nil) and arg[1].Z or ((arg[1].z ~= nil) and arg[1].z or ((#arg[1] > 2) and arg[1][3] or 0.0))
+	-- 	else
+	-- 		M.print("Invalid argument 1 passed to vector function", LogLevel.Warning)
+	-- 	end
 
-		if #arg == 2 then
-			if type(arg[2]) == "boolean" then
-				reuseable = arg[2]
-			else
-				M.print("Invalid argument 2 passed to vector function", LogLevel.Warning)
-			end
-		end
-	elseif #arg == 3 or #arg == 4 then
-		if type(arg[1]) == "number" then x = arg[1] else M.print("Invalid x value passed to vector function", LogLevel.Warning) end
-		if type(arg[2]) == "number" then y = arg[2] else M.print("Invalid y value passed to vector function", LogLevel.Warning) end
-		if type(arg[3]) == "number" then z = arg[3] else M.print("Invalid z value passed to vector function", LogLevel.Warning) end
+	-- 	if #arg == 2 then
+	-- 		if type(arg[2]) == "boolean" then
+	-- 			reuseable = arg[2]
+	-- 		else
+	-- 			M.print("Invalid argument 2 passed to vector function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- elseif #arg == 3 or #arg == 4 then
+	-- 	if type(arg[1]) == "number" then x = arg[1] else M.print("Invalid x value passed to vector function", LogLevel.Warning) end
+	-- 	if type(arg[2]) == "number" then y = arg[2] else M.print("Invalid y value passed to vector function", LogLevel.Warning) end
+	-- 	if type(arg[3]) == "number" then z = arg[3] else M.print("Invalid z value passed to vector function", LogLevel.Warning) end
 
-		if #arg == 4 then
-			if type(arg[4]) == "boolean" then
-				reuseable = arg[4]
-			else
-				M.print("Invalid argument 4 passed to vector function", LogLevel.Warning)
-			end
-		end
-	end
+	-- 	if #arg == 4 then
+	-- 		if type(arg[4]) == "boolean" then
+	-- 			reuseable = arg[4]
+	-- 		else
+	-- 			M.print("Invalid argument 4 passed to vector function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- end
 
-	local vector = M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", reuseable)
-	if vector ~= nil then
-		if vector["X"] ~= nil then vector.X = x else vector.x = x end
-		if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
-		if vector["Z"] ~= nil then vector.Z = z else vector.z = z end
-	end
-	return vector
+	-- local vector = M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", reuseable)
+	-- if vector ~= nil then
+	-- 	if vector["X"] ~= nil then vector.X = x else vector.x = x end
+	-- 	if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
+	-- 	if vector["Z"] ~= nil then vector.Z = z else vector.z = z end
+	-- end
+	-- return vector
 
-	--this should work but doesnt, at least in robocop
-	--return kismet_math_library:MakeVector(x, y, z)
+	-- --this should work but doesnt, at least in robocop
+	-- --return kismet_math_library:MakeVector(x, y, z)
 
 end
+M.vector = M.profiler:wrap("vector", M.vector)
 
 function M.rotator(...)
-    local arg = {...}
-	local pitch=0
-	local yaw=0
-	local roll=0
-	local reuseable = false
+	return mathLib.rotator(...)
+    -- local arg = {...}
+	-- local pitch=0
+	-- local yaw=0
+	-- local roll=0
+	-- local reuseable = false
 
-	if #arg == 1 or #arg == 2 then
-		if type(arg[1]) == "userdata" then --maybe a rotator was sent in
-			--if arg[1]:is_a(M.get_class("ScriptStruct /Script/CoreUObject.Rotator")) then
-			return arg[1]
-		elseif type(arg[1]) == "table" then
-			pitch = (arg[1].Pitch ~= nil) and arg[1].Pitch or ((arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0)))
-			yaw = (arg[1].Yaw ~= nil) and arg[1].Yaw or ((arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0)))
-			roll = (arg[1].Roll ~= nil) and arg[1].Roll or ((arg[1].Z ~= nil) and arg[1].Z or ((arg[1].z ~= nil) and arg[1].z or ((#arg[1] > 2) and arg[1][3] or 0.0)))
-		else
-			M.print("Invalid argument 1 passed to rotator function", LogLevel.Warning)
-		end
+	-- if #arg == 1 or #arg == 2 then
+	-- 	if type(arg[1]) == "userdata" then --maybe a rotator was sent in
+	-- 		--if arg[1]:is_a(M.get_class("ScriptStruct /Script/CoreUObject.Rotator")) then
+	-- 		return arg[1]
+	-- 	elseif type(arg[1]) == "table" then
+	-- 		pitch = (arg[1].Pitch ~= nil) and arg[1].Pitch or ((arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0)))
+	-- 		yaw = (arg[1].Yaw ~= nil) and arg[1].Yaw or ((arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0)))
+	-- 		roll = (arg[1].Roll ~= nil) and arg[1].Roll or ((arg[1].Z ~= nil) and arg[1].Z or ((arg[1].z ~= nil) and arg[1].z or ((#arg[1] > 2) and arg[1][3] or 0.0)))
+	-- 	else
+	-- 		M.print("Invalid argument 1 passed to rotator function", LogLevel.Warning)
+	-- 	end
 
-		if #arg == 2 then
-			if type(arg[2]) == "boolean" then
-				reuseable = arg[2]
-			else
-				M.print("Invalid argument 2 passed to rotator function", LogLevel.Warning)
-			end
-		end
-	elseif #arg == 3 or #arg == 4 then
-		if type(arg[1]) == "number" then pitch = arg[1] else M.print("Invalid pitch value passed to rotator function", LogLevel.Warning) end
-		if type(arg[2]) == "number" then yaw = arg[2] else M.print("Invalid yaw value passed to rotator function", LogLevel.Warning) end
-		if type(arg[3]) == "number" then roll = arg[3] else M.print("Invalid roll value passed to rotator function", LogLevel.Warning) end
+	-- 	if #arg == 2 then
+	-- 		if type(arg[2]) == "boolean" then
+	-- 			reuseable = arg[2]
+	-- 		else
+	-- 			M.print("Invalid argument 2 passed to rotator function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- elseif #arg == 3 or #arg == 4 then
+	-- 	if type(arg[1]) == "number" then pitch = arg[1] else M.print("Invalid pitch value passed to rotator function", LogLevel.Warning) end
+	-- 	if type(arg[2]) == "number" then yaw = arg[2] else M.print("Invalid yaw value passed to rotator function", LogLevel.Warning) end
+	-- 	if type(arg[3]) == "number" then roll = arg[3] else M.print("Invalid roll value passed to rotator function", LogLevel.Warning) end
 
-		if #arg == 4 then
-			if type(arg[4]) == "boolean" then
-				reuseable = arg[4]
-			else
-				M.print("Invalid argument 4 passed to vector function", LogLevel.Warning)
-			end
-		end
-	end
+	-- 	if #arg == 4 then
+	-- 		if type(arg[4]) == "boolean" then
+	-- 			reuseable = arg[4]
+	-- 		else
+	-- 			M.print("Invalid argument 4 passed to vector function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- end
 
-	if kismet_math_library.MakeRotator ~= nil then
-		return kismet_math_library:MakeRotator(roll, pitch, yaw)
-	end
+	-- if kismet_math_library.MakeRotator ~= nil then
+	-- 	return kismet_math_library:MakeRotator(roll, pitch, yaw)
+	-- end
 
-	local rotator = M.get_struct_object("ScriptStruct /Script/CoreUObject.Rotator", reuseable)
-	if rotator ~= nil then
-		if rotator["Pitch"] ~= nil then rotator.Pitch = pitch else rotator.pitch = pitch end
-		if rotator["Yaw"] ~= nil then rotator.Yaw = yaw else rotator.yaw = yaw end
-		if rotator["Roll"] ~= nil then rotator.Roll = roll else rotator.roll = roll end
-	else
-		rotator = {Pitch = pitch, Yaw = yaw, Roll = roll}
-	end
-	return rotator
+	-- local rotator = M.get_struct_object("ScriptStruct /Script/CoreUObject.Rotator", reuseable)
+	-- if rotator ~= nil then
+	-- 	if rotator["Pitch"] ~= nil then rotator.Pitch = pitch else rotator.pitch = pitch end
+	-- 	if rotator["Yaw"] ~= nil then rotator.Yaw = yaw else rotator.yaw = yaw end
+	-- 	if rotator["Roll"] ~= nil then rotator.Roll = roll else rotator.roll = roll end
+	-- else
+	-- 	rotator = {Pitch = pitch, Yaw = yaw, Roll = roll}
+	-- end
+	-- return rotator
 end
 M.rotator = M.profiler:wrap("rotator", M.rotator)
 
 function M.vector2D(...)
-    local arg = {...}
-	local x=0.0
-	local y=0.0
-	local reuseable = false
+	return mathLib.vector2D(...)
+    -- local arg = {...}
+	-- local x=0.0
+	-- local y=0.0
+	-- local reuseable = false
 
-	if #arg == 1 or (#arg == 2 and type(arg[2]) == "boolean") then
-		if type(arg[1]) == "table" or type(arg[1]) == "userdata" then
-			x = (arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0))
-			y = (arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0))
-		else
-			M.print("Invalid argument 1 passed to vector function", LogLevel.Warning)
-		end
+	-- if #arg == 1 or (#arg == 2 and type(arg[2]) == "boolean") then
+	-- 	if type(arg[1]) == "table" or type(arg[1]) == "userdata" then
+	-- 		x = (arg[1].X ~= nil) and arg[1].X or ((arg[1].x ~= nil) and arg[1].x or ((#arg[1] > 0) and arg[1][1] or 0.0))
+	-- 		y = (arg[1].Y ~= nil) and arg[1].Y or ((arg[1].y ~= nil) and arg[1].y or ((#arg[1] > 1) and arg[1][2] or 0.0))
+	-- 	else
+	-- 		M.print("Invalid argument 1 passed to vector function", LogLevel.Warning)
+	-- 	end
 
-		if #arg == 2 then
-			if type(arg[2]) == "boolean" then
-				reuseable = arg[2]
-			else
-				M.print("Invalid argument 2 passed to vector function", LogLevel.Warning)
-			end
-		end
-	elseif #arg == 2 or (#arg == 3 and type(arg[3]) == "boolean") then
-		if type(arg[1]) == "number" then x = arg[1] else M.print("Invalid x value passed to vector function", LogLevel.Warning) end
-		if type(arg[2]) == "number" then y = arg[2] else M.print("Invalid y value passed to vector function", LogLevel.Warning) end
+	-- 	if #arg == 2 then
+	-- 		if type(arg[2]) == "boolean" then
+	-- 			reuseable = arg[2]
+	-- 		else
+	-- 			M.print("Invalid argument 2 passed to vector function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- elseif #arg == 2 or (#arg == 3 and type(arg[3]) == "boolean") then
+	-- 	if type(arg[1]) == "number" then x = arg[1] else M.print("Invalid x value passed to vector function", LogLevel.Warning) end
+	-- 	if type(arg[2]) == "number" then y = arg[2] else M.print("Invalid y value passed to vector function", LogLevel.Warning) end
 
-		if #arg == 3 then
-			if type(arg[3]) == "boolean" then
-				reuseable = arg[3]
-			else
-				M.print("Invalid argument 3 passed to vector function", LogLevel.Warning)
-			end
-		end
-	end
+	-- 	if #arg == 3 then
+	-- 		if type(arg[3]) == "boolean" then
+	-- 			reuseable = arg[3]
+	-- 		else
+	-- 			M.print("Invalid argument 3 passed to vector function", LogLevel.Warning)
+	-- 		end
+	-- 	end
+	-- end
 
-	local vector = M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector2D", reuseable)
-	if vector ~= nil then
-		if vector["X"] ~= nil then vector.X = x else vector.x = x end
-		if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
-	end
-	return vector
+	-- local vector = M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector2D", reuseable)
+	-- if vector ~= nil then
+	-- 	if vector["X"] ~= nil then vector.X = x else vector.x = x end
+	-- 	if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
+	-- end
+	-- return vector
 end
 
 -- Converts degrees to radians
-local function deg2rad(deg)
-    return deg * math.pi / 180
-end
+-- local function deg2rad(deg)
+--     return deg * math.pi / 180
+-- end
 
 -- Converts a rotator (pitch, yaw, roll) to a quaternion
-local function rotatorToQuaternion(pitch, yaw, roll)
-    -- Convert to radians
-    local p = deg2rad(pitch)
-    local y = deg2rad(yaw)
-    local r = deg2rad(roll)
+-- local function rotatorToQuaternion(pitch, yaw, roll)
+--     -- Convert to radians
+--     local p = deg2rad(pitch)
+--     local y = deg2rad(yaw)
+--     local r = deg2rad(roll)
 
-    -- Half angles
-    local cy = math.cos(y * 0.5)
-    local sy = math.sin(y * 0.5)
-    local cp = math.cos(p * 0.5)
-    local sp = math.sin(p * 0.5)
-    local cr = math.cos(r * 0.5)
-    local sr = math.sin(r * 0.5)
+--     -- Half angles
+--     local cy = math.cos(y * 0.5)
+--     local sy = math.sin(y * 0.5)
+--     local cp = math.cos(p * 0.5)
+--     local sp = math.sin(p * 0.5)
+--     local cr = math.cos(r * 0.5)
+--     local sr = math.sin(r * 0.5)
 
-    -- Quaternion components
-    local qw = cr * cp * cy + sr * sp * sy
-    local qx = sr * cp * cy - cr * sp * sy
-    local qy = cr * sp * cy + sr * cp * sy
-    local qz = cr * cp * sy - sr * sp * cy
+--     -- Quaternion components
+--     local qw = cr * cp * cy + sr * sp * sy
+--     local qx = sr * cp * cy - cr * sp * sy
+--     local qy = cr * sp * cy + sr * cp * sy
+--     local qz = cr * cp * sy - sr * sp * cy
 
-    return {x = qx, y = qy, z = qz, w = qw}
-end
+--     return {x = qx, y = qy, z = qz, w = qw}
+-- end
 
 function M.rotatorFromQuat(x, y, z, w)
-	return kismet_math_library:Quat_Rotator(M.quat(x, y, z, w))
+	return mathLib.rotatorFromQuat(x, y, z, w)
+	--return kismet_math_library:Quat_Rotator(M.quat(x, y, z, w))
 end
 
 function M.quatFromRotator(pitch, yaw, roll)
-	local quat = rotatorToQuaternion(pitch, yaw, roll)
-	return M.quatf(quat.x, quat.y, quat.z, quat.w)
-	--return kismet_math_library:Conv_VectorToQuaternion(M.vector(x, y, z))
+	return mathLib.quatFromEuler({X=pitch, Y=yaw, Z=roll}, false)
+	-- --return kismet_math_library:Quat_MakeFromEuler(M.vector(roll, pitch, yaw))
+	-- local quat = rotatorToQuaternion(pitch, yaw, roll)
+	-- return M.quatf(quat.x, quat.y, quat.z, quat.w)
+	-- --return kismet_math_library:Conv_VectorToQuaternion(M.vector(x, y, z))
 end
 
 function M.quat(x, y, z, w, reuseable)
-	local quat = M.get_struct_object("ScriptStruct /Script/CoreUObject.Quat", reuseable)
-	if quat ~= nil then
-		kismet_math_library:Quat_SetComponents(quat, x, y, z, w)
-	end
-	return quat
+	return mathLib.quat(x, y, z, w, reuseable)
+	-- --return kismet_math_library:MakeQuat(x, y, z, w)
+	-- local quat = M.get_struct_object("ScriptStruct /Script/CoreUObject.Quat", reuseable)
+	-- if quat ~= nil then
+	-- 	if kismet_math_library.Quat_SetComponents ~= nil then
+	-- 		kismet_math_library:Quat_SetComponents(quat, x, y, z, w)
+	-- 	else
+	-- 		quat.X = x
+	-- 		quat.Y = y
+	-- 		quat.Z = z
+	-- 		quat.W = w
+	-- 	end
+	-- end
+	-- return quat
 end
 
 function M.rotateVector(vector, rotator)
-	return kismet_math_library:Quat_RotateVector(kismet_math_library:Quat_MakeFromEuler(M.vector(rotator.Roll, rotator.Pitch, rotator.Yaw)), vector)
+	return mathLib.vectorRotate(vector, rotator, true)
+	--return kismet_math_library:Quat_RotateVector(kismet_math_library:Quat_MakeFromEuler(M.vector(rotator.Roll, rotator.Pitch, rotator.Yaw)), vector)
 end
+M.rotateVector = M.profiler:wrap("rotateVector", M.rotateVector)
+
 
 function M.vectorDistance(vector1, vector2)
-	return kismet_math_library:Vector_Distance(vector1, vector2)
+	return mathLib.vectorDistance(vector1, vector2)
+	--return kismet_math_library:Vector_Distance(vector1, vector2)
 end
--- function M.sumRotators(...) --BreakRotator doesnt work in robocop UB
-    -- local arg = {...}
-	-- local rollTotal,pitchTotal,yawTotal = 0,0,0
-	-- for i = 1, #arg do
-		-- local roll,pitch,yaw = 0,0,0
-		-- kismet_math_library:BreakRotator(arg[i], roll, pitch, yaw) 
-		-- print("here", roll, pitch, yaw)
-		-- rollTotal = rollTotal + roll
-		-- pitchTotal = pitchTotal + pitch
-		-- yawTotal = yawTotal + yaw
-	-- end
-	-- return kismet_math_library:MakeRotator(rollTotal, pitchTotal, yawTotal)
--- end
 
 function M.sumRotators(...)
-    local arg = {...}
-	local rollTotal,pitchTotal,yawTotal = 0,0,0
-	if arg ~= nil then
-		for i = 1, #arg do
-			if arg[i] ~= nil then
-				if arg[i]["Pitch"] ~= nil then pitchTotal = pitchTotal + arg[i]["Pitch"] else pitchTotal = pitchTotal + arg[i]["pitch"] end
-				if arg[i]["Yaw"] ~= nil then yawTotal = yawTotal + arg[i]["Yaw"] else yawTotal = yawTotal + arg[i]["yaw"] end
-				if arg[i]["Roll"] ~= nil then rollTotal = rollTotal + arg[i]["Roll"] else rollTotal = rollTotal + arg[i]["roll"] end
-			end
-		end
-	end
-	return kismet_math_library:MakeRotator(rollTotal, pitchTotal, yawTotal)
+	return mathLib.sumRotators(...)
+    -- local arg = {...}
+	-- local rollTotal,pitchTotal,yawTotal = 0,0,0
+	-- if arg ~= nil then
+	-- 	for i = 1, #arg do
+	-- 		if arg[i] ~= nil then
+	-- 			if arg[i]["Pitch"] ~= nil then pitchTotal = pitchTotal + arg[i]["Pitch"] else pitchTotal = pitchTotal + arg[i]["pitch"] end
+	-- 			if arg[i]["Yaw"] ~= nil then yawTotal = yawTotal + arg[i]["Yaw"] else yawTotal = yawTotal + arg[i]["yaw"] end
+	-- 			if arg[i]["Roll"] ~= nil then rollTotal = rollTotal + arg[i]["Roll"] else rollTotal = rollTotal + arg[i]["roll"] end
+	-- 		end
+	-- 	end
+	-- end
+	-- return kismet_math_library:MakeRotator(rollTotal, pitchTotal, yawTotal)
 end
 
 function M.get_transform(position, rotation, scale, reuseable)
-	if position == nil then position = {X=0.0, Y=0.0, Z=0.0} end
-	if scale == nil then scale = {X=1.0, Y=1.0, Z=1.0} end
-	local transform = M.get_struct_object("ScriptStruct /Script/CoreUObject.Transform", reuseable)
-	if transform ~= nil then
-		transform.Translation = vector_3f(position.X, position.Y, position.Z)
-		if rotation == nil then
-			transform.Rotation.X = 0.0
-			transform.Rotation.Y = 0.0
-			transform.Rotation.Z = 0.0
-			transform.Rotation.W = 1.0
-		else
-			transform.Rotation = rotation
-		end
-		transform.Scale3D = vector_3f(scale.X, scale.Y, scale.Z)
-	end
-	return transform
+	return mathLib.getTransform(position, rotation, scale, reuseable)
+	-- if position == nil then position = {X=0.0, Y=0.0, Z=0.0} end
+	-- if scale == nil then scale = {X=1.0, Y=1.0, Z=1.0} end
+	-- local transform = M.get_struct_object("ScriptStruct /Script/CoreUObject.Transform", reuseable)
+	-- if transform ~= nil then
+	-- 	transform.Translation = vector_3f(position.X, position.Y, position.Z)
+	-- 	if rotation == nil then
+	-- 		transform.Rotation.X = 0.0
+	-- 		transform.Rotation.Y = 0.0
+	-- 		transform.Rotation.Z = 0.0
+	-- 		transform.Rotation.W = 1.0
+	-- 	else
+	-- 		transform.Rotation = rotation
+	-- 	end
+	-- 	transform.Scale3D = vector_3f(scale.X, scale.Y, scale.Z)
+	-- end
+	-- return transform
 end
 
 function M.set_component_relative_location(component, position)
@@ -2147,23 +2222,28 @@ function M.set_component_relative_transform(component, position, rotation, scale
 end
 
 function M.distanceBetween(vector1, vector2)
-	return kismet_math_library:Vector_Distance(M.vector(vector1), M.vector(vector2))
+	return mathLib.vectorDistance(M.vector(vector1), M.vector(vector2))
+	--return kismet_math_library:Vector_Distance(M.vector(vector1), M.vector(vector2))
 end
 
 function M.getForwardVector(rotator)
-	if rotator ~= nil then
-		return kismet_math_library:GetForwardVector(rotator)
-	else
-		return M.vector(0,0,0)
-	end
+	return mathLib.getForwardVector(rotator, true)
+	-- rotator = M.rotator(rotator)
+	-- if rotator ~= nil then
+	-- 	return kismet_math_library:GetForwardVector(rotator)
+	-- else
+	-- 	return M.vector(0,0,0)
+	-- end
 end
+M.getForwardVector = M.profiler:wrap("getForwardVector", M.getForwardVector)
 
 function M.clampAngle180(angle)
-    angle = angle % 360
-    if angle > 180 then
-        angle = angle - 360
-    end
-    return angle
+	return mathLib.clampAngle180(angle)
+    -- angle = angle % 360
+    -- if angle > 180 then
+    --     angle = angle - 360
+    -- end
+    -- return angle
 end
 
 -- The following two function allow you to create an array that can have a function as an element
@@ -2233,29 +2313,35 @@ function M.setUEVRParam_int(paramName, value)
 	uevr.params.vr.set_mod_value(paramName, value)
 end
 
+function M.setUEVRParam(paramName, value)
+	uevr.params.vr.set_mod_value(paramName, value)
+end
+
 function M.PositiveIntegerMask(text)
     return text:gsub("[^%-%d]", "")
 end
 
 function M.get_reuseable_struct_object(structClassName)
-	if structCache[structClassName] == nil then
-		local class = M.get_class(structClassName)
-		if class ~= nil then
-			structCache[structClassName] = StructObject.new(class)
-		end
-	end
-	return structCache[structClassName]
+	return uevrLib.get_reuseable_struct_object(structClassName)
+	-- if structCache[structClassName] == nil then
+	-- 	local class = M.get_class(structClassName)
+	-- 	if class ~= nil then
+	-- 		structCache[structClassName] = StructObject.new(class)
+	-- 	end
+	-- end
+	-- return structCache[structClassName]
 end
 
 function M.get_struct_object(structClassName, reuseable)
-	if reuseable == true then
-		return M.get_reuseable_struct_object(structClassName)
-	end
-	local class = M.get_class(structClassName)
-	if class ~= nil then
-		return StructObject.new(class)
-	end
-	return nil
+	return uevrLib.get_struct_object(structClassName, reuseable)
+	-- if reuseable == true then
+	-- 	return M.get_reuseable_struct_object(structClassName)
+	-- end
+	-- local class = M.get_class(structClassName)
+	-- if class ~= nil then
+	-- 	return StructObject.new(class)
+	-- end
+	-- return nil
 end
 
 function M.pauseGame(value)
@@ -2310,6 +2396,38 @@ function M.getWorld()
 	return M.get_world()
 end
 
+
+function M.spawn_actor_of_class(className, transform, collisionMethod, owner)
+	local actorClass = M.get_class(className)
+	if actorClass == nil then
+		print("spawn_actor_of_class - class not found:", className)
+		return nil
+	end
+
+	local viewport = game_engine.GameViewport
+	if viewport == nil then
+		print("Viewport is nil")
+	end
+
+	local worldContext = viewport.World
+	if worldContext == nil then
+		print("World is nil")
+	end
+
+	if transform == nil then
+		transform = M.get_transform()
+	end
+
+	collisionMethod = collisionMethod or 1
+	local actor = Statics:BeginDeferredActorSpawnFromClass(worldContext, actorClass, transform, collisionMethod, owner)
+	if actor == nil then
+		print("spawn_actor_of_class - failed to spawn:", className)
+		return nil
+	end
+
+	Statics:FinishSpawningActor(actor, transform)
+	return actor
+end
 
 function M.spawn_actor(transform, collisionMethod, owner, tag)
 	local viewport = game_engine.GameViewport
@@ -2374,25 +2492,30 @@ function M.getAllActorsOfClass(className)
 	return actors
 end
 
--- TArray Support ----------------
-local tArrayExists, tArray = pcall(require, "libs/core/tarray")
-if tArrayExists == false then tArray = nil end
-local function checkTArrayExists()
-	if tArray == nil then
-		M.print("TArray module not loaded. Ensure libs/core/tarray.lua exists and the tarray_helper.dll file is in the plugins folder", LogLevel.Error)
-	end
-	return tArray ~= nil
-end
----------------------------------
 
 function M.getSocketNames(object, callback)
----@diagnostic disable-next-line: need-check-nil
-	if checkTArrayExists() then tArray.registerCallback(callback, "FName", object, "GetAllSocketNames()") end
+	--if checkTArrayExists() then tArray.registerCallback(callback, "FName", object, "GetAllSocketNames()") end
+
+	local arr = {}
+	if checkPluginExists() then
+		plugin.showDebug = true
+		---@diagnostic disable-next-line: need-check-nil
+		local result = plugin.executeFunction(object, "GetAllSocketNames")
+		if result ~= nil then
+			local names = result.ReturnValue or {}
+			for i = 1, #names do
+				local name = names[i]
+				table.insert(arr, name)
+			end
+		end
+		plugin.showDebug = false
+	end
+	callback(arr)
 end
 
 --coutesy of Pande4360
 function M.validate_object(object)
-    if object == nil or not UEVR_UObjectHook.exists(object) then
+	if object == nil or type(object) ~= "userdata" or not UEVR_UObjectHook.exists(object) then
         return nil
     else
         return object
@@ -2480,11 +2603,9 @@ function M.create_component_of_class(class, manualAttachment, relativeTransform,
 		--print("Used AddComponentByClass to create component",component)
 	end
 	if component ~= nil then
-		component:SetVisibility(true)
-		component:SetHiddenInGame(false)
-		if component.SetCollisionEnabled ~= nil then
-			component:SetCollisionEnabled(0, false)
-		end
+		if component.SetVisibility ~= nil then component:SetVisibility(true) end
+		if component.SetHiddenInGame ~= nil then component:SetHiddenInGame(false) end
+		if component.SetCollisionEnabled ~= nil then component:SetCollisionEnabled(0, false) end
 	else
 		M.print("Failed to create_component_of_class because component was nil")
 	end
@@ -2496,72 +2617,79 @@ function M.getEngineVersion()
 end
 
 function M.find_required_object(name)
-    local obj = uevr.api:find_uobject(name)
-    if not obj then
-        M.print("Cannot find " .. name)
-        return nil
-    end
+	return uevrLib.find_required_object(name)
+    -- local obj = uevr.api:find_uobject(name)
+    -- if not obj then
+    --     M.print("Cannot find " .. name)
+    --     return nil
+    -- end
 
-    return obj
+    -- return obj
 end
 
 --uses caching
 function M.get_class(name, clearCache)
-	if name == nil then return nil end
-	if clearCache or classCache[name] == nil then
-		local ok, result = pcall(function()
-			return uevr.api:find_uobject(name)
-		end)
-		if not ok then
-			print("[uevr_utils] Error finding class in get_class handled properly", name, result)
-			return nil
-		end
-		classCache[name] = result
-		--classCache[name] = uevr.api:find_uobject(name)
-	end
-    return classCache[name]
+	return uevrLib.get_class(name, clearCache)
+	-- if name == nil then return nil end
+	-- if clearCache or classCache[name] == nil then
+	-- 	local ok, result = pcall(function()
+	-- 		return uevr.api:find_uobject(name)
+	-- 	end)
+	-- 	if not ok then
+	-- 		print("[uevr_utils] Error finding class in get_class handled properly", name, result)
+	-- 		return nil
+	-- 	end
+	-- 	classCache[name] = result
+	-- 	--classCache[name] = uevr.api:find_uobject(name)
+	-- end
+    -- return classCache[name]
 end
 
 function M.find_default_instance(className)
-	local class =  M.get_class(className)
-	if class ~= nil and class.get_first_object_matching ~= nil then
-		return class:get_class_default_object()
-	end
-	return nil
+	return uevrLib.find_default_instance(className)
+	-- local class =  M.get_class(className)
+	-- if class ~= nil and class.get_first_object_matching ~= nil then
+	-- 	return class:get_class_default_object()
+	-- end
+	-- return nil
 end
 
 function M.find_first_instance(className, includeDefault)
-	local class =  M.get_class(className)
-	if class ~= nil and class.get_first_object_matching ~= nil then
-		return class:get_first_object_matching(includeDefault)
-	end
-	return nil
+	return uevrLib.find_first_instance(className, includeDefault)
+	-- local class =  M.get_class(className)
+	-- if class ~= nil and class.get_first_object_matching ~= nil then
+	-- 	return class:get_first_object_matching(includeDefault)
+	-- end
+	-- return nil
 end
 
 function M.find_all_instances(className, includeDefault)
-	local class =  M.get_class(className)
-	if class ~= nil and class.get_objects_matching ~= nil then
-		return class:get_objects_matching(includeDefault)
-	end
-	return nil
+	return uevrLib.find_all_instances(className, includeDefault)
+	-- local class =  M.get_class(className)
+	-- if class ~= nil and class.get_objects_matching ~= nil then
+	-- 	return class:get_objects_matching(includeDefault)
+	-- end
+	-- return nil
 end
 
 function M.find_first_of(className, includeDefault)
-	if includeDefault == nil then includeDefault = false end
-	local class =  M.get_class(className)
-	if class ~= nil then
-		return UEVR_UObjectHook.get_first_object_by_class(class, includeDefault)
-	end
-	return nil
+	return uevrLib.find_first_of(className, includeDefault)
+	-- if includeDefault == nil then includeDefault = false end
+	-- local class =  M.get_class(className)
+	-- if class ~= nil then
+	-- 	return UEVR_UObjectHook.get_first_object_by_class(class, includeDefault)
+	-- end
+	-- return nil
 end
 
 function M.find_all_of(className, includeDefault)
-	if includeDefault == nil then includeDefault = false end
-	local class =  M.get_class(className)
-	if class ~= nil then
-		return UEVR_UObjectHook.get_objects_by_class(class, includeDefault)
-	end
-	return {}
+	return uevrLib.find_all_of(className, includeDefault)
+	-- if includeDefault == nil then includeDefault = false end
+	-- local class =  M.get_class(className)
+	-- if class ~= nil then
+	-- 	return UEVR_UObjectHook.get_objects_by_class(class, includeDefault)
+	-- end
+	-- return {}
 end
 
 function M.splitOnLastPeriod(input)
@@ -2575,27 +2703,68 @@ function M.splitOnLastPeriod(input)
 end
 
 function M.find_instance_of(className, objectName)
-	--check if the objectName is a short name
-	local isShortName = string.find(objectName, '.', 1, true) == nil
-	local instances = M.find_all_of(className, true)
-	for i, instance in ipairs(instances) do
-		if isShortName then
-			local before, after = M.splitOnLastPeriod(instance:get_full_name())
-			if after ~= nil and after == objectName then
-				return instance
-			end
-		else
-			if instance:get_full_name() == objectName then
-				return instance
-			end
-		end
-	end
-	return nil
+	return uevrLib.find_instance_of(className, objectName)
+	-- --check if the objectName is a short name
+	-- local isShortName = string.find(objectName, '.', 1, true) == nil
+	-- local instances = M.find_all_of(className, true)
+	-- for i, instance in ipairs(instances) do
+	-- 	if isShortName then
+	-- 		local before, after = M.splitOnLastPeriod(instance:get_full_name())
+	-- 		if after ~= nil and after == objectName then
+	-- 			return instance
+	-- 		end
+	-- 	else
+	-- 		if instance:get_full_name() == objectName then
+	-- 			return instance
+	-- 		end
+	-- 	end
+	-- end
+	-- return nil
 end
 
 function M.fname_from_string(str)
 	if str == nil then str = "" end
 	return kismet_string_library:Conv_StringToName(str)
+end
+
+-- print(uevrUtils.ternary(true, true, nil))    -- true
+-- print(uevrUtils.ternary(false, true, nil))   -- nil
+-- print(uevrUtils.ternary(true, false, nil))   -- false
+-- print(uevrUtils.ternary(true, nil, true))    -- nil
+function M.ternary(cond, trueVal, falseVal)
+    if cond then
+        return trueVal
+    else
+        return falseVal
+    end
+end
+
+-- Use this version for expensive computations
+-- For example: ternary(inVal, expensiveA(), expensiveB()) evaluates both always, so use ternary_lazy instead
+-- Example 1:
+-- local result = uevrUtils.ternary_lazy(
+--     boolVal,
+--     function() return nil end,
+--     function() return false end
+-- )
+-- Example 2:
+-- local function add(a, b)
+--     return a + b
+-- end
+-- local function sub(a, b)
+--     return a - b
+-- end
+-- local result = ternary_lazy(
+--     inVal,
+--     function() return add(10, 5) end,
+--     function() return sub(10, 5) end
+-- )
+function M.ternary_lazy(cond, trueFn, falseFn)
+    if cond then
+        return trueFn()
+    else
+        return falseFn()
+    end
 end
 
 -- float values from 0.0 to 1.0
@@ -2710,31 +2879,49 @@ function M.splitStr(inputstr, sep)
    	return t
 end
 
+function M.startsWith(source, find)
+    if type(source) ~= "string" or type(find) ~= "string" then
+        return false
+    end
+
+    if #find == 0 then
+        return true
+    end
+
+    return source:sub(1, #find) == find
+end
+
 function M.getArrayFromVector2(vec)
 	if vec == nil then
 		return {0,0}
 	end
-	return {vec.x, vec.y}
+	return {M.cleanFloat(vec.x), M.cleanFloat(vec.y)}
 end
 
 function M.getArrayFromVector3(vec)
 	if vec == nil then
 		return {0,0,0}
 	end
-	return {vec.X, vec.Y, vec.Z}
+	return {M.cleanFloat(vec.X), M.cleanFloat(vec.Y), M.cleanFloat(vec.Z)}
 end
 
 function M.getArrayFromVector4(vec)
 	if vec == nil then
 		return {0, 0, 0, 0}
 	end
-	return {vec.X, vec.Y, vec.Z, vec.W}
+	return {M.cleanFloat(vec.X), M.cleanFloat(vec.Y), M.cleanFloat(vec.Z), M.cleanFloat(vec.W)}
+end
+
+function M.cleanFloat(num)
+	if num < 0.0001 and num > -0.0001 then num = 0 end
+	num = math.floor(num * 10000) / 10000
+	return num
 end
 
 --convert userdata types to native lua types for json saving
 function M.getNativeValue(val, useTable)
 	local returnValue = val
-	if type(val) == "userdata" then
+	if type(val) == "userdata" then 
 ---@diagnostic disable-next-line: undefined-field
 		if val.x ~= nil and val.y ~= nil and val.z == nil and val.w == nil then
 			returnValue = M.getArrayFromVector2(val)
@@ -2752,6 +2939,16 @@ function M.getNativeValue(val, useTable)
 			returnValue = M.getArrayFromVector4(val)
 			if useTable == true then
 				returnValue = {X=returnValue[1], Y=returnValue[2], Z=returnValue[3], W=returnValue[4]}
+			end
+		elseif val.X ~= nil and val.Y ~= nil and val.Z ~= nil then
+			returnValue = M.getArrayFromVector3(val)
+			if useTable == true then
+				returnValue = {X=returnValue[1], Y=returnValue[2], Z=returnValue[3]}
+			end
+		elseif val.Pitch ~= nil and val.Yaw ~= nil and val.Roll ~= nil then
+			returnValue = {M.cleanFloat(val.Pitch), M.cleanFloat(val.Yaw), M.cleanFloat(val.Roll)}
+			if useTable == true then
+				returnValue = {Pitch=returnValue[1], Yaw=returnValue[2], Roll=returnValue[3]}
 			end
 		end
 	end
@@ -2887,7 +3084,7 @@ function M.stopFadeCamera()
 		--(FromAlpha, ToAlpha, Duration, Color, bShouldFadeAudio, bHoldWhenFinished)
 		camMan:StopCameraFade()
 		--camMan:SetManualCameraFade(1, color_from_rgba(0.0, 0.0, 0.0, 0.0), false)
-		print("stopFadeCamera executed\n")
+		--print("stopFadeCamera executed\n")
 	end
 	fadeHardLock = false
 	fadeSoftLock = false
@@ -2966,7 +3163,7 @@ function M.get_decoupled_pitch_adjust_ui()
 end
 
 
-function M.enableCameraLerp(state, pitch, yaw, roll)
+function M.enableCameraLerp(state, pitch, yaw, roll, speed)
 	if pitch == true then
 		uevr.params.vr.set_mod_value("VR_LerpCameraPitch", state and "true" or "false")
 	end
@@ -2975,6 +3172,9 @@ function M.enableCameraLerp(state, pitch, yaw, roll)
 	end
 	if roll == true then
 		uevr.params.vr.set_mod_value("VR_LerpCameraRoll", state and "true" or "false")
+	end
+	if speed ~= nil then
+		uevr.params.vr.set_mod_value("VR_LerpCameraSpeed", speed)
 	end
 end
 
@@ -2994,6 +3194,11 @@ end
 
 function M.setUIFollowsViewSize(size)
 	uevr.params.vr.set_mod_value("UI_Size", tostring(size))
+end
+
+-- 0-flat, 1-cylinder
+function M.setUIShape(overlayType)
+	uevr.params.vr.set_mod_value("UI_OverlayType", tostring(overlayType))
 end
 
 --there should be a better way to do this with the asset registry
@@ -3076,12 +3281,15 @@ function M.getPropertiesOfClass(object, className, excludeInherited)
 		while M.getValid(class) ~= nil do
 			local property = class:get_child_properties()
 			while property ~= nil do
-				if property:get_class():get_name() == "ObjectProperty" then
-					local value = object[property:get_fname():to_string()]
-					if value ~= nil and (propertyClass == nil or value:is_a(propertyClass)) then
-						table.insert(propertiesList, property:get_fname():to_string())
+				-- single pcall to guard against metamethod/index errors
+				pcall(function()
+					if property:get_class():get_name() == "ObjectProperty" then
+						local value = object[property:get_fname():to_string()]
+						if value ~= nil and (propertyClass == nil or value:is_a(propertyClass)) then
+							table.insert(propertiesList, property:get_fname():to_string())
+						end
 					end
-				end
+				end)
 				property = property:get_next()
 			end
 			if excludeInherited == true then
@@ -3137,7 +3345,9 @@ function M.destroyComponent(component, destroyOwner, destroyChildren)
 				if children ~= nil then
 					M.print("[destroyComponent] Found " .. #children .. " children")
 					for i = #children, 1, -1 do
-						M.destroyComponent(children[i], destroyOwner, destroyChildren)
+						-- Never propagate destroyOwner into children: they share the same owner actor.
+						-- Destroying the owner during child recursion can invalidate subsequent UObject calls and crash.
+						M.destroyComponent(children[i], false, destroyChildren)
 					end
 				else
 					M.print("[destroyComponent] No children found")
@@ -3188,9 +3398,9 @@ end
 function M.createPoseableMeshFromSkeletalMesh(skeletalMeshComponent, options)
 	if options == nil then options = {} end
 	local showDebug = options.showDebug
-	if showDebug == true then M.print("Creating PoseableMeshComponent from " .. skeletalMeshComponent:get_full_name()) end
 	local poseableComponent = nil
 	if skeletalMeshComponent ~= nil then
+		if showDebug == true then M.print("Creating PoseableMeshComponent from " .. skeletalMeshComponent:get_full_name()) end
 		if skeletalMeshComponent:is_a(M.get_class("Class /Script/Engine.SkeletalMeshComponent")) or skeletalMeshComponent:is_a(M.get_class("Class /Script/Engine.PoseableMeshComponent")) then
 			poseableComponent = M.create_component_of_class("Class /Script/Engine.PoseableMeshComponent", options.manualAttachment, options.relativeTransform, options.deferredFinish, options.parent, options.tag)
 			--poseableComponent:SetCollisionEnabled(0, false)
@@ -3304,6 +3514,9 @@ function M.createSkeletalMeshComponent(mesh, options)
 	return component
 end
 
+
+-- Bone handler functions
+-- TODO move this to a core file
 function M.getRootBoneOfBone(skeletalMeshComponent, boneName)
 	local fName = M.fname_from_string(boneName)
 	local boneName = fName
@@ -3327,7 +3540,109 @@ function M.getBoneNames(skeletalMeshComponent)
 	return boneNames
 end
 
+function M.getAncestorBones(component, boneName)
+	if component == nil then return {} end
+	if boneName == nil or boneName == "" then return {component:GetBoneName(1)} end
+	local boneNames = {}
+	local fName = M.fname_from_string(boneName)
+	while fName:to_string() ~= "None" do
+		table.insert(boneNames, fName:to_string())
+		fName = component:GetParentBone(fName)
+	end
+	return boneNames
+end
 
+function M.findCommonAncestor(mesh, boneName1, boneName2)
+	if mesh == nil or boneName1 == "None" or boneName2 == "None" then
+		return nil
+	end
+	local ancestors1 = M.getAncestorBones(mesh, boneName1)
+	local ancestors2 = M.getAncestorBones(mesh, boneName2)
+	for _, ancestor1 in ipairs(ancestors1) do
+		for _, ancestor2 in ipairs(ancestors2) do
+			if ancestor1 == ancestor2 and ancestor1 ~= boneName1 and ancestor1 ~= boneName2 then
+				return ancestor1
+			end
+		end
+	end
+	return nil
+end
+
+-- Finds the opposite (left/right) bone in a list, handling various naming conventions
+-- bone_name: string, is_left: boolean, bone_list: table of strings
+function M.findOppositeBone(bone_name, is_left, bone_list)
+	-- Patterns for left/right detection (expanded for mid-string)
+	local left_right_pairs = {
+		{"_l_", "_r_"}, {"_L_", "_R_"},
+		{"_l$", "_r$"}, {"_L$", "_R$"},
+		{"_l", "_r"}, {"_L", "_R"},
+		{"left", "right"}, {"Left", "Right"}, {"LEFT", "RIGHT"},
+		{"\\.l$", ".r$"}, {"\\.L$", ".R$"},
+		{"-l$", "-r$"}, {"-L$", "-R$"},
+		{" l ", " r "}, {" L ", " R "},
+	}
+
+	local candidates = {}
+	local seen = {}
+
+	local function add_candidate(candidate)
+		if type(candidate) == "string" and candidate ~= bone_name and not seen[candidate] then
+			table.insert(candidates, candidate)
+			seen[candidate] = true
+		end
+	end
+
+	-- Try all left/right swaps
+	for _, pair in ipairs(left_right_pairs) do
+		local from_pat, to_pat = is_left and pair[1] or pair[2], is_left and pair[2] or pair[1]
+		local candidate = bone_name:gsub(from_pat, to_pat)
+		add_candidate(candidate)
+	end
+
+	-- Also try simple _l_ <-> _r_ anywhere in the string
+	if is_left then
+		add_candidate(bone_name:gsub("_l_", "_r_"))
+		add_candidate(bone_name:gsub("_L_", "_R_"))
+	else
+		add_candidate(bone_name:gsub("_r_", "_l_"))
+		add_candidate(bone_name:gsub("_R_", "_L_"))
+	end
+
+	-- Try swapping _l/_r or L/R anywhere in the name (but not if it's the only L/R in the string)
+	if is_left then
+		add_candidate(bone_name:gsub("([_.%-])l([_.%-])", "%1r%2"))
+		add_candidate(bone_name:gsub("([_.%-])L([_.%-])", "%1R%2"))
+		add_candidate(bone_name:gsub("l$", "r"))
+		add_candidate(bone_name:gsub("L$", "R"))
+	else
+		add_candidate(bone_name:gsub("([_.%-])r([_.%-])", "%1l%2"))
+		add_candidate(bone_name:gsub("([_.%-])R([_.%-])", "%1L%2"))
+		add_candidate(bone_name:gsub("r$", "l"))
+		add_candidate(bone_name:gsub("R$", "L"))
+	end
+
+	-- Try global L/R swap (last resort, only if above fails)
+	local swapped
+	if is_left then
+		swapped = bone_name:gsub("[lL]", function(c) return (c == "l" and "r") or "R" end)
+	else
+		swapped = bone_name:gsub("[rR]", function(c) return (c == "r" and "l") or "L" end)
+	end
+	add_candidate(swapped)
+
+	-- Search for any candidate in the bone_list
+	for _, candidate in ipairs(candidates) do
+		for _, b in ipairs(bone_list) do
+			if b == candidate then
+				return b
+			end
+		end
+	end
+
+	-- Not found
+	return nil
+end
+-- End bone functions
 
 --options are width, height, format
 function M.createRenderTarget2D(options)
@@ -3433,7 +3748,7 @@ function M.createWidgetComponent(widget, options)
 			end
 		else
 			--Temporary hack for Unreal Engine 5.5+ returning invalid classes for a few seconds after level change
-			if className ~= nil then classCache[className] = nil end
+			if className ~= nil then uevrLib.clearClassCache(className) end
 			M.print("WidgetComponent not created because widget could not be created")
 		end
 	else
@@ -3558,23 +3873,24 @@ function M.getCleanHitResult(hitResult)
 		local bInitialOverlap = {}
 		local Time = {}
 		local Distance = {}
-		local Location = {}
-		local ImpactPoint = {}
-		local Normal = {}
-		local ImpactNormal = {}
+		local Location = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
+		local ImpactPoint = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
+		local Normal = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
+		local ImpactNormal = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
 		local PhysMat = {}
 		local HitActor = {}
 		local HitComponent = {}
 		local HitBoneName = {}
+		local BoneName = {}
 		local HitItem = {}
 		local ElementIndex = {}
 		local FaceIndex = {}
-		local TraceStart = {}
-		local TraceEnd = {}
+		local TraceStart = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
+		local TraceEnd = {} --M.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", false)
 
 		--static void BreakHitResult(const struct FHitResult& Hit, bool* bBlockingHit, bool* bInitialOverlap, float* Time, float* Distance, struct FVector* Location, struct FVector* ImpactPoint, struct FVector* Normal, struct FVector* ImpactNormal, class UPhysicalMaterial** PhysMat, class AActor** HitActor, class UPrimitiveComponent** HitComponent, class FName* HitBoneName, class FName* BoneName, int32* HitItem, int32* ElementIndex, int32* FaceIndex, struct FVector* TraceStart, struct FVector* TraceEnd);
 		local success = pcall(function()
-			Statics:BreakHitResult(hitResult, bBlockingHit, bInitialOverlap, Time, Distance, Location, ImpactPoint, Normal, ImpactNormal, PhysMat, HitActor, HitComponent, HitBoneName, HitItem, ElementIndex, FaceIndex, TraceStart, TraceEnd )
+			Statics:BreakHitResult(hitResult, bBlockingHit, bInitialOverlap, Time, Distance, Location, ImpactPoint, Normal, ImpactNormal, PhysMat, HitActor, HitComponent, HitBoneName, BoneName, HitItem, ElementIndex, FaceIndex, TraceStart, TraceEnd )
 		end)
 		if not success then
 			--M.print("BreakHitResult failed, falling back to hitResult fields", LogLevel.Warning)
@@ -3709,6 +4025,10 @@ end
 
 function M.parseHierarchyString(str)
 	--print("[parseHierarchyString] Parsing hierarchy string: " .. tostring(str))
+	if(type(str) ~= "string") then
+		M.print("[parseHierarchyString] Invalid input, expected string but got " .. type(str), LogLevel.Warning)
+		return
+	end
 	if str == nil then str = "" end
     local tokens = {}
     for token in str:gmatch("[^%.]+") do
@@ -3817,8 +4137,9 @@ function get_cvar_int(cvar)
     end
 end
 function M.get_cvar_int(cvar)
-	get_cvar_int(cvar)
+	return get_cvar_int(cvar)
 end
+
 function set_cvar_int(cvar, value)
     local console_manager = uevr.api:get_console_manager()
 
@@ -3978,25 +4299,28 @@ M.initUEVR(uevr)
 -- function on_client_restart(newPawn)
 -- 	uevrUtils.print("Pawn changed to " .. newPawn:get_full_name())
 -- end
-hook_function("Class /Script/Engine.PlayerController", "ClientRestart", true, nil,
-	function(fn, obj, locals, result)
-		if on_client_restart ~= nil or hasUEVRCallbacks("on_client_restart") then --don't bother doing anything if nothing is listening
-			if on_client_restart ~= nil then
-				on_client_restart(locals.NewPawn)
+if disableHookFunctions ~= true then
+	print("Hooking PlayerController ClientRestart function to detect pawn changes")
+	hook_function("Class /Script/Engine.PlayerController", "ClientRestart", true, nil,
+		function(fn, obj, locals, result)
+			if on_client_restart ~= nil or hasUEVRCallbacks("on_client_restart") then --don't bother doing anything if nothing is listening
+				if on_client_restart ~= nil then
+					on_client_restart(locals.NewPawn)
+				end
+				executeUEVRCallbacks("on_client_restart", locals.NewPawn)
 			end
-			executeUEVRCallbacks("on_client_restart", locals.NewPawn)
+
+		-- print("ClientRestart called", locals, result, locals.NewPawn:get_class():get_full_name(), obj:get_class():get_full_name() )
+		-- if locals.NewPawn ~= nil and locals.NewPawn:get_class():get_full_name() == "BlueprintGeneratedClass /Game/Core/Player/BP_PlayerCharacter.BP_PlayerCharacter_C" then
+		-- 	pawn = locals.NewPawn
+		-- end
+		-- if locals.NewPawn ~= nil and locals.NewPawn:get_class():get_full_name() == "BlueprintGeneratedClass /Game/Development/Vehicles/BP_MoskvichDrivable.BP_MoskvichDrivable_C" then
+		-- 	print("Player in vehicle")
+		-- 	--isInCar = true
+		-- end
 		end
-
-	-- print("ClientRestart called", locals, result, locals.NewPawn:get_class():get_full_name(), obj:get_class():get_full_name() )
-	-- if locals.NewPawn ~= nil and locals.NewPawn:get_class():get_full_name() == "BlueprintGeneratedClass /Game/Core/Player/BP_PlayerCharacter.BP_PlayerCharacter_C" then
-	-- 	pawn = locals.NewPawn
-	-- end
-	-- if locals.NewPawn ~= nil and locals.NewPawn:get_class():get_full_name() == "BlueprintGeneratedClass /Game/Development/Vehicles/BP_MoskvichDrivable.BP_MoskvichDrivable_C" then
-	-- 	print("Player in vehicle")
-	-- 	--isInCar = true
-	-- end
-	end
-, true)
-
+	, true)
+end
 
 return M
+

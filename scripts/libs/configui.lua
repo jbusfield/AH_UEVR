@@ -250,6 +250,10 @@ Available Widget Types:
 		properties: label
 		example: { widgetType = "collapsing_header", label = "Advanced Settings" }
 
+	- list_box - Start a list box container
+		properties: id, isHidden
+		example: { widgetType = "list_box", id = "some_list", selections = {"One", "Two", "Three"}, label = "List", isHidden = false, width = 300, height = 100 }
+
 	- begin_group - Start a group of widgets
 		properties: id, isHidden
 		example: { widgetType = "begin_group", id = "advanced_settings", isHidden = false }
@@ -327,6 +331,7 @@ Available Widget Types:
 
 
 ]]--
+--local uevrUtils = require('libs/uevr_utils')
 
 local M = {}
 
@@ -416,13 +421,16 @@ ImGuiWindowFlags = {
     NoInputs = 1 << 9 | 1 << 18 | 1 << 19, -- Alias for NoMouseInputs and NoNav
 }
 
+
 local configValues = {}
 local itemMap = {}
 local panelList = {}
 local layoutDefinitions = {}
+local layoutElementMap = {}
 local updateFunctions = {}
 local createFunctions = {}
 local createOrUpdateFunctions = {}
+local updateInProgress = {}
 local defaultFilename = "config_default"
 local treeInitialized = {}
 
@@ -443,17 +451,23 @@ local function doUpdate(panelID, widgetID, value, updateConfigValue, noCallbacks
 		end
 
 		if noCallbacks ~= true then
-			local funcList = updateFunctions[widgetID]
-			if funcList ~= nil and #funcList > 0 then
-				for i = 1, #funcList do
-					funcList[i](value)
+			if updateInProgress[widgetID] then
+				-- skip callbacks to prevent re-entrant updates
+			else
+				updateInProgress[widgetID] = true
+				local funcList = updateFunctions[widgetID]
+				if funcList ~= nil and #funcList > 0 then
+					for i = 1, #funcList do
+						funcList[i](value)
+					end
 				end
-			end
-			funcList = createOrUpdateFunctions[widgetID]
-			if funcList ~= nil and #funcList > 0 then
-				for i = 1, #funcList do
-					funcList[i](value)
+				funcList = createOrUpdateFunctions[widgetID]
+				if funcList ~= nil and #funcList > 0 then
+					for i = 1, #funcList do
+						funcList[i](value)
+					end
 				end
+				updateInProgress[widgetID] = false
 			end
 		end
 		if panelList[panelID] ~= nil then panelList[panelID].isDirty = true end
@@ -701,6 +715,27 @@ local function drawUI(panelID)
 				imgui.begin_group()
 			elseif item.widgetType == "end_group" then
 				imgui.end_group()
+			elseif item.widgetType == "list_box" then
+				local size = nil
+				if item.width ~= nil or item.height ~= nil then
+					size = {item.width or 300, item.height or 100}
+				end
+				imgui.begin_list_box(item.label, size)
+				for index, selection in ipairs(item.selections or {}) do				
+					-- imgui.push_style_color(ImGui.Header, colorStringToInteger(item.color or "#FF8888FF"))
+					-- imgui.push_style_color(ImGui.HeaderActive, colorStringToInteger(item.color or "#FF8888FF"))
+					-- imgui.push_style_color(ImGui.HeaderHovered, colorStringToInteger(item.color or "#FF8888FF"))
+
+					if imgui.menu_item(selection, "", item.selectedIndex == index, true) then
+						item.selectedIndex = index
+						doUpdate(panelID, item.id, selection)
+					end
+					-- imgui.pop_style_color(3)
+				end
+				imgui.end_list_box()
+				--imgui.selectable("Highlighted Item", true)
+			-- elseif item.widgetType == "end_list_box" then
+			-- 	imgui.end_list_box()
 			elseif item.widgetType == "begin_child_window" then
 				imgui.begin_child_window(getVector2FromArray(item.size), item.border, item.flags)
 			elseif item.widgetType == "end_child_window" then
@@ -807,18 +842,29 @@ local function drawUI(panelID)
 	end
 end
 
-local function getDefinitionElement(panelID, id)
-	--print(panelID)
+local function rebuildDefinitionElementMap(panelID)
+	layoutElementMap[panelID] = {}
 	local definition = layoutDefinitions[panelID]
-	if definition ~= nil then
-		for _, element in ipairs(definition) do
-			if element.id == id then
-				return element
-			end
+	if definition == nil then
+		return
+	end
+
+	for _, element in ipairs(definition) do
+		if element.id ~= nil then
+			layoutElementMap[panelID][element.id] = element
 		end
 	end
-    return nil -- Return nil if the id is not found
 end
+--rebuildDefinitionElementMap = uevrUtils.profiler:wrap("ConfigUI: rebuildDefinitionElementMap", rebuildDefinitionElementMap)
+
+local function getDefinitionElement(panelID, id)
+	local definitionMap = layoutElementMap[panelID]
+	if definitionMap ~= nil then
+		return definitionMap[id]
+	end
+	return nil
+end
+--getDefinitionElement = uevrUtils.profiler:wrap("ConfigUI: getDefinitionElement", getDefinitionElement)
 
 local function wrapTextOnWordBoundary(text, maxCharsPerLine)
 	if text == nil then text = "" end
@@ -870,6 +916,7 @@ function M.updatePanel(panelDefinition)
 	end
 
 	layoutDefinitions[panelID] = panelDefinition["layout"]
+	rebuildDefinitionElementMap(panelID)
 
 	panelList[panelID] = {isDirty=false, timeSinceLastSave=0, fileName=fileName, isHidden=panelDefinition["isHidden"]}
 
@@ -913,6 +960,7 @@ function M.createPanel(panelDefinition)
 	end
 
 	layoutDefinitions[panelID] = panelDefinition["layout"]
+	rebuildDefinitionElementMap(panelID)
 
 	panelList[panelID] = {isDirty=false, timeSinceLastSave=0, fileName=fileName, isHidden=panelDefinition["isHidden"]}
 
@@ -1277,7 +1325,7 @@ end
 function M.setLabel(widgetID, newLabel)
 	local item = getDefinitionElement(M.getPanelID(widgetID), widgetID)
 	if item ~= nil then
-		if item.widgetType == "text" and item.wrapped == true then
+		if item.widgetType == "text" or item.widgetType == "text_colored" and item.wrapped == true then
 			item.label_wrapped = wrapTextOnWordBoundary(newLabel, item.textWidth)
 		end
 		item.label = newLabel

@@ -194,6 +194,7 @@ local trackerComponent = nil
 
 local widgetPrefix = "uevr_interaction_"
 
+local status = {}
 
 local currentLogLevel = LogLevel.Error
 function M.setLogLevel(val)
@@ -1060,6 +1061,7 @@ uevr.sdk.callbacks.on_post_engine_tick(function(engine, delta)
 
         local isHovering = widgetInteractionComponent.HoveredWidgetComponent ~= nil
         --print("isHovering", isHovering, widgetInteractionComponent.HoveredWidgetComponent)
+        status.isHovering = isHovering
         if isHovering then
                 --playerController.bShowMouseCursor = false
                 --widgetInteractionComponent.HoveredWidgetComponent.Widget["NeedClickSound?"] = false
@@ -1159,6 +1161,9 @@ uevr.sdk.callbacks.on_xinput_get_state(function(retval, user_index, state)
     wasButtonPressed = isButtonPressed
 end)
 
+function M.isHovering()
+	return status.isHovering
+end
 -- uevrUtils.setInterval(100, function()
 --     moveMouseCursor()
 -- end)
@@ -1168,6 +1173,7 @@ uevrUtils.registerPreLevelChangeCallback(function(level)
     widgetInteractionComponent = nil
     laserComponent = nil
     trackerComponent = nil
+    status = {}
 end)
 
 uevrUtils.setInterval(1000, function()
@@ -1178,6 +1184,7 @@ end)
 
 uevr.params.sdk.callbacks.on_script_reset(function()
     destroyWidgetInteractionComponent()
+    status = {}
 end)
 
 

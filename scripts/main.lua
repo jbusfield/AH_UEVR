@@ -13,6 +13,7 @@ local ui = require('libs/ui')
 local remap = require('libs/remap')
 local gestures = require('libs/gestures')
 local gunstock = require('libs/gunstock')
+local collision = require('libs/collision')
 
 --uevrUtils.setLogLevel(LogLevel.Debug)
 -- reticule.setLogLevel(LogLevel.Debug)
@@ -25,7 +26,7 @@ local gunstock = require('libs/gunstock')
 --interaction.setLogLevel(LogLevel.Debug)
 
 
-uevrUtils.setDeveloperMode(true)
+--uevrUtils.setDeveloperMode(true)
 -- hands.enableConfigurationTool()
 
 ui.init()
@@ -38,13 +39,15 @@ pawnModule.init()
 remap.init()
 input.init()
 gunstock.showConfiguration()
+collision.init()
 
 local wasArmsAnimating = false
 local isInAnimationCutscene = false
 local isInCar = false
 local isClimbing = false
 local materialUtils = nil
-local leftHandDirectionOffset = 40
+--local leftHandDirectionOffset = 40
+local leftHandDirectionOffset = {X=0,Y=0,Z=0}
 local activateCassetteMenu = false
 local isGrabbingCassette = false
 local jumpTurnDeadzone = 32000
@@ -52,7 +55,7 @@ local jumpTurnDeadzone = 32000
 --temp debug param
 --local socketList = {"None"}
 
-local versionTxt = "v1.0.3"
+local versionTxt = "v1.0.4"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -73,13 +76,19 @@ local configDefinition = {
 				expandArray(input.getConfigurationWidgets),
 			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
-			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Control" }, { widgetType = "begin_rect", },
-				{
-					widgetType = "drag_float",
+			--{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Control" }, { widgetType = "begin_rect", },
+			{
+				widgetType = "tree_node",
+				id = "atomic_heart_advanced_settings",
+				initialOpen = false,
+				label = "Advanced Settings"
+			},
+						{
+					widgetType = "drag_float3",
 					id = "leftHandDirectionOffset",
 					label = "Left Hand Target Angle",
 					speed = 1,
-					range = {-90, 90},
+					range = {-180, 180},
 					initialValue = leftHandDirectionOffset
 				},
 				{
@@ -104,7 +113,8 @@ local configDefinition = {
 				-- 	selections = socketList,
 				-- 	initialValue = 1
 				-- },
-			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
+			{ widgetType = "tree_pop" },
+			--{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
 		}
 	}
@@ -125,12 +135,12 @@ local function setIsClimbing(value) --0 not climbing, 1 climbing, 2 hanging by l
 	elseif value == 1 then
 		pawnModule.hideArmsBones(false)
 		hands.hideHands(true)
-		input.setDisabled(true)
+		--input.setDisabled(true)
 	elseif value == 2 then
 		pawnModule.hideArmsBones(true)
 		hands.hideHand(Handed.Left, true)
 		hands.hideHand(Handed.Right, false)
-		input.setDisabled(true)
+		--input.setDisabled(true)
 	end
 end
 
@@ -303,14 +313,13 @@ end)
 local function setDefaultTargeting(handed)
 	if handed == Handed.Left then
 		input.setAimMethod(input.AimMethod.LEFT_CONTROLLER)
-		input.setAimRotationOffset({Pitch=0, Yaw=leftHandDirectionOffset, Roll=0})
-		input.setAimCameraOverride(true)
+		input.setAimRotationOffset({Pitch=leftHandDirectionOffset.X, Yaw=leftHandDirectionOffset.Y, Roll=leftHandDirectionOffset.Z})
+		input.setPlayerControllerRotationFollowsBody(false)
 		reticule.setTargetMethod(reticule.ReticuleTargetMethod.LEFT_CONTROLLER)
-		reticule.setTargetRotationOffset({Pitch=0, Yaw=leftHandDirectionOffset, Roll=0})
+		reticule.setTargetRotationOffset({Pitch=leftHandDirectionOffset.X, Yaw=leftHandDirectionOffset.Y, Roll=leftHandDirectionOffset.Z})
 	else
 		input.setAimMethod(input.AimMethod.RIGHT_WEAPON)
 		input.setAimRotationOffset({Pitch=0, Yaw=0, Roll=0})
-		input.setAimCameraOverride(false)
 		reticule.setTargetMethod(reticule.ReticuleTargetMethod.CAMERA)
 		reticule.setTargetRotationOffset()
 	end
@@ -355,6 +364,19 @@ local function animateMelee(direction) -- 0-left, 1-right
 		local id = attachments.getActiveAttachmentID(Handed.Right)
 		if id ~= nil and weaponMontages[id] ~= nil and weaponMontages[id][direction + 1] ~= nil then
 			local animName = weaponMontages[id][direction + 1]
+			if id == "BP_Klusha_C_SK_Klusha_Handle01" then
+				if status.montageCheck == nil then
+					status.montageExtension = ""
+					status.montageCheck = true
+					local className = montage.getMontageClassName(animName)
+					if className ~= nil then
+						if uevrUtils.get_class(className) == nil then
+							status.montageExtension = "_DLC4"
+						end
+					end
+				end
+				animName = animName .. status.montageExtension
+			end
 			uevrUtils.print("Animating melee with animation: " .. animName)
 			montage.playMontage(animName, 5.0) -- set speed to 5.0 to make it more responsive
 		else
@@ -476,13 +498,51 @@ ui.registerWidgetChangeCallback("WBP_UniversalLockTooltipWidget_C", function(act
 		interaction.setAllowMouseUpdate(true)
 		interaction.setMeshTraceChannel(11)
 		interaction.setMouseCursorVisibility(false)
+		status.isUsingCodeLock = true
 	else
 		interaction.setInteractionType(interaction.InteractionType.Widget)
 		interaction.setAllowMouseUpdate(false)
+		status.isUsingCodeLock = false
 	end
+
+	local widget = uevrUtils.find_first_instance("WidgetBlueprintGeneratedClass /Game/Core/UI/HUD/Widgets/UniversalLockTooltip/WBP_UniversalLockTooltipWidget.WBP_UniversalLockTooltipWidget_C", false)
+	if widget ~= nil and widget.Background ~= nil then
+		widget.Background:SetVisibility(1)
+	end
+
 end)
 
+
+-----------------------------------
+--hide the annoying slight opacity background of some dialogs
+ui.registerWidgetChangeCallback("WBP_MainMenu_C", function(active)
+	if active then
+		local widget = uevrUtils.find_first_instance("WidgetBlueprintGeneratedClass /Game/Core/UI/Widgets/MainMenu/WBP_MainMenu.WBP_MainMenu_C", false)
+		if widget ~= nil and widget.i_BG ~= nil then
+			widget.i_BG:SetVisibility(1)
+		end
+	end
+end)
+ui.registerWidgetChangeCallback("WBP_Dialogue_C", function(active)
+	if active then
+		local widget = uevrUtils.find_first_instance("WidgetBlueprintGeneratedClass /Game/Core/UI/Dialogue/WBP_Dialogue.WBP_Dialogue_C", false)
+		if widget ~= nil and widget.Image ~= nil then
+			widget.Image:SetVisibility(1)
+		end
+	end
+end)
+----------------------------------
+
 uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+	if status.isUsingCodeLock or interaction.isHovering() then
+		if state.Gamepad.bLeftTrigger > 0 then
+			uevrUtils.pressButton(state, XINPUT_GAMEPAD_A)
+		end
+		state.Gamepad.bRightTrigger = 0
+		state.Gamepad.bLeftTrigger = 0
+		return
+	end
+
 	if state.Gamepad.bRightTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_RIGHT_SHOULDER) then
 		setDefaultTargeting(Handed.Right)
     elseif state.Gamepad.bLeftTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER) then
@@ -510,6 +570,7 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		--pull the left stick down momentarily so that it selects the cassette radial item
 		state.Gamepad.sThumbLY = -32000
 	end
+
 
 end, 5) --increased priority to get values before remap occurs
 
@@ -553,6 +614,18 @@ function on_post_engine_tick(engine, delta)
 			setIsClimbing(currentClimbing)
 			wasClimmbing = currentClimbing
 		end
+
+		--when levitating a world item put the item directly in front of you instead of off to the side
+		--pawn.GrabSocket.RelativeLocation.X = 0
+		pawn.GrabSocket.RelativeLocation.Y = 0
+		pawn.GrabSocket.RelativeLocation.Z = 0
+		--pawn.InteractionsComponent:ToggleActive()
+
+		-- if pawn ~= nil and pawn.SkillsComponent ~= nil then
+		-- 	print("SkillsComponent: ",pawn.SkillsComponent:IsActive())
+		-- else
+		-- 	print("SkillsComponent: nil")
+		-- end
 	end
 end
 -- local function checkWidgets()
@@ -567,7 +640,7 @@ end
 
 configui.onCreateOrUpdate("leftHandDirectionOffset", function(value)
 	leftHandDirectionOffset = value
-	setDefaultTargeting(status["currentTargetingHand"])
+	setDefaultTargeting(status["currentTargetingHand"] or Handed.Right)
 end)
 configui.onCreateOrUpdate("jumpTurnDeadzone", function(value)
 	print("Configured deadzone")
@@ -612,6 +685,9 @@ hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEPlay", true, nil,
 	function(fn, obj, locals, result)
 		print("OnQTEPlay called", locals)
 		remap.setDisabled(true)
+		delay(1000, function()
+			uevrUtils.stopFadeCamera()
+		end)
 	end
 , true)
 

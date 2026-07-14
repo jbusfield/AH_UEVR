@@ -145,7 +145,7 @@ local function destroyActor(actor)
 							actor:K2_DestroyComponent(component)
 							M.print("HMD Controller component destroyed")
 						end
-					end)	
+					end)
 				end
 			end
 			if actor.K2_DestroyActor ~= nil then
@@ -277,16 +277,23 @@ end
 
 --called after a script restart
 function M.restoreExistingComponents()
+	local isRestored = true
 	for i = 0, 1 do
 		if getCachedController(i) == nil then
 			local controller = M.getController(i)
-			if controller ~= nil then
+			if controller ~= nil and uevrUtils.getValid(controller) ~= nil and controller.GetOwner ~= nil then
+				--pcall( function()
 				-- M.print isnt ready at this point so just use print
-				print("Restoring existing controller " .. i .. ": " .. controller:get_full_name() .. " " .. controller:GetOwner():get_full_name())
-				actors[i] = controller:GetOwner()
+				local owner = controller:GetOwner()
+				local ownerName = owner and owner:get_full_name() or "No Owner"
+				print("Restoring existing controller " .. i .. ": " .. controller:get_full_name() .. " " .. ownerName)
+				actors[i] = owner
+				if owner == nil then isRestored = false end
+				--end)
 			end
 		end
 	end
+	return isRestored
 end
 
 function M.hmdControllerExists()
@@ -329,7 +336,9 @@ function M.createController(controllerID)
 			if not M.controllerExists(controllerID, false) then
 				controller = createControllerComponent(createActor(controllerID), sourceNames[controllerID], controllerID)
 			else
-				M.restoreExistingComponents()
+				if M.restoreExistingComponents() == false then
+					controller = createControllerComponent(createActor(controllerID), sourceNames[controllerID], controllerID)
+				end
 			end
 		end
 		return controller
@@ -472,8 +481,8 @@ uevrUtils.registerPreLevelChangeCallback(function(level)
 	M.print("Pre-Level changed in controllers")
 	M.onLevelChange()
 	if not isRestored then
-		M.restoreExistingComponents()
-		isRestored = true
+		isRestored = M.restoreExistingComponents()
+		--isRestored = true
 	end
 end)
 

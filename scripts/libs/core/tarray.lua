@@ -1,3 +1,6 @@
+-- #########################################################
+-- This is deprecated. Use core/plugin.lua instead
+-- #########################################################
 
 -- requires tarray_helper.dll to be in the plugins folder
 -- stubs are in place in the dll to handle "GetAllSocketNames" as a property and "GetAllSocketNames(int float, string)" as a method with parameters
@@ -6,7 +9,11 @@ local M = {}
 
 local pendingTArrayCallbacks = {}
 
+--deprecated. Do not waste processing on this
+
 uevr.sdk.callbacks.on_lua_event(function(eventName, eventData)
+    --print("Lua event received:", eventName, "Payload", eventData)
+    --print(type(eventData), eventData=="")
     --updateLuaEvent(eventName, eventData)
     --parse event name on : if first object is "GetTArray" then it's a tarray result event
     local splitEvent = M.splitStr(eventName, ":")
@@ -14,11 +21,18 @@ uevr.sdk.callbacks.on_lua_event(function(eventName, eventData)
         --executeUEVRCallbacks("on_tarray_result", splitEvent[3], splitEvent[4], json.load_string(eventData))
         local objectName = splitEvent[3]
         local methodName = splitEvent[4]
+        --print("Processing TArray result for object:", objectName, "method:", methodName, "eventdata:", eventData)
+        if methodName == "ActionMappings" and eventData == "" then
+            --There's some kind of bug with ActionMappings returning twice with the first time an empty string
+            return
+        end
         local arrayData = json.load_string(eventData)
+        --print("Parsed array data:", arrayData)
         local key = objectName .. "|" .. methodName
         local cb = pendingTArrayCallbacks[key]
-        if cb then
+        if cb ~= nil then
             pendingTArrayCallbacks[key] = nil
+            --print("Executing callback for key:", key, arrayData)
             cb(arrayData)
         end
     end
@@ -50,6 +64,7 @@ function M.dispatchTArrayCall(arrayType, object, objectMethod, ...)
 		eventName = eventName .. ":" .. paramTypesStr
 	end
 	local eventData = json.dump_string(params)
+    --print("Sending event:", eventName, "with data:", eventData)
 	uevr.api:dispatch_custom_event(eventName, eventData	)
 end
 

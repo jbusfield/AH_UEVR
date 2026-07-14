@@ -53,9 +53,10 @@ M.ReticuleTargetMethod = {
 	RIGHT_CONTROLLER = 3,
 	LEFT_ATTACHMENT = 4,
 	RIGHT_ATTACHMENT = 5,
+    CUSTOM = 6,
 }
 local reticuleTypeNameStrings = {"None", "Default", "Mesh", "Widget", "Custom"}
-local reticuleTargetMethodStrings = {"Camera", "Left Controller", "Right Controller", "Left Attachment", "Right Attachment"}
+local reticuleTargetMethodStrings = {"Camera", "Left Controller", "Right Controller", "Left Attachment", "Right Attachment", "Custom"}
 
 
 local currentLogLevel = LogLevel.Error
