@@ -17,4 +17,6 @@ Grabbing items and interacting with the world is done with the left hand (your g
 To interact with the NORA skill tree, point your left finger towards the button you want to press. When the laser is hovered over the button, press either Left Trigger or A.
 <BR><BR>
 To interact with the puzzle that requires you to press several button in a pattern, point your left finger towards the button you want to press. When the laser is hovered over the button, press either Left Trigger or A.
+<BR><BR>
+To drive a car, once in the car use the left stick to turn left and right, and the right trigger to go forward and the right grip to go backward
 
