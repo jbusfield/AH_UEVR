@@ -1,3 +1,5 @@
+-- Contributers: ideas and inspiration for this module courtesy of Pande4360 and gwizdek
+
 ---@diagnostic disable: unused-local
 local uevrUtils = require("libs/uevr_utils")
 local paramModule = require("libs/core/params")
@@ -87,9 +89,26 @@ local function setParameter(key, value, persist)
     return paramManager:setInActiveProfile(key, value, persist)
 end
 
+local function validateProfileData(profileData)
+    if profileData.radius == nil then profileData.radius = parameters.radius end
+    if profileData.half_height == nil then profileData.half_height = parameters.half_height end
+    if profileData.extents == nil then profileData.extents = uevrUtils.deepCopyTable(parameters.extents) end
+    if profileData.position == nil then profileData.position = uevrUtils.deepCopyTable(parameters.position) end
+    if profileData.rotation == nil then profileData.rotation = uevrUtils.deepCopyTable(parameters.rotation) end
+    if profileData.scale == nil then profileData.scale = uevrUtils.deepCopyTable(parameters.scale) end
+    if profileData.collision_enabled == nil then profileData.collision_enabled = parameters.collision_enabled end
+    if profileData.collision_object_type == nil then profileData.collision_object_type = parameters.collision_object_type end
+    if profileData.visible == nil then profileData.visible = parameters.visible end
+    if profileData.generate_overlap_events == nil then profileData.generate_overlap_events = parameters.generate_overlap_events end
+    if profileData.attachTo == nil then profileData.attachTo = parameters.attachTo end
+    if profileData.channels == nil then profileData.channels = uevrUtils.deepCopyTable(parameters.channels) end
+    if profileData.shape == nil then profileData.shape = parameters.shape end
+end
+
 local function setColliderProperties(collider, id)
     local profileData = paramManager:get(id)
     if profileData ~= nil then
+        validateProfileData(profileData)
         print("Setting collider properties for ", id, "Radius", profileData.radius, "Shape", profileData.shape, "Collision Object Type", profileData.collision_object_type - 1, "Collision Enabled", profileData.collision_enabled - 1, "Channels", profileData.channels, "Visible", profileData.visible, "Generate Overlap Events", profileData.generate_overlap_events, "Attach To", profileData.attachTo)
         if collider.SetSphereRadius ~= nil then
             collider:SetSphereRadius(profileData.radius, false)
@@ -98,7 +117,10 @@ local function setColliderProperties(collider, id)
             collider:SetBoxExtent(uevrUtils.vector(profileData.extents[1], profileData.extents[2], profileData.extents[3]), false)
         elseif collider.SetCapsuleRadius ~= nil then
             if profileData.half_height == nil then profileData.half_height = 20 end
-            collider:SetCapsuleRadius(profileData.radius, profileData.half_height, false)
+            print("Setting capsule radius to ", profileData.radius, "and half height to ", profileData.half_height)
+            collider:SetCapsuleRadius(profileData.radius, false)
+            collider:SetCapsuleHalfHeight(profileData.half_height, false);
+        elseif collider.SetCapsuleRadiusAndHalfHeight ~= nil then
         end
 
         if profileData.shape == COLLISION_SHAPES.Sphere or profileData.shape == COLLISION_SHAPES.Box or profileData.shape == COLLISION_SHAPES.Capsule or profileData.shape == COLLISION_SHAPES.Custom then
@@ -277,7 +299,21 @@ function M.getLocation(id)
     return nil
 end
 
-local function updateColliders()
+local contactCallbacks = {}
+
+function M.registerContactCallback(callback)
+    if type(callback) == "function" then
+        table.insert(contactCallbacks, callback)
+    end
+end
+
+local function notifyContactCallbacks(id, handVelocity, hitResult, collider, handed)
+    for i = 1, #contactCallbacks do
+        contactCallbacks[i](id, handVelocity, hitResult, collider, handed)
+    end
+end
+
+local function updateColliders(delta)
 	if status.colliders ~= nil then
 
         local locations = {}
@@ -304,8 +340,25 @@ local function updateColliders()
                     -- data.rotation are local offsets in the controller's space.
                     local loc, rot = mathLib.childWorldTransform(locations[data.handed], rotations[data.handed], data.position, data.rotation)
 
-                    if rot then collider:K2_SetWorldRotation(rot, true, reusable_hit_result, false) end
-                    if loc then collider:K2_SetWorldLocation(loc, true, reusable_hit_result, false) end
+                    local handVelocity = nil
+                    if loc ~= nil then
+                        if delta ~= nil and delta > 0 and data.lastHandLoc ~= nil then
+                            handVelocity = uevrUtils.vector(
+                                (loc.X - data.lastHandLoc.X) / delta,
+                                (loc.Y - data.lastHandLoc.Y) / delta,
+                                (loc.Z - data.lastHandLoc.Z) / delta
+                            )
+                        end
+                        data.lastHandLoc = { X = loc.X, Y = loc.Y, Z = loc.Z }
+                    end
+
+                    if rot then collider:K2_SetWorldRotation(rot, false, reusable_hit_result, false) end
+                    if loc then
+                        collider:K2_SetWorldLocation(loc, true, reusable_hit_result, false)
+                        if #contactCallbacks > 0 and reusable_hit_result ~= nil and reusable_hit_result.bBlockingHit then
+                            notifyContactCallbacks(id, handVelocity, reusable_hit_result, collider, data.handed)
+                        end
+                    end
                 end
             end
         end
@@ -586,7 +639,7 @@ function M.checkCollisionEvents()
 end
 
 uevr.sdk.callbacks.on_pre_engine_tick(function(engine, delta)
-    updateColliders()
+    updateColliders(delta)
 end)
 
 -- uevr.sdk.callbacks.on_post_engine_tick(function(engine, delta)

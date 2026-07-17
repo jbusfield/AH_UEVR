@@ -315,11 +315,17 @@ Usage
 	uevrUtils.isButtonNotPressed(state, button) - returns true if the given XINPUT button is not pressed. The state param comes from on_xinput_get_state()
 	uevrUtils.pressButton(state, button) - triggers a button press for the specified button. The state param comes from on_xinput_get_state()
 	uevrUtils.unpressButton(state, button) - stops a button press for the specified button. The state param comes from on_xinput_get_state()
+	uevrUtils.isButtonDoubleTapped(state, button, (optional)maxInterval) - returns true once on the frame a double-tap is detected (default maxInterval 0.3s)
+	uevrUtils.doDoubleTap(button, (optional)tapMs, (optional)gapMs) - injects a double-tap of the given XINPUT_GAMEPAD button into upcoming xinput frames (default tapMs 50, gapMs 80). Presses are applied after other xinput handlers so remap cannot clear them. Queues if already active.
 		example
 			if isButtonPressed(state, XINPUT_GAMEPAD_X) then
 				unpressButton(state, XINPUT_GAMEPAD_X)
 				pressButton(state, XINPUT_GAMEPAD_DPAD_LEFT)
 			end
+			if isButtonDoubleTapped(state, XINPUT_GAMEPAD_A) then
+				print("A double tapped")
+			end
+			uevrUtils.doDoubleTap(XINPUT_GAMEPAD_DPAD_DOWN)
 			
 	uevrUtils.fadeCamera(rate, (optional)hardLock, (optional)softLock, (optional)overrideHardLock, (optional)overrideSoftLock) - fades the players camera to black
 		example:
@@ -1045,6 +1051,40 @@ function M.delay(msec, func)
 	setTimeout(msec, func)
 end
 
+local doubleTapInjects = {}
+
+local function updateDoubleTapInjects(state)
+	local now = os.clock()
+	for button, inj in pairs(doubleTapInjects) do
+		if inj.stage == 1 or inj.stage == 3 then
+			M.pressButton(state, button)
+		end
+		if now >= inj.untilTime then
+			if inj.stage == 1 then
+				inj.stage = 2
+				inj.untilTime = now + inj.gapSec
+			elseif inj.stage == 2 then
+				inj.stage = 3
+				inj.untilTime = now + inj.tapSec
+			else
+				local queue = inj.queue
+				doubleTapInjects[button] = nil
+				if queue ~= nil and #queue > 0 then
+					local nextSeq = table.remove(queue, 1)
+					doubleTapInjects[button] = {
+						stage = 1,
+						untilTime = now + nextSeq.tapSec,
+						tapSec = nextSeq.tapSec,
+						gapSec = nextSeq.gapSec,
+						queue = queue,
+					}
+					M.pressButton(state, button)
+				end
+			end
+		end
+	end
+end
+
 local function updateDelay(delta)
 	for i = #delayList, 1, -1 do
 		delayList[i]["countDown"] = delayList[i]["countDown"] - delta
@@ -1091,7 +1131,7 @@ M.profiler = {
     enabled = false,
     counts = {},
     totalTimes = {},
-    
+
     toggle = function(self, enable)
         self.enabled = enable
         if not enable then
@@ -1099,31 +1139,31 @@ M.profiler = {
             self.totalTimes = {}
         end
     end,
-    
+
     wrap = function(self, funcName, func)
         return function(...)
             if not self.enabled then
                 return func(...)
             end
-            
+
             local startTime = os.clock()
             local results = {func(...)}
             local elapsed = (os.clock() - startTime) * 1000
-            
+
             self.counts[funcName] = (self.counts[funcName] or 0) + 1
             self.totalTimes[funcName] = (self.totalTimes[funcName] or 0) + elapsed
-            
+
             return table.unpack(results)
         end
     end,
-    
+
     report = function(self)
         if not self.enabled then return end
         print("\n=== Profiling Report ===")
         for name, count in pairs(self.counts) do
             local total = self.totalTimes[name]
             local avg = total / count
-            print(string.format("%s: %d calls, %.3f ms total, %.3f ms avg", 
+            print(string.format("%s: %d calls, %.3f ms total, %.3f ms avg",
                 name, count, total, avg))
         end
         print("========================\n")
@@ -1655,7 +1695,7 @@ function M.initUEVR(UEVR, callbackFunc)
 	GameUserSettings = M.find_default_instance("Class /Script/Engine.GameUserSettings")
 	WidgetBlueprintLibrary = M.find_default_instance("Class /Script/UMG.WidgetBlueprintLibrary")
     WidgetLayoutLibrary = M.find_default_instance("Class /Script/UMG.WidgetLayoutLibrary")
-    
+
 
 	game_engine = M.find_first_of("Class /Script/Engine.GameEngine")
 
@@ -1678,6 +1718,9 @@ function M.initUEVR(UEVR, callbackFunc)
 		executeUEVRCallbacks("onInputGetState", retval, user_index, state)
 
 		executeUEVRCallbacks("onPostInputGetState", retval, user_index, state)
+
+		-- After remap/other handlers so injected taps are not cleared
+		updateDoubleTapInjects(state)
 	end)
 
 	uevr.sdk.callbacks.on_pre_calculate_stereo_view_offset(function(device, view_index, world_to_meters, position, rotation, is_double)
@@ -2921,7 +2964,7 @@ end
 --convert userdata types to native lua types for json saving
 function M.getNativeValue(val, useTable)
 	local returnValue = val
-	if type(val) == "userdata" then 
+	if type(val) == "userdata" then
 ---@diagnostic disable-next-line: undefined-field
 		if val.x ~= nil and val.y ~= nil and val.z == nil and val.w == nil then
 			returnValue = M.getArrayFromVector2(val)
@@ -2958,7 +3001,7 @@ end
 function M.tableToString(tbl, indent)
 	if not indent then indent = 0 end
 	local toprint = string.rep(" ", indent) .. "{\n"
-	indent = indent + 2 
+	indent = indent + 2
 	for k, v in pairs(tbl) do
 		toprint = toprint .. string.rep(" ", indent)
 		if type(k) == "number" then
@@ -2992,6 +3035,59 @@ end
 function M.unpressButton(state, button)
     state.Gamepad.wButtons = state.Gamepad.wButtons & ~(button)
 end
+
+local doubleTapButtonState = {}
+-- Returns true once on the rising edge of the second tap within maxInterval seconds (default 0.3).
+-- Call every xinput frame for each button you care about.
+function M.isButtonDoubleTapped(state, button, maxInterval)
+	if maxInterval == nil then maxInterval = 0.3 end
+	local s = doubleTapButtonState[button]
+	if s == nil then
+		s = { wasPressed = false, lastTapTime = nil }
+		doubleTapButtonState[button] = s
+	end
+
+	local pressed = M.isButtonPressed(state, button)
+	local doubleTapped = false
+	if pressed and not s.wasPressed then
+		local now = os.clock()
+		if s.lastTapTime ~= nil and (now - s.lastTapTime) <= maxInterval then
+			doubleTapped = true
+			s.lastTapTime = nil
+		else
+			s.lastTapTime = now
+		end
+	end
+	s.wasPressed = pressed
+	return doubleTapped
+end
+
+-- Injects a double-tap of button into upcoming xinput frames.
+-- tapMs = how long each press is held, gapMs = time between presses (both in milliseconds).
+-- If a sequence is already running for this button, the new one is queued.
+function M.doDoubleTap(button, tapMs, gapMs)
+	if tapMs == nil then tapMs = 50 end
+	if gapMs == nil then gapMs = 80 end
+
+	local tapSec = tapMs / 1000
+	local gapSec = gapMs / 1000
+	local existing = doubleTapInjects[button]
+	if existing ~= nil then
+		if existing.queue == nil then
+			existing.queue = {}
+		end
+		table.insert(existing.queue, { tapSec = tapSec, gapSec = gapSec })
+		return
+	end
+
+	doubleTapInjects[button] = {
+		stage = 1,
+		untilTime = os.clock() + tapSec,
+		tapSec = tapSec,
+		gapSec = gapSec,
+	}
+end
+
 function M.isThumbpadTouched(state, hand)
     local thumbpad = hand == Handed.Right and uevr.params.vr.get_action_handle("/actions/default/in/ThumbrestTouchRight") or uevr.params.vr.get_action_handle("/actions/default/in/ThumbrestTouchLeft")
 	local controller = hand == Handed.Right and uevr.params.vr.get_right_joystick_source() or uevr.params.vr.get_left_joystick_source()
@@ -3091,6 +3187,9 @@ function M.stopFadeCamera()
 end
 
 function M.set_2D_mode(state, delay_msec)
+	-- 2D mode is broken with AFW
+	--if M.getUEVRParam_int("VR_RenderingMethod") == 3 then return end
+	
 	--print("Setting 2D mode to ", state)
     if uevr ~= nil and uevr.params ~= nil then
 		local mode = uevr.params.vr:get_mod_value("VR_2DScreenMode")
@@ -3118,7 +3217,20 @@ function M.set_2D_mode(state, delay_msec)
 		end
 	end
 end
+--[[
+				if M.getUEVRParam_int("VR_RenderingMethod") == 3 then
+					M.setUEVRParam("VR_RenderingMethod", "0")
+					delay(2000, function()
+						uevr.params.vr.set_mod_value("VR_2DScreenMode", "false")
+						delay(2000, function()
+							M.setUEVRParam("VR_RenderingMethod", "3")
+						end)
+					end)
+				else
+					uevr.params.vr.set_mod_value("VR_2DScreenMode", "false")
+				end
 
+]]--
 function M.get_2D_mode()
 	if uevr ~= nil and uevr.params ~= nil then
 		local mode = uevr.params.vr:get_mod_value("VR_2DScreenMode")
@@ -3962,7 +4074,7 @@ function M.getTargetLocation(originPosition, originDirection, collisionChannel, 
 		--M.executeUEVRCallbacks("on_interaction_hit", M.getCleanHitResult(hitResult))
 		return M.vector(hitResult.Location)
 	end
-	
+
 
 	-- if originPosition ~= nil and originDirection ~= nil then
 	-- 	local endLocation = originPosition + (originDirection * 8192.0)

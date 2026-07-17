@@ -37,7 +37,7 @@ end
 
 function M.find_default_instance(className)
 	local class =  M.get_class(className)
-	if class ~= nil and class.get_first_object_matching ~= nil then
+	if class ~= nil and class.get_class_default_object ~= nil then
 		return class:get_class_default_object()
 	end
 	return nil

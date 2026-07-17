@@ -1,4 +1,4 @@
-
+-- Contributers: ideas and inspiration for this module courtesy of gwizdek
 --[[
     This module allows you call any function in the game's SDK without limitations such
     as the TArray issue that may exist in native lua calls. Notice that this module itself

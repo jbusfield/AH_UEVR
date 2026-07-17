@@ -55,7 +55,7 @@ local jumpTurnDeadzone = 32000
 --temp debug param
 --local socketList = {"None"}
 
-local versionTxt = "v1.0.4"
+local versionTxt = "v1.0.5"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -534,6 +534,7 @@ end)
 ----------------------------------
 
 uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+	-- When using laser, let left trigger work the same as pressing A
 	if status.isUsingCodeLock or interaction.isHovering() then
 		if state.Gamepad.bLeftTrigger > 0 then
 			uevrUtils.pressButton(state, XINPUT_GAMEPAD_A)
@@ -543,6 +544,7 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		return
 	end
 
+	-- switch hands when using the hand's trigger or shoulder button
 	if state.Gamepad.bRightTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_RIGHT_SHOULDER) then
 		setDefaultTargeting(Handed.Right)
     elseif state.Gamepad.bLeftTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER) then

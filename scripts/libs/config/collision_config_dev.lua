@@ -448,8 +448,10 @@ local function updateUIState(key)
     
         local isBox = value == COLLISION_SHAPES.Box or value == COLLISION_SHAPES.Box_Overlap_Only
         local isCapsule = value == COLLISION_SHAPES.Capsule or value == COLLISION_SHAPES.Capsule_Overlap_Only
+        --local isSphere = value == COLLISION_SHAPES.Sphere or value == COLLISION_SHAPES.Sphere_Overlap_Only
         configui.hideWidget(widgetPrefix .. "half_height", not isCapsule)
         configui.hideWidget(widgetPrefix .. "extents", not isBox)
+        configui.hideWidget(widgetPrefix .. "radius", isBox)
     end
 end
 

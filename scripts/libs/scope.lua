@@ -627,6 +627,16 @@ function M.getScopeCount()
     return count
 end
 
+function M.hasActiveScope()
+    for weaponTypeID, scopes in pairs(activeScopeInstances) do
+        for _, scope in ipairs(scopes) do
+            if scope.currentActiveState == true then
+                return true
+            end
+        end
+    end
+    return false
+end
 
 function Scope:setFOV(value)
 	if uevrUtils.getValid(self.sceneCaptureComponent) ~= nil then
@@ -1105,6 +1115,10 @@ end
 -- end)
 
 uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+	--we check for active scopes here because we should disable 
+	--the right stick y (to prevent jumping etc) only when there's an active scope
+	if not M.hasActiveScope() then return end
+
 	if autoHandleInput == false or activeScopeCount == 0 then
 		return
 	end
@@ -1119,9 +1133,10 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		scopeAdjustDirection = thumbY/32768
 	end
 
-	-- prevent annoying accidental snap turn when making adjustments
+	-- prevent annoying accidental snap turn adjustments
 	if scopeAdjustDirection ~= 0 then
 		state.Gamepad.sThumbRX = 0
+		state.Gamepad.sThumbRY = 0
 	end
 
 	scopeAdjustMode = M.AdjustMode.ZOOM
@@ -1132,6 +1147,7 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 end, 11)
 
 function on_post_engine_tick(engine, delta)
+	--if not M.hasActiveScope() then return end
 	M.updateScopes(delta)
 end
 
