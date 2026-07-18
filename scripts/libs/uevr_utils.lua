@@ -3108,6 +3108,25 @@ end
     -- pressButton(state, XINPUT_GAMEPAD_DPAD_LEFT)
 -- end
 
+function M.getFilesInDirectory(directory)
+	local files = {}
+	if directory ~= nil then
+		files = fs.glob(string.format([[%s\\.*json]], directory)) -- dev directory inside data
+	else
+		files = fs.glob([[[^\\]*json]]) --root data directory
+	end
+
+	--local json_files = fs.glob([[dev\\.*json]]) -- dev directory inside data
+
+	-- print(files)
+	-- -- Iterate over them.
+	-- for k, v in ipairs(files) do
+	-- 	print(v)
+	-- 	-- v will be something like `my-cool-mod\config-file-1.json` 
+	-- end
+	return files
+end
+
 local fadeHardLock = false
 local fadeSoftLock = false
 function M.isFadeHardLocked()

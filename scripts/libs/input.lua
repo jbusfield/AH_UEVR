@@ -49,7 +49,8 @@ local parameters = {
 	pawnRotationModeDisableRotation = false,
 	pawnRotationModeDisableInEarlyUpdate = false,
 	usePawnControlRotation = 1,
-	cameraResetAction = 1
+	cameraResetAction = 1,
+	adjustBodyMeshPosition = true,
 }
 
 local isDisabled = false
@@ -157,6 +158,10 @@ end
 
 function M.setBodyMeshOverride(meshList)
 	bodyMeshOverride = meshList
+end
+
+function M.isBodyMeshPositionAdjustmentAllowed()
+	return uevrUtils.ternary(getParameter("adjustBodyMeshPosition") == nil, true, getParameter("adjustBodyMeshPosition"))
 end
 
 local function getAimMethod()
@@ -719,6 +724,11 @@ local function saveParameter(key, value, persist, noCallbacks)
 	end
 	if key == "useMeshHeightForHeadOffset" then
 		status["meshZOffset"] = nil
+	end
+	if key == "adjustBodyMeshPosition" then
+		if value == false then
+			M.updateMeshRelativePosition(true)
+		end
 	end
 end
 
@@ -1381,17 +1391,20 @@ local function getVRCameraOffsets()
 end
 getVRCameraOffsets = uevrUtils.profiler:wrap("getVRCameraOffsets", getVRCameraOffsets)
 
+--native stereo uses view_index 1 and 2
+--AFW uses only 1
 uevr.params.sdk.callbacks.on_early_calculate_stereo_view_offset(function(device, view_index, world_to_meters, position, rotation, is_double)
 	if not isDisabled then --and getParameter("aimMethod") ~= M.AimMethod.UEVR then
 		--print(optimizeBodyYawCalculations == false, getParameter("optimizeBodyRotationCalculations") ~= true, view_index)
-		if isRotationModeEarlyUpdateDisabled() == false and lateYaw == false and (optimizeBodyYawCalculations == false or getParameter("optimizeBodyRotationCalculations") ~= true or view_index == 0) then
+		if isRotationModeEarlyUpdateDisabled() == false and lateYaw == false and (optimizeBodyYawCalculations == false or getParameter("optimizeBodyRotationCalculations") ~= true or view_index == 1) then
 			updateBodyYaw()
 		end
-		if getParameter("optimizeBodyLocationCalculations") ~= true or view_index == 0 then
+		--print(view_index)
+		if getParameter("optimizeBodyLocationCalculations") ~= true or view_index == 1 then
 			updatePawnPositionRoomscale(world_to_meters)
 		end
 
-		if lateYaw == false and view_index == 0 then
+		if lateYaw == false and view_index == 1 and M.isBodyMeshPositionAdjustmentAllowed() then
 			updateMeshRelativePosition()
 		end
 

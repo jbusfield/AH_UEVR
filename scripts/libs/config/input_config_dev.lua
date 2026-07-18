@@ -323,47 +323,61 @@ local function getConfigWidgets(m_paramManager)
 				initialValue = 1,
 				width = 100
 			},
-			{
-				widgetType = "drag_float3",
-				id = widgetPrefix .. "headOffset",
-				label = "Mesh Offset",
-				speed = .1,
-				range = {-200, 200},
-				initialValue = {configDefaults["headOffset"] and configDefaults["headOffset"].X or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Y or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Z or 0}
-			},
             {
                 widgetType = "checkbox",
-                id = widgetPrefix .. "useMeshHeightForHeadOffset",
-                label = "Use Mesh Height",
-                initialValue = configDefaults["useMeshHeightForHeadOffset"]
+                id = widgetPrefix .. "adjustBodyMeshPosition",
+                label = "Adjust Body Mesh Position",
+                initialValue = configDefaults["adjustBodyMeshPosition"] or true
             },
 			{
-				widgetType = "checkbox",
-				id = widgetPrefix .. "adjustForAnimation",
-				label = "Animation Movement Compensation",
-				initialValue = configDefaults["adjustForAnimation"]
+				widgetType = "begin_group",
+				id = widgetPrefix .. "body_mesh_position_group",
+				isHidden = false
 			},
-			{
-				widgetType = "combo",
-				id = widgetPrefix .. "headBones",
-				label = "Head Bone",
-				selections = {"None"},
-				initialValue = 1
-			},
-			{
-				widgetType = "checkbox",
-				id = widgetPrefix .. "adjustForEyeOffset",
-				label = "Eye Offset Compensation",
-				initialValue = configDefaults["adjustForEyeOffset"]
-			},
-			{
-				widgetType = "slider_float",
-				id = widgetPrefix .. "eyeOffset",
-				label = "Eye Offset",
-				speed = .1,
-				range = {-40, 40},
-				initialValue = configDefaults["eyeOffset"]
-			},
+				{ widgetType = "indent", width = 20} ,
+				{
+					widgetType = "drag_float3",
+					id = widgetPrefix .. "headOffset",
+					label = "Mesh Offset",
+					speed = .1,
+					range = {-200, 200},
+					initialValue = {configDefaults["headOffset"] and configDefaults["headOffset"].X or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Y or 0, configDefaults["headOffset"] and configDefaults["headOffset"].Z or 0}
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "useMeshHeightForHeadOffset",
+					label = "Use Mesh Height",
+					initialValue = configDefaults["useMeshHeightForHeadOffset"]
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "adjustForAnimation",
+					label = "Animation Movement Compensation",
+					initialValue = configDefaults["adjustForAnimation"]
+				},
+				{
+					widgetType = "combo",
+					id = widgetPrefix .. "headBones",
+					label = "Head Bone",
+					selections = {"None"},
+					initialValue = 1
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "adjustForEyeOffset",
+					label = "Eye Offset Compensation",
+					initialValue = configDefaults["adjustForEyeOffset"]
+				},
+				{
+					widgetType = "slider_float",
+					id = widgetPrefix .. "eyeOffset",
+					label = "Eye Offset",
+					speed = .1,
+					range = {-40, 40},
+					initialValue = configDefaults["eyeOffset"]
+				},
+				{ widgetType = "unindent", width = 20} ,
+			{ widgetType = "end_group"},
 		{
 			widgetType = "tree_pop"
 		},
@@ -454,9 +468,10 @@ local function updateUIState(key)
     elseif key == "adjustForEyeOffset" then
         configui.hideWidget(widgetPrefix .. "eyeOffset", not configui.getValue(exKey))
 	elseif key == "aimCameraList" then
-		print("@@@@@@@@@@@@@@@@@")
 		configui.hideWidget(widgetPrefix .. "usePawnControlRotation", configui.getValue(exKey) == 1)
 		configui.hideWidget(widgetPrefix .. "cameraResetAction", configui.getValue(exKey) == 1)
+	elseif key == "adjustBodyMeshPosition" then
+		configui.setHidden(widgetPrefix .. "body_mesh_position_group", not configui.getValue(exKey))
     end
 end
 
@@ -659,7 +674,13 @@ configui.onUpdate(widgetPrefix .. "cameraResetAction", function(value)
 	updateSetting("cameraResetAction", value)
 end)
 
-
+configui.onUpdate(widgetPrefix .. "adjustBodyMeshPosition", function(value)
+	updateSetting("adjustBodyMeshPosition", value)
+	updateUIState("adjustBodyMeshPosition")
+end)
+configui.onCreate(widgetPrefix .. "adjustBodyMeshPosition", function(value)
+	configui.setHidden(widgetPrefix .. "body_mesh_position_group", not value)
+end)
 
 configui.onUpdate(widgetPrefix .. "aimCameraList", function(value)
 	--get the camera name from the selection

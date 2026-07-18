@@ -2527,8 +2527,9 @@ local function tryAutoCreateArms()
 		local paramsFile = "hands_parameters"
 		local mesh = paramManager:getFromActiveProfile("mesh")
 		if mesh ~= nil and mesh ~= "" then
-			M.new({ animationsFile = paramsFile })
-			print("Auto-created IK arms with params from " .. paramsFile)
+			if M.new({ animationsFile = paramsFile }) ~= nil then
+				M.print("Auto-created IK arms with params from " .. paramsFile)
+			end
 		end
 	end
 end

@@ -55,7 +55,7 @@ local jumpTurnDeadzone = 32000
 --temp debug param
 --local socketList = {"None"}
 
-local versionTxt = "v1.0.5"
+local versionTxt = "v1.0.6"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -64,16 +64,16 @@ local configDefinition = {
 		layout = spliceableInlineArray
 		{
 			{ widgetType = "text", id = "title", label = title },
-			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Reticule" }, { widgetType = "begin_rect", },
-				expandArray(reticule.getConfigurationWidgets,{{id="uevr_reticule_update_distance", initialValue=200},}),
-			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
-			{ widgetType = "new_line" },
 			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "UI" }, { widgetType = "begin_rect", },
 				expandArray(ui.getConfigurationWidgets),
 			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
 			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Input" }, { widgetType = "begin_rect", },
 				expandArray(input.getConfigurationWidgets),
+			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
+			{ widgetType = "new_line" },
+			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Reticule" }, { widgetType = "begin_rect", },
+				expandArray(reticule.getConfigurationWidgets,{{id="uevr_reticule_update_distance", initialValue=200},}),
 			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
 			--{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Control" }, { widgetType = "begin_rect", },
@@ -267,6 +267,64 @@ function on_uevr_ui_change(uiDrawn)
 	uevrUtils.print("UEVR UI drawn " .. tostring(uiDrawn))
 end
 
+-- local function updateWidgetMarkers()
+-- 	if status.textureImported == false then return end
+-- 	if uevrUtils.getValid(status.texture) == nil then
+-- 		status.texture = kismet_rendering_library:ImportFileAsTexture2D(uevrUtils.get_world(), "C:\\Users\\john\\source\\AO.png")
+-- 		if uevrUtils.getValid(status.texture) == nil then
+-- 			print("Texture not imported")
+-- 			status.textureImported = false
+-- 		end
+-- 	end
+-- 	if status.texture ~= nil then
+-- 		-- print("Texture imported successfully")
+-- 		-- local x = texture:Blueprint_GetSizeX()
+-- 		-- local y = texture:Blueprint_GetSizeY()
+-- 		-- print("Texture size: " .. tostring(x) .. " x " .. tostring(y))
+
+-- 		--create widget Class /Script/UMG.Image
+-- 		--image:SetBrushFromTexture(class UTexture2D* Texture, bool bMatchSize);
+-- 		local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
+-- 		if allWidgets ~= nil then
+-- 			--print("Checking widgets")
+-- 			for index, widget in pairs(allWidgets) do
+-- 				--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
+-- 				widget.ActionButton.ButtonImage:SetBrushFromTexture(status.texture, false)
+-- 			end
+-- 		end
+-- 	end
+
+-- end
+
+setInterval(1000, function()
+	--updateWidgetMarkers()
+	local lb = uevrUtils.find_required_object("PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_LB_02_png.XBOX_LB_02_png")
+	if lb == nil then
+		print("LB not found")
+	else
+		--print(lb:get_full_name())
+	end
+	--print(lb:get_full_name())
+	local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
+	if allWidgets ~= nil then
+		--print("Checking widgets")
+		--it should be RB in the map screen
+		for index, widget in pairs(allWidgets) do
+			if widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name() == "PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png" then
+				widget.ActionButton.ButtonImage:SetBrushResourceObject(lb)
+				print("Set LB to " .. lb:get_full_name())
+			end
+			--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
+			-- if widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name() ~= "Material /Game/Development/MaterialLibrary/Glass/Empty_Mat.Empty_Mat" then
+			-- 	print("Widget: " .. widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name())
+			-- end
+		end
+	end
+--PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png
+
+end)
+
+
 --callback from uevrUtils that fires whenever the level changes
 function on_level_change(level, levelName)
 	uevrUtils.print("Level changed to " .. levelName)
@@ -277,7 +335,7 @@ function on_level_change(level, levelName)
 	if materialUtils == nil then
 		uevrUtils.print("MaterialUtils not found")
 	end
-
+	
 end
 
 --callback from uevrUtils that fires whenever a cutscene change is detected
@@ -619,8 +677,10 @@ function on_post_engine_tick(engine, delta)
 
 		--when levitating a world item put the item directly in front of you instead of off to the side
 		--pawn.GrabSocket.RelativeLocation.X = 0
-		pawn.GrabSocket.RelativeLocation.Y = 0
-		pawn.GrabSocket.RelativeLocation.Z = 0
+		if pawn.GrabSocket ~= nil then
+			pawn.GrabSocket.RelativeLocation.Y = 0
+			pawn.GrabSocket.RelativeLocation.Z = 0
+		end
 		--pawn.InteractionsComponent:ToggleActive()
 
 		-- if pawn ~= nil and pawn.SkillsComponent ~= nil then
@@ -630,15 +690,11 @@ function on_post_engine_tick(engine, delta)
 		-- end
 	end
 end
--- local function checkWidgets()
--- 		local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
--- 		if allWidgets ~= nil then
--- 			print("Checking widgets")
--- 			for index, widget in pairs(allWidgets) do
--- 				--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
--- 			end
--- 		end
--- end
+
+function on_character_hidden(isCharacterHidden)
+	uevrUtils.setUEVRParam("VR_RoomscaleMovement", tostring(not isCharacterHidden))
+end
+
 
 configui.onCreateOrUpdate("leftHandDirectionOffset", function(value)
 	leftHandDirectionOffset = value
@@ -673,10 +729,10 @@ configui.create(configDefinition)
 -- 	--uevr.api:dispatch_custom_event("GetTArray:FName" .. ":" .. pawn.Mesh:get_full_name() .. ":" .. "GetAllSocketNames", "")
 -- end)
 
--- register_key_bind("F2", function()
--- 	print("F2 pressed")
--- 	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
--- end)
+register_key_bind("F2", function()
+	print("F2 pressed")
+	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
+end)
 
 -- register_key_bind("F3", function()
 -- 	print("F3 pressed")
@@ -687,9 +743,6 @@ hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEPlay", true, nil,
 	function(fn, obj, locals, result)
 		print("OnQTEPlay called", locals)
 		remap.setDisabled(true)
-		delay(1000, function()
-			uevrUtils.stopFadeCamera()
-		end)
 	end
 , true)
 
@@ -697,6 +750,10 @@ hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEStop", true, nil,
 	function(fn, obj, locals, result)
 		print("OnQTEStop called", locals)
 		remap.setDisabled(false)
+		delay(1000, function()
+			uevrUtils.stopFadeCamera()
+		end)
+
 	end
 , true)
 
