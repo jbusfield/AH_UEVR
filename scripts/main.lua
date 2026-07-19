@@ -55,7 +55,7 @@ local jumpTurnDeadzone = 32000
 --temp debug param
 --local socketList = {"None"}
 
-local versionTxt = "v1.0.6"
+local versionTxt = "v1.0.7"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -296,13 +296,15 @@ end
 
 -- end
 
+-- Show LB when game tries to show RB
 setInterval(1000, function()
 	--updateWidgetMarkers()
-	local lb = uevrUtils.find_required_object("PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_LB_02_png.XBOX_LB_02_png")
-	if lb == nil then
+	if uevrUtils.getValid(status.lbResource) == nil then
+		status.lbResource = uevrUtils.find_required_object("PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_LB_02_png.XBOX_LB_02_png")
+	end
+	if status.lbResource == nil then
 		print("LB not found")
-	else
-		--print(lb:get_full_name())
+		return
 	end
 	--print(lb:get_full_name())
 	local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
@@ -311,8 +313,8 @@ setInterval(1000, function()
 		--it should be RB in the map screen
 		for index, widget in pairs(allWidgets) do
 			if widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name() == "PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png" then
-				widget.ActionButton.ButtonImage:SetBrushResourceObject(lb)
-				print("Set LB to " .. lb:get_full_name())
+				widget.ActionButton.ButtonImage:SetBrushResourceObject(status.lbResource)
+				--print("Set LB to " .. status.lbResource:get_full_name())
 			end
 			--widget.ActionButton.ButtonImage.Brush.ResourceObject = lb
 			-- if widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name() ~= "Material /Game/Development/MaterialLibrary/Glass/Empty_Mat.Empty_Mat" then
@@ -603,11 +605,28 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 	end
 
 	-- switch hands when using the hand's trigger or shoulder button
+	-- Only suppress LT on a rising edge when switching hands. Zeroing an already-held LT
+	-- creates a fake release that the left_trigger toggle remap treats as a real edge
+	-- (hose toggles off, then a later real release toggles it back on).
+	local leftTriggerHeld = state.Gamepad.bLeftTrigger > 0
 	if state.Gamepad.bRightTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_RIGHT_SHOULDER) then
+		local currentHand = status["currentTargetingHand"]
 		setDefaultTargeting(Handed.Right)
-    elseif state.Gamepad.bLeftTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER) then
+		if currentHand == Handed.Left and state.Gamepad.bRightTrigger > 0 then
+			status.handChangedCount = 2 --delay trigger firing by two frames to allow the game to switch hands
+		end
+		if status.handChangedCount ~= nil and status.handChangedCount > 0 then
+			status.handChangedCount = status.handChangedCount - 1
+			state.Gamepad.bRightTrigger = 0
+		end
+	elseif leftTriggerHeld or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER) then
+		local currentHand = status["currentTargetingHand"]
 		setDefaultTargeting(Handed.Left)
-    end
+		if currentHand == Handed.Right and leftTriggerHeld and not status.leftTriggerWasHeld then
+			state.Gamepad.bLeftTrigger = 0
+		end
+	end
+	status.leftTriggerWasHeld = leftTriggerHeld
 
 	isGrabbingCassette = false
 	if uevrUtils.getValid(pawn) ~= nil and pawn.GetCurrentWeapon ~= nil then
