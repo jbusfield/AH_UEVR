@@ -29,7 +29,7 @@ ik.setInitialTransformOnAnimationCompleteEnabled(false)
 -- ik.setLogLevel(LogLevel.Debug)
 
 -- uncomment the next line to see the full developer UI
---uevrUtils.setDeveloperMode(true)
+uevrUtils.setDeveloperMode(true)
 --hands.enableConfigurationTool()
 
 ui.init()

@@ -14,12 +14,21 @@ Usage
     This module provides two-bone IK arm solving against VR motion controllers, poseable mesh
     management, accessory socket targeting, profile-based configuration, and optional copy-pose
     animation from a source skeletal mesh.
-
-    Enums:
-		ik.SolverType.TWO_BONE / ROTATION_ONLY
-		ik.ControllerType.LEFT_CONTROLLER / RIGHT_CONTROLLER
         
-    Available functions:
+    Profile settings: 
+		IK Pose Authoritative (animation_ik_pose_authoritative) (IK Dev Config → Animation → "IK Pose Authoritative")
+			Controls whether two-bone solvers keep running during CopyPose animation frames.
+			CopyPoseFromSkeletalComponent always writes the full shared arms skeleton, so games need
+			different ownership of the pose afterward:
+				true  - solvers always run (including after CopyPose). Use when a one-arm montage would
+					otherwise leave the other arm stuck in the game's animated pose and you need IK to
+					reclaim controller tracking on that arm.
+				false - solvers run only when not animating. Use when montages (e.g. weapon reloads)
+					must keep their authored arm/weapon rotations and post-CopyPose IK would twist them
+					toward the controllers.
+			Configure per profile in ik_parameters / the IK Dev Config UI.
+	
+	Available functions:
     
     ik.init((optional)isDeveloperMode, (optional)logLevel) - initializes the IK module.
 		If isDeveloperMode is omitted, uses uevrUtils.getDeveloperMode(). In developer mode the
@@ -367,6 +376,7 @@ local parameters = {
     mesh_rotation_offset = uevrUtils.rotator(0,0,0),
     animation_location_offset = uevrUtils.vector(0,0,0),
     animation_rotation_offset = uevrUtils.rotator(0,0,0),
+	animation_ik_pose_authoritative = false,
 	solvers = {},
 }
 local paramManager = paramModule.new(parametersFileName, parameters, true)
@@ -755,18 +765,16 @@ function Rig:create()
                 end
             end
 
-			--moved this outside the didAnimate check so that the solver could modify the position after animation
-			self:rebuildOrderedSolversIfNeeded()
-			for _, solverEntry in ipairs(self.orderedSolvers or {}) do
-				local solverId = solverEntry.id
-				local activeParams = solverEntry.params
-				if activeParams then
-					if activeParams.solverType == M.SolverType.TWO_BONE then
+			-- Authoritative: always solve (AH). Otherwise: only when not animating (TOW).
+			if self.animationIKPoseAuthoritative or didAnimate == false then
+				self:rebuildOrderedSolversIfNeeded()
+				for _, solverEntry in ipairs(self.orderedSolvers or {}) do
+					local activeParams = solverEntry.params
+					if activeParams and activeParams.solverType == M.SolverType.TWO_BONE then
 						self:solveTwoBone(activeParams)
 					end
 				end
 			end
-
         end
 	end
 	if self.tickPhase == "pre" then
@@ -923,6 +931,7 @@ function Rig:initializeRigState()
 		animationMesh = uevrUtils.getObjectFromDescriptor(animationMeshName, false)
 	end
 	self.animationMesh = animationMesh
+	self.animationIKPoseAuthoritative = getParameter({self.rigId, "animation_ik_pose_authoritative"})
 	self.animationLocationOffset = getParameter({self.rigId, "animation_location_offset"}) and uevrUtils.vector(getParameter({self.rigId, "animation_location_offset"})) or uevrUtils.vector(0,0,0)
 	self.animationRotationOffset = getParameter({self.rigId, "animation_rotation_offset"}) and uevrUtils.rotator(getParameter({self.rigId, "animation_rotation_offset"})) or uevrUtils.rotator(0,0,0)
 
@@ -1085,6 +1094,7 @@ local function isRigLevelParam(paramName)
 		or paramName == "animation_mesh"
 		or paramName == "animation_location_offset"
 		or paramName == "animation_rotation_offset"
+		or paramName == "animation_ik_pose_authoritative"
 		or paramName == "show_debug_meshes"
 		or paramName == "parent_type"
 		or paramName == "spine_bone_name"
@@ -1269,6 +1279,12 @@ function Rig:setRigParameter(paramName, value)
 	if paramName == "animation_rotation_offset" then
 		local offset = value and uevrUtils.rotator(value) or uevrUtils.rotator(0,0,0)
 		self.animationRotationOffset = offset
+		return
+	end
+
+	if paramName == "animation_ik_pose_authoritative" then
+		self.animationIKPoseAuthoritative = value
+		return
 	end
 end
 
