@@ -1,0 +1,134 @@
+{
+    "_profileLabels": {
+        "default": "Default"
+    },
+    "_profileState": {
+        "currentEditingProfile": "default"
+    },
+    "default": {
+        "animation_location_offset": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "animation_mesh": "Pawn.FPHandsMesh",
+        "animation_rotation_offset": [
+            0.0,
+            92.0,
+            0.0
+        ],
+        "hide_body": false,
+        "mesh": "Pawn.FPHandsPostProcessMesh",
+        "mesh_location_offset": [
+            -10.655,
+            0.0,
+            -83.335
+        ],
+        "mesh_rotation_offset": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "parent_type": 1,
+        "show_debug_meshes": false,
+        "solvers": {
+            "055655c3-5c27-40fb-afa2-af6169aa5397": {
+                "active": true,
+                "allow_stretch": false,
+                "allow_wrist_affects_elbow": true,
+                "end_bone": "hand_l",
+                "end_bone_lock_pitch": false,
+                "end_bone_lock_roll": false,
+                "end_bone_lock_yaw": false,
+                "end_bone_offset": [
+                    -5.1561,
+                    -10.561,
+                    1.0506
+                ],
+                "end_bone_rotation": [
+                    36.0,
+                    79.0,
+                    0.0
+                ],
+                "end_control_type": 0,
+                "incremental_forearm_twist": true,
+                "joint_bone": "lowerarm_l",
+                "label": "Left",
+                "max_stretch_scale": 0.0,
+                "smoothing": 0,
+                "solver_type": 1,
+                "sort_order": 2,
+                "start_bone": "upperarm_l",
+                "start_stretch_ratio": 0.0,
+                "twist_bones": [
+                    {
+                        "bone": "lowerarm_twist_00_l",
+                        "pitch": 0.0,
+                        "roll": 0.39399999380111694,
+                        "yaw": 0.0
+                    },
+                    {
+                        "bone": "lowerarm_twist_01_l",
+                        "pitch": 0.0,
+                        "roll": 0.6819999814033508,
+                        "yaw": 0.0
+                    },
+                    {
+                        "bone": "lowerarm_twist_02_l",
+                        "pitch": 0.0,
+                        "roll": 0.6669999957084656,
+                        "yaw": 0.0
+                    }
+                ],
+                "wrist_bone": "",
+                "wrist_twist_influence": 0.35,
+                "wrist_twist_max": 75.0
+            },
+            "9f2499de-f73a-4e85-a0e7-f1b391918bff": {
+                "active": true,
+                "allow_stretch": false,
+                "allow_wrist_affects_elbow": true,
+                "end_bone": "hand_r",
+                "end_bone_lock_pitch": false,
+                "end_bone_lock_roll": false,
+                "end_bone_lock_yaw": false,
+                "end_bone_offset": [
+                    -4.22,
+                    4.9019,
+                    -1.875
+                ],
+                "end_bone_rotation": [
+                    0.0,
+                    -29.0,
+                    107.0
+                ],
+                "end_control_type": 1,
+                "joint_bone": "lowerarm_r",
+                "label": "Right",
+                "max_stretch_scale": 0.0,
+                "smoothing": 0,
+                "solver_type": 1,
+                "sort_order": 1,
+                "start_bone": "upperarm_r",
+                "start_stretch_ratio": 0.0,
+                "twist_bones": [
+                    {
+                        "bone": "lowerarm_twist_00_r",
+                        "pitch": 0.0,
+                        "roll": 0.25699999928474426,
+                        "yaw": 0.0
+                    },
+                    {
+                        "bone": "lowerarm_twist_01_r",
+                        "pitch": 0.0,
+                        "roll": 1.0,
+                        "yaw": 0.0
+                    }
+                ],
+                "wrist_bone": "",
+                "wrist_twist_influence": 0.35,
+                "wrist_twist_max": 75.0
+            }
+        }
+    }
+}

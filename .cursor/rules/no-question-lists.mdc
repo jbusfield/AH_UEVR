@@ -1,0 +1,10 @@
+---
+description: Never present the user with question lists or AskQuestion prompts
+alwaysApply: true
+---
+
+# No Question Lists
+
+Never present the user with a list of questions. Do not use the AskQuestion tool. Do not ask multiple-choice clarifying questions in chat.
+
+When something is ambiguous, make a reasonable decision from context (open files, dumps, existing code patterns) and proceed. Prefer implementing over asking.

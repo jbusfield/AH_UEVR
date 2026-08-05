@@ -51,6 +51,11 @@ Usage
 				end
 			end)
 
+    attachments.forceGripUpdate() - immediately runs one grip-update pass (same work as the periodic timer).
+		Use after temporarily suppressing mesh reattach so the weapon snaps back without waiting for setGripUpdateTimeout.
+		example:
+			attachments.forceGripUpdate()
+
     attachments.registerOnGripAnimationCallback(callbackFunc) - registers a callback function that will be called when grip animation changes, 
 		for example when a new weapon is equipped.
         example:
@@ -1950,15 +1955,24 @@ function M.attachToMesh(attachment, mesh, socketName, gripHand, options)
 		--print("Checking if attachment is already a child of the mesh", meshName, attachmentName, childMeshName)
 		if meshAttachmentList[meshName] ~= nil and meshAttachmentList[meshName].attachments ~= nil and meshAttachmentList[meshName].attachments[attachmentName] ~= nil then
 			if meshAttachmentList[meshName].attachments[attachmentName].childMeshName == childMeshName then
-				if mesh.AttachChildren ~= nil then
-					for i, child in ipairs(mesh.AttachChildren) do
-						if child == attachment then
-							--M.print("Attachment is already a child of the mesh")
-							return true
-						end
-					end
+				-- AttachParent is the source of truth. AttachChildren can lag after the game
+				-- reparents the weapon (e.g. anim notify), which made forceGripUpdate no-op.
+				if attachment.AttachParent == mesh then
+					return true
+				end
+				-- Tracked as gripped to this mesh but currently parented elsewhere (e.g. accessories
+				-- temporarily promoted it to a motion controller to break an IK hierarchy cycle,
+				-- or a game anim notify owns parenting for a reload window).
+				-- Do not steal it back while that override is active.
+				if uevrUtils.executeUEVRCallbacksWithBooleanResult("attachment_suppress_mesh_reattach", attachment, mesh) == true then
+					return true
 				end
 			end
+		end
+
+		-- Also honor suppress when the tracked-entry checks above don't match (name/mesh churn).
+		if uevrUtils.executeUEVRCallbacksWithBooleanResult("attachment_suppress_mesh_reattach", attachment, mesh) == true then
+			return true
 		end
 
 
@@ -2357,27 +2371,29 @@ end
 local currentAnimationIDList = {}
 function M.setAnimationIDs(animationIDList)
 	--dont rewrite if nothing has changed
-	if deepEqual(animationIDList, currentAnimationIDList) then
-		return
-	end
-	currentAnimationIDList = animationIDList
-	if animationIDList ~= nil then
-		animationLabels = getAnimationLabelsArray(animationIDList)
-		animationIDs = getAnimationIDsArray(animationIDList)
-		for i = 1, #attachmentOffsets do
-			local parent = attachmentOffsets[i]["parent"]
-			local child = attachmentOffsets[i]["child"]
-			local name = parent .. "_" .. child
-			configui.setSelections(widgetPrefix .. name .. "_grip_animation", animationLabels)
-			local selectedID = attachmentOffsets[i]["animation"]
-			for j = 1, #animationIDs do
-				if selectedID == animationIDs[j] then
-					--dont think callback is needed here since we're just updating the configui to match existing settings
-					configui.setValue(widgetPrefix .. name .. "_grip_animation", j, true)
+	if not deepEqual(animationIDList, currentAnimationIDList) then
+		currentAnimationIDList = animationIDList
+		if animationIDList ~= nil then
+			animationLabels = getAnimationLabelsArray(animationIDList)
+			animationIDs = getAnimationIDsArray(animationIDList)
+			for i = 1, #attachmentOffsets do
+				local parent = attachmentOffsets[i]["parent"]
+				local child = attachmentOffsets[i]["child"]
+				local name = parent .. "_" .. child
+				configui.setSelections(widgetPrefix .. name .. "_grip_animation", animationLabels)
+				local selectedID = attachmentOffsets[i]["animation"]
+				for j = 1, #animationIDs do
+					if selectedID == animationIDs[j] then
+						--dont think callback is needed here since we're just updating the configui to match existing settings
+						configui.setValue(widgetPrefix .. name .. "_grip_animation", j, true)
+					end
 				end
 			end
 		end
 	end
+	-- Always forward so accessory combos refresh even when attachment IDs are unchanged
+	-- (e.g. widgets created after the first call, or early-return path).
+	accessoriesConfig.setAnimationIDs(animationIDList)
 end
 
 configui.onUpdate("use_uevr_attachments_strip_parent_name_numeric_suffix", function(value)
@@ -2461,6 +2477,113 @@ configui.onUpdate("uevr_attachments_left_hand_flip_z", function(value)
 end)
 
 local autoUpdateCallbackCreated = false
+local gripUpdateCallback = nil
+local failedAttachments = {}
+
+local function runGripUpdate()
+	if gripUpdateCallback == nil then return false end
+	local rightAttachment, rightMesh, rightSocketName, leftAttachment, leftMesh, leftSocketName, attachOptionsRight, attachOptionsLeft = gripUpdateCallback()
+	local allowReattach = nil
+	if attachOptionsLeft ~= nil and type(attachOptionsLeft) == "boolean" then
+		allowReattach = attachOptionsLeft
+	end
+	if attachOptionsRight == nil then
+		attachOptionsRight = {
+			detachFromOriginOnGrip = true,
+			maintainWorldPositionOnDetachFromOrigin = false,
+			detachFromParentOnRelease = true,
+			maintainWorldPositionOnDetachFromParent = false,
+			reattachToOriginOnRelease = allowReattach or false,
+			restoreTransformToOriginOnReattach = allowReattach or false,
+			useZeroTransformOnReattach = false,
+			allowChildVisibilityHandling = true,
+			allowChildHiddenInGameHandling = true,
+			allowRenderInMainPassHandling = true
+		}
+	elseif type(attachOptionsRight) == "boolean" then
+		attachOptionsRight = {
+			detachFromOriginOnGrip = attachOptionsRight,
+			maintainWorldPositionOnDetachFromOrigin = false,
+			detachFromParentOnRelease = attachOptionsRight,
+			maintainWorldPositionOnDetachFromParent = false,
+			reattachToOriginOnRelease = allowReattach or false,
+			restoreTransformToOriginOnReattach = allowReattach or false,
+			useZeroTransformOnReattach = false,
+			allowChildVisibilityHandling = true,
+			allowChildHiddenInGameHandling = true,
+			allowRenderInMainPassHandling = true
+		}
+	end
+	if attachOptionsLeft == nil then
+		attachOptionsLeft = {
+			detachFromOriginOnGrip = true,
+			maintainWorldPositionOnDetachFromOrigin = false,
+			detachFromParentOnRelease = true,
+			maintainWorldPositionOnDetachFromParent = false,
+			reattachToOriginOnRelease = false,
+			restoreTransformToOriginOnReattach = false,
+			useZeroTransformOnReattach = false,
+			allowChildVisibilityHandling = true,
+			allowChildHiddenInGameHandling = true,
+			allowRenderInMainPassHandling = true
+		}
+	elseif type(attachOptionsLeft) == "boolean" then
+		attachOptionsLeft = {
+			detachFromOriginOnGrip = attachOptionsLeft,
+			maintainWorldPositionOnDetachFromOrigin = false,
+			detachFromParentOnRelease = attachOptionsLeft,
+			maintainWorldPositionOnDetachFromParent = false,
+			reattachToOriginOnRelease = allowReattach or false,
+			restoreTransformToOriginOnReattach = allowReattach or false,
+			useZeroTransformOnReattach = false,
+			allowChildVisibilityHandling = true,
+			allowChildHiddenInGameHandling = true,
+			allowRenderInMainPassHandling = true
+		}
+	end
+
+	-- detach them first so switching left to right isnt affected
+	if rightAttachment == nil then
+		M.detachGripAttachments(Handed.Right)
+	end
+	if leftAttachment == nil then
+		M.detachGripAttachments(Handed.Left)
+	end
+
+	--failedAttachments keeps a mesh that cant be attached from endlessly being retried
+	if rightAttachment ~= nil and uevrUtils.getValid(rightAttachment) ~= nil and failedAttachments[rightAttachment:get_full_name()] ~= true then
+		if failedAttachments[rightAttachment:get_full_name()] == nil then failedAttachments[rightAttachment:get_full_name()] = 0 end
+		local rightSuccess = false
+		if rightMesh == nil then
+			rightSuccess = M.attachToRawController(rightAttachment, Handed.Right, attachOptionsRight)
+		else
+			rightSuccess = M.attachToMesh(rightAttachment, rightMesh, rightSocketName, Handed.Right, attachOptionsRight)
+		end
+		if not rightSuccess then
+			print("###########SFailed to attach right attachment")
+			failedAttachments[rightAttachment:get_full_name()] = failedAttachments[rightAttachment:get_full_name()] + 1
+		else
+			failedAttachments[rightAttachment:get_full_name()] = 0
+		end
+	end
+
+	if leftAttachment ~= nil and uevrUtils.getValid(leftAttachment) ~= nil and failedAttachments[leftAttachment:get_full_name()] ~= true then
+		if failedAttachments[leftAttachment:get_full_name()] == nil then failedAttachments[leftAttachment:get_full_name()] = 0 end
+		local leftSuccess = false
+		if leftMesh == nil then
+			leftSuccess = M.attachToRawController(leftAttachment, Handed.Left, attachOptionsLeft)
+		else
+			leftSuccess = M.attachToMesh(leftAttachment, leftMesh, leftSocketName, Handed.Left, attachOptionsLeft)
+		end
+		if not leftSuccess then
+			failedAttachments[leftAttachment:get_full_name()] = failedAttachments[leftAttachment:get_full_name()] + 1
+		else
+			failedAttachments[leftAttachment:get_full_name()] = 0
+		end
+	end
+	return true
+end
+
 --options = {
 --	detachFromOriginOnGrip = true, 
 --	maintainWorldPositionOnDetachFromOrigin = false, 
@@ -2473,156 +2596,18 @@ local autoUpdateCallbackCreated = false
 --	allowChildHiddenInGameHandling = true,
 --	allowRenderInMainPassHandling = true
 --}
-local failedAttachments = {}
 function M.registerOnGripUpdateCallback(callback)
+	gripUpdateCallback = callback
 	if not autoUpdateCallbackCreated then
+		autoUpdateCallbackCreated = true
 		uevrUtils.setInterval(gripUpdateTimeout, function()
-			local rightAttachment, rightMesh, rightSocketName, leftAttachment, leftMesh, leftSocketName, attachOptionsRight, attachOptionsLeft = callback()
-			-- print("Before")
-			-- printMeshAttachmentList()
-			-- print("Left",activeGripAnimations[Handed.Left])
-			-- print("Right",activeGripAnimations[Handed.Right])
-			local allowReattach = nil
-			if attachOptionsLeft ~= nil and type(attachOptionsLeft) == "boolean" then
-				allowReattach = attachOptionsLeft
-			end
-			if attachOptionsRight == nil then
-				attachOptionsRight = {
-					detachFromOriginOnGrip = true,
-					maintainWorldPositionOnDetachFromOrigin = false,
-					detachFromParentOnRelease = true,
-					maintainWorldPositionOnDetachFromParent = false,
-					reattachToOriginOnRelease = allowReattach or false,
-					restoreTransformToOriginOnReattach = allowReattach or false,
-					useZeroTransformOnReattach = false,
-					allowChildVisibilityHandling = true,
-					allowChildHiddenInGameHandling = true,
-					allowRenderInMainPassHandling = true
-				}
-			elseif type(attachOptionsRight) == "boolean" then
-				attachOptionsRight = {
-					detachFromOriginOnGrip = attachOptionsRight,
-					maintainWorldPositionOnDetachFromOrigin = false,
-					detachFromParentOnRelease = attachOptionsRight,
-					maintainWorldPositionOnDetachFromParent = false,
-					reattachToOriginOnRelease = allowReattach or false,
-					restoreTransformToOriginOnReattach = allowReattach or false,
-					useZeroTransformOnReattach = false,
-					allowChildVisibilityHandling = true,
-					allowChildHiddenInGameHandling = true,
-					allowRenderInMainPassHandling = true
-				}
-			end
-			if attachOptionsLeft == nil then
-				attachOptionsLeft = {
-					detachFromOriginOnGrip = true,
-					maintainWorldPositionOnDetachFromOrigin = false,
-					detachFromParentOnRelease = true,
-					maintainWorldPositionOnDetachFromParent = false,
-					reattachToOriginOnRelease = false,
-					restoreTransformToOriginOnReattach = false,
-					useZeroTransformOnReattach = false,
-					allowChildVisibilityHandling = true,
-					allowChildHiddenInGameHandling = true,
-					allowRenderInMainPassHandling = true
-				}
-			elseif type(attachOptionsLeft) == "boolean" then
-				attachOptionsLeft = {
-					detachFromOriginOnGrip = attachOptionsLeft,
-					maintainWorldPositionOnDetachFromOrigin = false,
-					detachFromParentOnRelease = attachOptionsLeft,
-					maintainWorldPositionOnDetachFromParent = false,
-					reattachToOriginOnRelease = allowReattach or false,
-					restoreTransformToOriginOnReattach = allowReattach or false,
-					useZeroTransformOnReattach = false,
-					allowChildVisibilityHandling = true,
-					allowChildHiddenInGameHandling = true,
-					allowRenderInMainPassHandling = true
-				}
-			end
-			-- --print(attachment, mesh, autoUpdateCurrentAttachment)
-			-- if detachFromParent == nil then detachFromParent = true end
-			-- if allowReattach == nil then allowReattach = false end
-
-			-- detach them first so switchiing left to right isnt affected
-			if rightAttachment == nil then
-				M.detachGripAttachments(Handed.Right)
-			end
-			if leftAttachment == nil then
-				M.detachGripAttachments(Handed.Left)
-			end
-
-			--failedAttachments keeps a mesh that cant be attached from endlessly being retried
-			if rightAttachment ~= nil and uevrUtils.getValid(rightAttachment) ~= nil and failedAttachments[rightAttachment:get_full_name()] ~= true then
-				local rightSuccess = false
-				-- if rightAttachment is nil then remove all right grip attachments
-				if rightAttachment == nil then
-					--M.detachGripAttachments(Handed.Right)
-				elseif rightMesh == nil then
-					rightSuccess = M.attachToRawController(rightAttachment, Handed.Right, attachOptionsRight)
-				else
-					rightSuccess = M.attachToMesh(rightAttachment, rightMesh, rightSocketName, Handed.Right, attachOptionsRight)
-				end
-				if not rightSuccess then
-					failedAttachments[rightAttachment:get_full_name()] = true
-				end
-			end
-
-			if leftAttachment ~= nil and uevrUtils.getValid(leftAttachment) ~= nil and failedAttachments[leftAttachment:get_full_name()] ~= true then
-				local leftSuccess = false
-				-- if leftAttachment is nil then remove all left grip attachments
-				if leftAttachment == nil then
-					--M.detachGripAttachments(Handed.Left)
-				elseif leftMesh == nil then
-					leftSuccess = M.attachToRawController(leftAttachment, Handed.Left, attachOptionsLeft)
-				else
-					leftSuccess = M.attachToMesh(leftAttachment, leftMesh, leftSocketName, Handed.Left, attachOptionsLeft)
-				end
-				if not leftSuccess then
-					failedAttachments[leftAttachment:get_full_name()] = true
-				end
-			end
-
-			-- print("After")
-			-- printMeshAttachmentList()
-			-- print("Left",activeGripAnimations[Handed.Left])
-			-- print("Right",activeGripAnimations[Handed.Right])
-
-			-- if rightMesh == nil and rightAttachment == nil then
-			-- 	--do nothing
-			-- elseif rightMesh == nil and rightAttachment ~= nil then
-			-- 	--M.detachAttachmentFromMeshes(rightAttachment, handleParentAttachment)
-			-- elseif rightMesh ~= nil and rightAttachment == nil then
-			-- 	M.detachAttachmentsFromMesh(rightMesh, handleParentAttachment)
-			-- elseif rightMesh ~= nil and rightAttachment ~= nil then
-			-- 	M.attachToMesh(rightAttachment, rightMesh, rightSocketName, Handed.Right, handleParentAttachment)
-			-- end
-
-			-- if leftMesh == nil and leftAttachment == nil then
-			-- 	--do nothing
-			-- elseif leftMesh == nil and leftAttachment ~= nil then
-			-- 	--M.detachAttachmentFromMeshes(leftAttachment, handleParentAttachment)
-			-- 	M.attachToRawController(leftAttachment, Handed.Left, handleParentAttachment)
-			-- elseif leftMesh ~= nil and leftAttachment == nil then
-			-- 	M.detachAttachmentsFromMesh(leftMesh, handleParentAttachment)
-			-- elseif leftMesh ~= nil and leftAttachment ~= nil then
-			-- 	M.attachToMesh(leftAttachment, leftMesh, leftSocketName, Handed.Left, handleParentAttachment)
-			-- end
-
-			-- if mesh ~= nil then
-			-- 	print("Children",mesh:get_full_name(),mesh.AttachChildren and #mesh.AttachChildren or 0)
-			-- end
-			-- if (mesh == nil and autoUpdateCurrentMesh~= nil) or (attachment == nil and autoUpdateCurrentAttachment ~= nil) then
-			-- 	M.detach(autoUpdateCurrentAttachment, true)
-			-- 	autoUpdateCurrentMesh = mesh
-			-- 	autoUpdateCurrentAttachment = attachment
-			-- elseif attachment ~= nil and mesh ~= nil and autoUpdateCurrentAttachment ~= attachment then
-			-- 	M.attachToMesh(attachment, mesh, socketName, true)
-			-- 	autoUpdateCurrentMesh = mesh
-			-- 	autoUpdateCurrentAttachment = attachment
-			-- end
+			runGripUpdate()
 		end)
 	end
+end
+
+function M.forceGripUpdate()
+	return runGripUpdate()
 end
 
 function M.setGunstockOffsetsEnabled(val)

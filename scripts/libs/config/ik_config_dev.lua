@@ -56,7 +56,7 @@ local solverDefaults = {
     max_stretch_scale = 0.0,
     wrist_bone = "",
     twist_bones = {},
-    --invert_forearm_roll = false,
+	incremental_forearm_twist = false,
 	sort_order = 0,
 	smoothing = 0,
     wrist_twist_influence = 0.35,
@@ -418,12 +418,6 @@ local function getConfigWidgets(m_paramManager)
 							range = {0, 1},
 							initialValue = 0.0
 						},
-						-- {
-						-- 	widgetType = "checkbox",
-						-- 	id = widgetPrefix .. "invert_forearm_roll",
-						-- 	label = "Invert Forearm Roll",
-						-- 	initialValue = false
-						-- },
 						{
 							widgetType = "checkbox",
 							id = widgetPrefix .. "allow_wrist_affects_elbow",
@@ -620,6 +614,12 @@ local function getConfigWidgets(m_paramManager)
 							range = {0,1},
 							initialValue = 0.0,
 							width = 80
+						},
+						{
+							widgetType = "checkbox",
+							id = widgetPrefix .. "incremental_forearm_twist",
+							label = "Use Pitch-Stable Forearm Twist",
+							initialValue = false
 						},
 					{ widgetType = "end_group" },
 				{

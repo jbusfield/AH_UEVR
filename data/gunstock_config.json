@@ -1,0 +1,325 @@
+{
+    "uevr_gunstock_BP_AK47_C_SK_AK47_Base_offhand_location_offset": [
+        10.800000190734863,
+        6.800000190734863,
+        0.5
+    ],
+    "uevr_gunstock_BP_AK47_C_SK_AK47_Base_rotation": [
+        -5.0,
+        17.0,
+        -35.400001525878906
+    ],
+    "uevr_gunstock_BP_AK47_C_SK_AK47_Base_use_default": false,
+    "uevr_gunstock_BP_AK47_C_SK_AK47_Base_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_AK47_DLC4_C_SK_AK47_Base_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_AK47_DLC4_C_SK_AK47_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_AK47_DLC4_C_SK_AK47_Base_use_default": true,
+    "uevr_gunstock_BP_AK47_DLC4_C_SK_AK47_Base_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_AK47_Limbo_C_SK_AK_Limbo_Base_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_AK47_Limbo_C_SK_AK_Limbo_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_AK47_Limbo_C_SK_AK_Limbo_Base_use_default": true,
+    "uevr_gunstock_BP_AK47_Limbo_C_SK_AK_Limbo_Base_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Dominator_C_SK_Dominator_Base_offhand_location_offset": [
+        -18.899999618530273,
+        0.0,
+        0.0
+    ],
+    "uevr_gunstock_BP_Dominator_C_SK_Dominator_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Dominator_C_SK_Dominator_Base_use_default": true,
+    "uevr_gunstock_BP_Dominator_C_SK_Dominator_Base_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Electro_C_SK_Electro_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Electro_C_SK_Electro_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Electro_C_SK_Electro_use_default": true,
+    "uevr_gunstock_BP_Electro_C_SK_Electro_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_EmptyHands_C_Mesh_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_EmptyHands_C_Mesh_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_EmptyHands_C_Mesh_use_default": true,
+    "uevr_gunstock_BP_EmptyHands_C_Mesh_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_use_default": true,
+    "uevr_gunstock_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_use_default": true,
+    "uevr_gunstock_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Klusha_C_SK_Klusha_Handle01_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Klusha_C_SK_Klusha_Handle01_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Klusha_C_SK_Klusha_Handle01_use_default": true,
+    "uevr_gunstock_BP_Klusha_C_SK_Klusha_Handle01_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_use_default": true,
+    "uevr_gunstock_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Krepysh_C_SK_Krepysh_Base_offhand_location_offset": [
+        -6.900000095367432,
+        -2.200000047683716,
+        -6.900000095367432
+    ],
+    "uevr_gunstock_BP_Krepysh_C_SK_Krepysh_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Krepysh_C_SK_Krepysh_Base_use_default": true,
+    "uevr_gunstock_BP_Krepysh_C_SK_Krepysh_Base_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Kuzmich_C_SK_Kuzmich_Base01_offhand_location_offset": [
+        1.399999976158142,
+        0.0,
+        -26.799999237060547
+    ],
+    "uevr_gunstock_BP_Kuzmich_C_SK_Kuzmich_Base01_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Kuzmich_C_SK_Kuzmich_Base01_use_default": true,
+    "uevr_gunstock_BP_Kuzmich_C_SK_Kuzmich_Base01_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Lisa_C_SK_Lisa_HandleBase_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Lisa_C_SK_Lisa_HandleBase_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Lisa_C_SK_Lisa_HandleBase_use_default": true,
+    "uevr_gunstock_BP_Lisa_C_SK_Lisa_HandleBase_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_NewtonEmptyHands_C_Mesh_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_NewtonEmptyHands_C_Mesh_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_NewtonEmptyHands_C_Mesh_use_default": true,
+    "uevr_gunstock_BP_NewtonEmptyHands_C_Mesh_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_PM_C_SK_PM_Base0_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_PM_C_SK_PM_Base0_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_PM_C_SK_PM_Base0_use_default": true,
+    "uevr_gunstock_BP_PM_C_SK_PM_Base0_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_PM_DLC1_C_SK_PM_Handle_offhand_location_offset": [
+        -3.0,
+        12.0,
+        0.0
+    ],
+    "uevr_gunstock_BP_PM_DLC1_C_SK_PM_Handle_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_PM_DLC1_C_SK_PM_Handle_use_default": true,
+    "uevr_gunstock_BP_PM_DLC1_C_SK_PM_Handle_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Pashtet_C_SK_Pashtet_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Pashtet_C_SK_Pashtet_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Pashtet_C_SK_Pashtet_use_default": true,
+    "uevr_gunstock_BP_Pashtet_C_SK_Pashtet_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter01_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter01_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter01_use_default": true,
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter01_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter02_offhand_location_offset": [
+        -26.399999618530273,
+        0.0,
+        20.200000762939453
+    ],
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter02_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter02_use_default": true,
+    "uevr_gunstock_BP_Plasmagun_C_SK_Plasmagun_Cutter02_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_use_default": true,
+    "uevr_gunstock_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Railgun_C_SK_Railgun_Base_offhand_location_offset": [
+        -15.5,
+        0.0,
+        14.699999809265137
+    ],
+    "uevr_gunstock_BP_Railgun_C_SK_Railgun_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Railgun_C_SK_Railgun_Base_use_default": true,
+    "uevr_gunstock_BP_Railgun_C_SK_Railgun_Base_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_offhand_location_offset": [
+        0.0,
+        0.0,
+        -19.200000762939453
+    ],
+    "uevr_gunstock_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_use_default": true,
+    "uevr_gunstock_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_use_default_offhand_location_offset": false,
+    "uevr_gunstock_BP_Shved_C_SK_Shved_Base_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Shved_C_SK_Shved_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Shved_C_SK_Shved_Base_use_default": true,
+    "uevr_gunstock_BP_Shved_C_SK_Shved_Base_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_use_default": true,
+    "uevr_gunstock_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Snejok_C_SK_Snejok_Base_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Snejok_C_SK_Snejok_Base_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Snejok_C_SK_Snejok_Base_use_default": true,
+    "uevr_gunstock_BP_Snejok_C_SK_Snejok_Base_use_default_offhand_location_offset": true,
+    "uevr_gunstock_BP_Zvezdochka_C_SK_ZvezdochkaBase_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_BP_Zvezdochka_C_SK_ZvezdochkaBase_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_BP_Zvezdochka_C_SK_ZvezdochkaBase_use_default": true,
+    "uevr_gunstock_BP_Zvezdochka_C_SK_ZvezdochkaBase_use_default_offhand_location_offset": true,
+    "uevr_gunstock_default_offhand_location_offset": [
+        14.800000190734863,
+        0.0,
+        -5.300000190734863
+    ],
+    "uevr_gunstock_default_rotation": [
+        -10.0,
+        27.5,
+        -30.0
+    ],
+    "uevr_gunstock_disable_configuration": true
+}

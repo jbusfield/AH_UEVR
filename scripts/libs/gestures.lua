@@ -12,7 +12,11 @@ local headForwardDotMaxThreshold = 0.65
 local headForwardDotMinThreshold = 0.0
 local eyesTriggerDistance = 15.0
 local eyesForwardDotThreshold = 0.85
-local holsterTriggerAngle = -65.0
+-- Degrees below horizontal required for a holster (negative pitch-equivalent).
+-- Detection uses the controller forward vector vs world down, not Euler Pitch alone,
+-- so roll/yaw no longer false-negatives a downward aim.
+local holsterTriggerAngle = -60.0
+local holsterMinDownDot = math.sin(math.rad(math.abs(holsterTriggerAngle)))
 
 local M = {}
 
@@ -350,10 +354,9 @@ local function detectHolster(state, hand, continuous)
 	end
 	if (continuous == true or not holsterGripOn) and uevrUtils.isButtonPressed(state, gripButton) then
 		holsterGripOn = true
-		local rotation = controllers.getControllerRotation(hand)
-		--print(rotation.Pitch,rotation.Yaw,rotation.Roll)
-		--only holster if the hand is pointing down
-		if rotation ~= nil and rotation.Pitch < holsterTriggerAngle then
+		-- World-space forward·down is stable under yaw/roll; Euler Pitch alone is not.
+		local forward = controllers.getControllerDirection(hand)
+		if forward ~= nil and -forward.Z >= holsterMinDownDot then
 			return true
 		end
 	elseif holsterGripOn and uevrUtils.isButtonNotPressed(state, gripButton)  then

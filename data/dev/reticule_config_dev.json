@@ -28,7 +28,7 @@
         0.03099999949336052,
         0.03099999949336052
     ],
-    "uevr_reticule_target_method": 3,
+    "uevr_reticule_target_method": 1,
     "uevr_reticule_widget_class": "WidgetBlueprintGeneratedClass /Game/Core/UI/Widgets/WBP_Crosshair.WBP_Crosshair_C",
     "uevr_reticule_widget_collisionChannel": 0,
     "uevr_reticule_widget_finder_list": 14,

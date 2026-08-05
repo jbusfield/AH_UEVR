@@ -1,14 +1,51 @@
 {
-    "leftHandDirectionOffset": 40.0,
+    "handle_socket": 18,
+    "handle_socket_left": 20,
+    "handle_socket_right": 18,
+    "hands_type": 2,
+    "jumpTurnDeadzone": 30,
+    "leftHandDirectionOffset": [
+        0.0,
+        90.0,
+        -90.0
+    ],
+    "testOffset": [
+        -38.0,
+        38.0,
+        -63.0
+    ],
+    "uevr_accessory_item_attach_type": 1,
+    "uevr_accessory_item_label": "",
+    "uevr_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_accessory_item_socket": 1,
+    "uevr_accessory_item_test_hand": false,
+    "uevr_accessory_socket": 1,
+    "uevr_input_config_pawnRotationMode": 4,
+    "uevr_input_config_smoothTurnSpeed": 50,
+    "uevr_input_config_snapAngle": 30,
+    "uevr_input_config_useSnapTurn": false,
+    "uevr_reticule_eye_dominance": 3,
+    "uevr_reticule_eye_dominance_offset": 60.0,
     "uevr_reticule_hide": false,
     "uevr_reticule_update_distance": 284,
     "uevr_reticule_update_scale": 0.828000009059906,
     "uevr_ui_headLockedUI": true,
     "uevr_ui_headLockedUIPosition": [
-        0.0,
-        0.0,
+        0.10000000149011612,
+        -0.25999999046325684,
         2.0
     ],
+    "uevr_ui_headLockedUIShape": 1,
     "uevr_ui_headLockedUISize": 2.0,
+    "uevr_ui_headLockedUIType": 1,
     "uevr_ui_reduceMotionSickness": true
 }

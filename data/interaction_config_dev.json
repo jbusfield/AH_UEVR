@@ -1,17 +1,17 @@
 {
     "allowMouseUpdate": false,
     "enableHitTesting": true,
-    "interactionAttachment": 2,
-    "interactionDepthOffset": -9.375,
+    "interactionAttachment": 1,
+    "interactionDepthOffset": -8.868000030517578,
     "interactionDistance": 313,
     "interactionLocationOffset": [
-        12.100000381469727,
-        1.0,
-        0.20000000298023224
+        10.0,
+        -2.299999952316284,
+        5.699999809265137
     ],
     "interactionRotationOffset": [
-        0.0,
-        0.0,
+        23.299999237060547,
+        22.200000762939453,
         0.0
     ],
     "interactionSource": 1,

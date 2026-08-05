@@ -1,0 +1,805 @@
+{
+    "accessories": {
+        "BP_AK47_C_SK_AK47_Base": {
+            "2d275d10-a76e-40bb-807f-6b9d97a3ed13": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "ak47",
+                        "grip_priority": 1,
+                        "location": [
+                            -1.5,
+                            -5.599999904632568,
+                            7.099999904632568
+                        ],
+                        "rotation": [
+                            3.9000000953674316,
+                            86.0,
+                            -16.5
+                        ],
+                        "socket_name": "",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "71529d3d-1f31-4e1d-b030-e0b290bd2651": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 15.100000381469727,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "ak_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            -5.5,
+                            7.199999809265137,
+                            -1.2999999523162842
+                        ],
+                        "rotation": [
+                            15.0,
+                            -96.4000015258789,
+                            91.30000305175781
+                        ],
+                        "socket_name": "mag_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "9a3bea0d-5987-4166-b0f3-b7094c35dc35": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 6.599999904632568,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "ak_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            -15.399999618530273,
+                            0.0,
+                            -4.0
+                        ],
+                        "rotation": [
+                            7.300000190734863,
+                            163.5,
+                            56.5
+                        ],
+                        "socket_name": "mag_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "c2a6100b-bd35-4ae3-acf1-0447cffd94ac": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 2,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            3.5,
+                            3.0,
+                            -6.199999809265137
+                        ],
+                        "rotation": [
+                            19.0,
+                            -132.39999389648438,
+                            11.600000381469727
+                        ],
+                        "socket_name": "cassete_snap",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Dominator_C_SK_Dominator_Base": {
+            "26c0c3ea-c27d-4e4e-b06f-ca5810b2fdea": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "dominator",
+                        "grip_priority": 1,
+                        "location": [
+                            -2.4000000953674316,
+                            -1.899999976158142,
+                            1.899999976158142
+                        ],
+                        "rotation": [
+                            0.6000000238418579,
+                            87.0999984741211,
+                            -11.199999809265137
+                        ],
+                        "socket_name": "Root",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "309f3a68-6f57-4e9d-bc85-8afe97b13ecb": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 9.0,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "ak_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            16.600000381469727,
+                            14.0,
+                            5.400000095367432
+                        ],
+                        "rotation": [
+                            -10.100000381469727,
+                            25.0,
+                            -116.9000015258789
+                        ],
+                        "socket_name": "Scope_01",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Krepysh_C_SK_Krepysh_Base": {
+            "639f6839-201c-48a1-8027-02499f2884c5": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "fat_boy",
+                        "grip_priority": 1,
+                        "location": [
+                            -2.0999999046325684,
+                            1.2999999523162842,
+                            -2.0999999046325684
+                        ],
+                        "rotation": [
+                            9.0,
+                            -19.0,
+                            70.80000305175781
+                        ],
+                        "socket_name": "Handle",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "9f3b3a6f-c0d5-418e-8295-e54d2fed42ae": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 8.300000190734863,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "fat_boy_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            3.700000047683716,
+                            13.899999618530273,
+                            -7.300000190734863
+                        ],
+                        "rotation": [
+                            118.19999694824219,
+                            146.39999389648438,
+                            67.30000305175781
+                        ],
+                        "socket_name": "pipe",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "ff4e0d7f-b826-49f6-aa66-a8c141f7226d": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -1.2000000476837158,
+                            0.20000000298023224,
+                            -8.899999618530273
+                        ],
+                        "rotation": [
+                            179.0,
+                            124.30000305175781,
+                            43.599998474121094
+                        ],
+                        "socket_name": "Bullet",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Kuzmich_C_SK_Kuzmich_Base01": {
+            "42a6ece8-f717-40f9-be19-90245caedb57": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 9.0,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "shotgum_offhand",
+                        "grip_priority": 1,
+                        "location": [
+                            -7.599999904632568,
+                            1.399999976158142,
+                            15.199999809265137
+                        ],
+                        "rotation": [
+                            66.69999694824219,
+                            168.0,
+                            9.399999618530273
+                        ],
+                        "socket_name": "button_01",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "8ae87f5a-7823-44b0-a6ef-d4a74f51656d": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "kuzmich",
+                        "grip_priority": 1,
+                        "location": [
+                            -2.5,
+                            -1.600000023841858,
+                            2.799999952316284
+                        ],
+                        "rotation": [
+                            0.699999988079071,
+                            82.4000015258789,
+                            -9.0
+                        ],
+                        "socket_name": "Root",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "db5b05d4-871b-4ae0-aa1f-eba764a70f79": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -8.199999809265137,
+                            -4.5,
+                            -3.5999999046325684
+                        ],
+                        "rotation": [
+                            71.0,
+                            1.7999999523162842,
+                            -111.19999694824219
+                        ],
+                        "socket_name": "mag_empty",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Lisa_C_SK_Lisa_HandleBase": {
+            "e5b1e1c3-8e55-4f98-acfd-32cf3fcc6b7e": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -0.699999988079071,
+                            4.900000095367432,
+                            -7.0
+                        ],
+                        "rotation": [
+                            27.0,
+                            48.0,
+                            -21.200000762939453
+                        ],
+                        "socket_name": "cassete_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_PM_DLC1_C_SK_PM_Handle": {
+            "953a8afa-58a9-4185-adb8-0e4bf2890aac": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 8.199999809265137,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "pm_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            9.300000190734863,
+                            1.399999976158142,
+                            -2.5
+                        ],
+                        "rotation": [
+                            -176.39999389648438,
+                            -70.69999694824219,
+                            -101.30000305175781
+                        ],
+                        "socket_name": "mag_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "f3af5347-6aef-4f09-b7be-cd8b5848c336": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 15.199999809265137,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            11.5,
+                            0.10000000149011612,
+                            -4.400000095367432
+                        ],
+                        "rotation": [
+                            -161.60000610351563,
+                            -88.4000015258789,
+                            -171.89999389648438
+                        ],
+                        "socket_name": "mag1_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "fedb9f97-352b-4cb9-b4f2-cf5ff0b158c9": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -3.299999952316284,
+                            0.4000000059604645,
+                            -10.300000190734863
+                        ],
+                        "rotation": [
+                            14.5,
+                            97.0,
+                            -41.099998474121094
+                        ],
+                        "socket_name": "cassete_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Pashtet_C_SK_Pashtet": {
+            "e5241653-6a67-46ca-b9f9-8155c66bea4a": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            2.0,
+                            5.400000095367432,
+                            -6.900000095367432
+                        ],
+                        "rotation": [
+                            22.700000762939453,
+                            -0.10000000149011612,
+                            -59.20000076293945
+                        ],
+                        "socket_name": "cassete_jnt",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Plasmagun_C_SK_Plasmagun_Cutter02": {
+            "0dbf8ac0-009d-4577-b6b0-0acae0f29799": {
+                "label": "Grip",
+                "markers": [
+                    {
+                        "activation_distance": 13.0,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "pm_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            7.0,
+                            2.9000000953674316,
+                            0.699999988079071
+                        ],
+                        "rotation": [
+                            59.70000076293945,
+                            157.8000030517578,
+                            136.10000610351563
+                        ],
+                        "socket_name": "Handle",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "6680bca8-ca0b-4a2c-9718-d09da5e020a6": {
+                "label": "Handle",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 1,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -0.6000000238418579,
+                            -6.599999904632568,
+                            4.0
+                        ],
+                        "rotation": [
+                            121.5999984741211,
+                            59.599998474121094,
+                            -61.400001525878906
+                        ],
+                        "socket_name": "handle_top",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "c67cda51-b66f-4892-9060-efa312fca04a": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            5.099999904632568,
+                            2.799999952316284,
+                            -1.399999976158142
+                        ],
+                        "rotation": [
+                            38.20000076293945,
+                            61.70000076293945,
+                            28.200000762939453
+                        ],
+                        "socket_name": "Magazine",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Railgun_C_SK_Railgun_Base": {
+            "3c583b84-fd9a-4a26-8d60-26cc0db53ab7": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "dominator",
+                        "grip_priority": 1,
+                        "location": [
+                            11.199999809265137,
+                            0.4000000059604645,
+                            4.400000095367432
+                        ],
+                        "rotation": [
+                            -10.199999809265137,
+                            -0.20000000298023224,
+                            -108.80000305175781
+                        ],
+                        "socket_name": "Handle",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "5306874e-5ab5-4d6a-bd8b-62d0acf5871a": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 12.899999618530273,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            2.299999952316284,
+                            -0.8999999761581421,
+                            -12.0
+                        ],
+                        "rotation": [
+                            41.20000076293945,
+                            -71.4000015258789,
+                            -16.399999618530273
+                        ],
+                        "socket_name": "Wwise_Body",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_ShotgunKS23_C_SK_ShotgunKS23_Base": {
+            "0ae5551c-d839-4a2b-bcf9-d3defd6f8f59": {
+                "label": "Reload",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "pm_offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            5.300000190734863,
+                            -1.399999976158142,
+                            5.800000190734863
+                        ],
+                        "rotation": [
+                            8.800000190734863,
+                            -75.0,
+                            -123.19999694824219
+                        ],
+                        "socket_name": "loading_port",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "1e852cad-d124-4b10-982a-33d5723729dd": {
+                "label": "Offhand Grip",
+                "markers": [
+                    {
+                        "activation_distance": 8.100000381469727,
+                        "activation_hand": 2,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            -4.0,
+                            4.199999809265137,
+                            0.800000011920929
+                        ],
+                        "rotation": [
+                            57.79999923706055,
+                            75.80000305175781,
+                            -47.29999923706055
+                        ],
+                        "socket_name": "forearm",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "310ef07f-d3f7-4cb5-8dd1-3514380ab7c2": {
+                "label": "Rack",
+                "markers": [
+                    {
+                        "activation_distance": 7.400000095367432,
+                        "activation_hand": 5,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "offhand_grip",
+                        "grip_priority": 1,
+                        "location": [
+                            -4.0,
+                            4.199999809265137,
+                            0.800000011920929
+                        ],
+                        "rotation": [
+                            57.79999923706055,
+                            75.80000305175781,
+                            -47.29999923706055
+                        ],
+                        "socket_name": "forearm",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "6832a2d8-a1c4-43f6-b195-cbd5a40016f5": {
+                "label": "Trigger Grip",
+                "markers": [
+                    {
+                        "activation_distance": 100.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "shotgun",
+                        "grip_priority": 1,
+                        "location": [
+                            -2.0999999046325684,
+                            -0.5,
+                            -9.899999618530273
+                        ],
+                        "rotation": [
+                            95.0,
+                            -0.20000000298023224,
+                            -99.9000015258789
+                        ],
+                        "socket_name": "Trigger",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "b46bf643-d7fc-4d5a-b9a4-d2d01f7f6aa0": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -4.699999809265137,
+                            -1.899999976158142,
+                            -5.300000190734863
+                        ],
+                        "rotation": [
+                            63.900001525878906,
+                            132.60000610351563,
+                            -39.900001525878906
+                        ],
+                        "socket_name": "cassete",
+                        "start_time": 0.0
+                    }
+                ]
+            },
+            "bf6af63f-f517-4147-8e38-a3ed094da354": {
+                "label": "Reload Right Hand",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -4.800000190734863,
+                            -1.7999999523162842,
+                            3.9000000953674316
+                        ],
+                        "rotation": [
+                            64.0,
+                            67.69999694824219,
+                            -76.5999984741211
+                        ],
+                        "socket_name": "loading_port",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Shved_C_SK_Shved_Base": {
+            "6bfac33f-ce6f-47f5-ab19-ef5973beb0b6": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            -2.0,
+                            3.4000000953674316,
+                            -8.699999809265137
+                        ],
+                        "rotation": [
+                            175.0,
+                            156.39999389648438,
+                            29.299999237060547
+                        ],
+                        "socket_name": "Cassette",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Snejok_C_SK_Snejok_Base": {
+            "e3e37ceb-f03d-4b74-ae09-07a87bff6328": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            5.199999809265137,
+                            0.20000000298023224,
+                            -9.899999618530273
+                        ],
+                        "rotation": [
+                            163.0,
+                            114.30000305175781,
+                            141.60000610351563
+                        ],
+                        "socket_name": "cassete_snap",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        },
+        "BP_Zvezdochka_C_SK_ZvezdochkaBase": {
+            "1da27b58-1872-4e5a-9872-ff3f2e287a3a": {
+                "label": "Cassette",
+                "markers": [
+                    {
+                        "activation_distance": 0.0,
+                        "activation_hand": 1,
+                        "attach_type": 0,
+                        "end_time": 0.0,
+                        "grip_animation": "",
+                        "grip_priority": 1,
+                        "location": [
+                            1.0,
+                            0.0,
+                            -9.199999809265137
+                        ],
+                        "rotation": [
+                            175.6999969482422,
+                            33.79999923706055,
+                            29.399999618530273
+                        ],
+                        "socket_name": "cassete",
+                        "start_time": 0.0
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -4,12 +4,16 @@
         "autoAdjustUIWhenInGameStatePriority": "0",
         "decouplePitchWhenInGameState": 1,
         "decouplePitchWhenInGameStatePriority": "0",
-        "handsWhenInGameState": 1,
+        "fadeCameraWhenInGameState": 1,
+        "fadeCameraWhenInGameStatePriority": "0",
+        "handsWhenInGameState": 3,
         "handsWhenInGameStatePriority": "0",
         "inputWhenInGameState": 3,
         "inputWhenInGameStatePriority": "0",
         "lockedUIWhenInGameState": 1,
         "lockedUIWhenInGameStatePriority": "0",
+        "pawnArmBonesWhenInGameState": 1,
+        "pawnArmBonesWhenInGameStatePriority": "0",
         "remapWhenInGameState": 3,
         "remapWhenInGameStatePriority": "0",
         "screen2DWhenInGameState": 1,
@@ -20,12 +24,16 @@
         "autoAdjustUIWhenInGameStatePriority": "0",
         "decouplePitchWhenInGameState": 1,
         "decouplePitchWhenInGameStatePriority": "0",
+        "fadeCameraWhenInGameState": 1,
+        "fadeCameraWhenInGameStatePriority": "0",
         "handsWhenInGameState": 3,
         "handsWhenInGameStatePriority": "0",
         "inputWhenInGameState": 3,
         "inputWhenInGameStatePriority": "2",
         "lockedUIWhenInGameState": 1,
         "lockedUIWhenInGameStatePriority": "0",
+        "pawnArmBonesWhenInGameState": 1,
+        "pawnArmBonesWhenInGameStatePriority": "0",
         "remapWhenInGameState": 1,
         "remapWhenInGameStatePriority": "0",
         "screen2DWhenInGameState": 1,
@@ -36,12 +44,16 @@
         "autoAdjustUIWhenInGameStatePriority": "0",
         "decouplePitchWhenInGameState": 1,
         "decouplePitchWhenInGameStatePriority": "0",
+        "fadeCameraWhenInGameState": 1,
+        "fadeCameraWhenInGameStatePriority": "0",
         "handsWhenInGameState": 3,
         "handsWhenInGameStatePriority": "0",
         "inputWhenInGameState": 3,
         "inputWhenInGameStatePriority": "0",
         "lockedUIWhenInGameState": 2,
         "lockedUIWhenInGameStatePriority": "0",
+        "pawnArmBonesWhenInGameState": 1,
+        "pawnArmBonesWhenInGameStatePriority": "0",
         "remapWhenInGameState": 3,
         "remapWhenInGameStatePriority": "0",
         "screen2DWhenInGameState": 1,
@@ -144,10 +156,16 @@
             "screen2DWhenActivePriority": "0"
         },
         "WidgetBlueprintGeneratedClass /Game/Core/UI/HUD/Widgets/UniversalLockTooltip/WBP_UniversalLockTooltipWidget.WBP_UniversalLockTooltipWidget_C": {
+            "alignment": [
+                0.0,
+                0.0
+            ],
             "autoAdjustUIWhenActive": 1,
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "inputWhenActive": 3,
@@ -155,8 +173,14 @@
             "label": "WBP_UniversalLockTooltipWidget_C",
             "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
             "remapWhenActive": 3,
             "remapWhenActivePriority": "0",
+            "scale": [
+                1.0,
+                1.0
+            ],
             "screen2DWhenActive": 1,
             "screen2DWhenActivePriority": "0"
         },
@@ -234,19 +258,31 @@
             "useControllerMouse": false
         },
         "WidgetBlueprintGeneratedClass /Game/Core/UI/Terminal/WBP_TerminalWidget.WBP_TerminalWidget_C": {
+            "alignment": [
+                0.0,
+                0.0
+            ],
             "autoAdjustUIWhenActive": 1,
             "autoAdjustUIWhenActivePriority": "0",
-            "decouplePitchWhenActive": 1,
+            "decouplePitchWhenActive": 3,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
-            "inputWhenActive": 1,
+            "inputWhenActive": 3,
             "inputWhenActivePriority": "0",
             "label": "WBP_TerminalWidget_C",
             "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
             "remapWhenActive": 3,
             "remapWhenActivePriority": "0",
+            "scale": [
+                1.0,
+                1.0
+            ],
             "screen2DWhenActive": 1,
             "screen2DWhenActivePriority": "0",
             "shouldLockViewWhenVisible": true,
@@ -274,13 +310,15 @@
         },
         "WidgetBlueprintGeneratedClass /Game/Core/UI/WBP_PlayerHUDWidget.WBP_PlayerHUDWidget_C": {
             "alignment": [
-                0.38999998569488525,
-                0.3400000035762787
+                0.3898,
+                0.25
             ],
             "autoAdjustUIWhenActive": 1,
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 3,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "inputWhenActive": 1,
@@ -288,10 +326,12 @@
             "label": "WBP_PlayerHUDWidget_C",
             "lockedUIWhenActive": 1,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
             "remapWhenActive": 1,
             "remapWhenActivePriority": "0",
             "scale": [
-                0.5600000023841858,
+                0.56,
                 0.75
             ],
             "screen2DWhenActive": 1,
@@ -300,20 +340,32 @@
             "useControllerMouse": false
         },
         "WidgetBlueprintGeneratedClass /Game/Core/UI/WBP_RadialMenu.WBP_RadialMenu_C": {
+            "alignment": [
+                0.0,
+                0.0
+            ],
             "autoAdjustUIWhenActive": 1,
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "headLockedViewWhenActive": 2,
             "inputWhenActive": 1,
             "inputWhenActivePriority": "0",
             "label": "WBP_RadialMenu_C",
-            "lockedUIWhenActive": 1,
+            "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
             "remapWhenActive": 1,
             "remapWhenActivePriority": "0",
+            "scale": [
+                1.0,
+                1.0
+            ],
             "screen2DWhenActive": 1,
             "screen2DWhenActivePriority": "0"
         },
@@ -326,6 +378,8 @@
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "headLockedViewWhenActive": 2,
@@ -334,6 +388,8 @@
             "label": "WBP_CraftWindowMain_C",
             "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
             "remapWhenActive": 3,
             "remapWhenActivePriority": "0",
             "scale": [
@@ -367,6 +423,8 @@
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 3,
             "handsWhenActivePriority": "0",
             "headLockedViewWhenActive": 2,
@@ -375,14 +433,24 @@
             "label": "WBP_FullscreenHint_Double_C",
             "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
+            "remapWhenActive": 1,
+            "remapWhenActivePriority": "0",
             "screen2DWhenActive": 1,
             "screen2DWhenActivePriority": "0"
         },
         "WidgetBlueprintGeneratedClass /Game/Core/UI/Widgets/Hints/WBP_FullscreenHint_Single.WBP_FullscreenHint_Single_C": {
+            "alignment": [
+                0.0,
+                0.0
+            ],
             "autoAdjustUIWhenActive": 1,
             "autoAdjustUIWhenActivePriority": "0",
             "decouplePitchWhenActive": 1,
             "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 2,
+            "fadeCameraWhenActivePriority": "0",
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "headLockedViewWhenActive": 2,
@@ -391,6 +459,14 @@
             "label": "WBP_FullscreenHint_Single_C",
             "lockedUIWhenActive": 2,
             "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
+            "remapWhenActive": 1,
+            "remapWhenActivePriority": "0",
+            "scale": [
+                1.0,
+                1.0
+            ],
             "screen2DWhenActive": 1,
             "screen2DWhenActivePriority": "0",
             "shouldLockViewWhenVisible": true,
@@ -417,7 +493,7 @@
             "handsWhenActive": 1,
             "handsWhenActivePriority": "0",
             "headLockedViewWhenActive": 2,
-            "inputWhenActive": 1,
+            "inputWhenActive": 3,
             "inputWhenActivePriority": "0",
             "label": "WBP_MainMenu_C",
             "lockedUIWhenActive": 2,
@@ -554,10 +630,31 @@
             "screen2DWhenActivePriority": "0"
         },
         "WidgetBlueprintGeneratedClass /Game/DLC2/Core/UI/HUD/WBP_PlayerHUDWidgetDLC2.WBP_PlayerHUDWidgetDLC2_C": {
-            "label": "WBP_PlayerHUDWidgetDLC2_C"
+            "autoAdjustUIWhenActive": 1,
+            "autoAdjustUIWhenActivePriority": "0",
+            "decouplePitchWhenActive": 1,
+            "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
+            "handsWhenActive": 1,
+            "handsWhenActivePriority": "0",
+            "inputWhenActive": 1,
+            "inputWhenActivePriority": "0",
+            "label": "WBP_PlayerHUDWidgetDLC2_C",
+            "lockedUIWhenActive": 1,
+            "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
+            "remapWhenActive": 1,
+            "remapWhenActivePriority": "0",
+            "screen2DWhenActive": 1,
+            "screen2DWhenActivePriority": "0"
         },
         "WidgetBlueprintGeneratedClass /Game/DLC2/Core/UI/HUD/WBP_SkillBuyNotification.WBP_SkillBuyNotification_C": {
             "label": "WBP_SkillBuyNotification_C"
+        },
+        "WidgetBlueprintGeneratedClass /Game/DLC2/Core/UI/LimboAudioDiary/WBP_LimboAudioDiary.WBP_LimboAudioDiary_C": {
+            "label": "WBP_LimboAudioDiary_C"
         },
         "WidgetBlueprintGeneratedClass /Game/DLC2/Development/SkinShop/WBP_SkinShop_Main.WBP_SkinShop_Main_C": {
             "label": "WBP_SkinShop_Main_C"
@@ -567,6 +664,38 @@
         },
         "WidgetBlueprintGeneratedClass /Game/DLC3/Core/Weapons/Range/Kuzmich/WBP_Kuzmich_NoEnergy.WBP_Kuzmich_NoEnergy_C": {
             "label": "WBP_Kuzmich_NoEnergy_C"
+        },
+        "WidgetBlueprintGeneratedClass /Game/DLC4/Core/UI/HUD/TimerDeathWidget/WBP_TimerDeath_End.WBP_TimerDeath_End_C": {
+            "label": "WBP_TimerDeath_End_C"
+        },
+        "WidgetBlueprintGeneratedClass /Game/DLC4/Core/WBP_PlayerHUDWidget_DLC4.WBP_PlayerHUDWidget_DLC4_C": {
+            "alignment": [
+                0.3899,
+                0.25
+            ],
+            "autoAdjustUIWhenActive": 1,
+            "autoAdjustUIWhenActivePriority": "0",
+            "decouplePitchWhenActive": 1,
+            "decouplePitchWhenActivePriority": "0",
+            "fadeCameraWhenActive": 1,
+            "fadeCameraWhenActivePriority": "0",
+            "handsWhenActive": 1,
+            "handsWhenActivePriority": "0",
+            "inputWhenActive": 1,
+            "inputWhenActivePriority": "0",
+            "label": "WBP_PlayerHUDWidget_DLC4_C",
+            "lockedUIWhenActive": 1,
+            "lockedUIWhenActivePriority": "0",
+            "pawnArmBonesWhenActive": 1,
+            "pawnArmBonesWhenActivePriority": "0",
+            "remapWhenActive": 1,
+            "remapWhenActivePriority": "0",
+            "scale": [
+                0.56,
+                0.75
+            ],
+            "screen2DWhenActive": 1,
+            "screen2DWhenActivePriority": "0"
         },
         "WidgetBlueprintGeneratedClass /Game/Developers/Denya/Game/Discription/WBP_MiniDescription.WBP_MiniDescription_C": {
             "autoAdjustUIWhenActive": 1,

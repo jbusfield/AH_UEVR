@@ -203,6 +203,299 @@ local function executeIsLeftAccessoryCallback(...)
 	return uevrUtils.executeUEVRCallbacksWithPriorityResult("active_left_accessory", table.unpack({...}))
 end
 
+-- If on_accessory_attach will parent a component that is currently an ancestor of the
+-- attachment, reparent the attachment to a MotionController first (KeepWorld) to avoid a
+-- hierarchy cycle. Restore the original parent/relative offsets on accessory detach.
+local restoreAttachmentFromParentCache
+
+local function mcReparentPrint(msg)
+	--print("[accessories][MCReparent] " .. tostring(msg))
+end
+
+local function getObjectName(obj)
+	if obj == nil then return "nil" end
+	local ok, name = pcall(function() return obj:get_full_name() end)
+	if ok and name ~= nil then return tostring(name) end
+	return tostring(obj)
+end
+
+local function describeParentChain(component)
+	if component == nil then return "(nil component)" end
+	local parts = { getObjectName(component) }
+	local current = component.AttachParent
+	local guard = 0
+	while current ~= nil and guard < 64 do
+		guard = guard + 1
+		table.insert(parts, getObjectName(current))
+		current = current.AttachParent
+	end
+	return table.concat(parts, " -> ")
+end
+
+local function collectUpcomingAttachComponents(handed)
+	local upcoming = {}
+	uevrUtils.executeUEVRCallbacks("accessory_attach_components", handed, upcoming)
+	return upcoming
+end
+
+-- Returns the ancestor that matches an upcoming attach target, if any.
+local function findUpcomingAttachAncestor(attachment, upcomingComponents)
+	if uevrUtils.getValid(attachment) == nil or type(upcomingComponents) ~= "table" then
+		return nil
+	end
+	if #upcomingComponents == 0 then
+		mcReparentPrint("cycleCheck: no upcoming attach components reported")
+		return nil
+	end
+
+	for i, component in ipairs(upcomingComponents) do
+		mcReparentPrint("cycleCheck: upcoming[" .. tostring(i) .. "]=" .. getObjectName(component))
+	end
+
+	local current = attachment.AttachParent
+	local guard = 0
+	while current ~= nil and guard < 64 do
+		guard = guard + 1
+		for _, upcoming in ipairs(upcomingComponents) do
+			if upcoming ~= nil and current == upcoming then
+				mcReparentPrint("cycleCheck: HIT - ancestor depth " .. tostring(guard) .. " will be attached: " .. getObjectName(current))
+				return current
+			end
+		end
+		current = current.AttachParent
+	end
+
+	mcReparentPrint("cycleCheck: no upcoming attach target in parent chain")
+	return nil
+end
+
+local function getGripMotionController(attachment)
+	local gripHand = Handed.Right
+	local attachmentData = attachments.getCurrentGrippedAttachmentData(Handed.Right)
+	if attachmentData == nil or attachmentData.attachment ~= attachment then
+		attachmentData = attachments.getCurrentGrippedAttachmentData(Handed.Left)
+	end
+	if attachmentData ~= nil and attachmentData.attachment == attachment and attachmentData.gripHand ~= nil then
+		gripHand = attachmentData.gripHand
+	end
+	return controllers.getController(gripHand, true), gripHand
+end
+
+local function countOverrideHolders(override)
+	if override == nil or type(override.holders) ~= "table" then return 0 end
+	local count = 0
+	for _, active in pairs(override.holders) do
+		if active then count = count + 1 end
+	end
+	return count
+end
+
+local function ensureOverrideOnMotionController(override)
+	if override == nil then return false end
+	local attachment = uevrUtils.getValid(override.attachment)
+	local mc = uevrUtils.getValid(override.motionController)
+	if attachment == nil or mc == nil or attachment.K2_AttachTo == nil then
+		return false
+	end
+	if attachment.AttachParent == mc then
+		return true
+	end
+	mcReparentPrint("promote: drift detected; re-applying MC parent. current chain=" .. describeParentChain(attachment))
+	local keepWorld = (EAttachLocation and EAttachLocation.KeepWorldPosition) or 1
+	local ok, err = pcall(function()
+		attachment:K2_AttachTo(mc, uevrUtils.fname_from_string(""), keepWorld, false)
+	end)
+	if not ok then
+		mcReparentPrint("promote: FAILED drift re-apply: " .. tostring(err))
+		return false
+	end
+	mcReparentPrint("promote: drift re-apply OK - new chain: " .. describeParentChain(attachment))
+	return true
+end
+
+-- Shared override (not per-hand): both hands can hold the same gripped weapon. Restoring
+-- when one hand detaches while the other still needs the MC parent causes snaps/spins.
+restoreAttachmentFromParentCache = function(handed)
+	local override = accessoryStatus["attachmentParentOverride"]
+	if override == nil then
+		mcReparentPrint("restore: no shared override")
+		return
+	end
+	if type(override.holders) ~= "table" or override.holders[handed] ~= true then
+		mcReparentPrint("restore: hand=" .. tostring(handed) .. " is not a holder")
+		return
+	end
+
+	override.holders[handed] = nil
+	local remaining = countOverrideHolders(override)
+	if remaining > 0 then
+		mcReparentPrint("restore: hand=" .. tostring(handed) .. " released; " .. tostring(remaining) .. " holder(s) remain — keeping MC parent")
+		return
+	end
+
+	local attachment = uevrUtils.getValid(override.attachment)
+	local parent = uevrUtils.getValid(override.parent)
+	mcReparentPrint("restore: last holder hand=" .. tostring(handed) ..
+		" attachment=" .. getObjectName(attachment) ..
+		" parent=" .. getObjectName(parent) ..
+		" socket=" .. tostring(override.socket) ..
+		" loc=(" .. tostring(override.location and override.location.X) .. "," .. tostring(override.location and override.location.Y) .. "," .. tostring(override.location and override.location.Z) .. ")" ..
+		" rot=(" .. tostring(override.rotation and override.rotation.Pitch) .. "," .. tostring(override.rotation and override.rotation.Yaw) .. "," .. tostring(override.rotation and override.rotation.Roll) .. ")")
+
+	if attachment == nil then
+		mcReparentPrint("restore: FAILED - cached attachment invalid")
+	elseif parent == nil then
+		mcReparentPrint("restore: FAILED - cached parent invalid")
+	elseif attachment.K2_AttachTo == nil then
+		mcReparentPrint("restore: FAILED - attachment has no K2_AttachTo")
+	else
+		local keepRelative = (EAttachLocation and EAttachLocation.KeepRelativeOffset) or 0
+		local ok, err = pcall(function()
+			attachment:K2_AttachTo(parent, uevrUtils.fname_from_string(override.socket or ""), keepRelative, false)
+			uevrUtils.set_component_relative_transform(
+				attachment,
+				override.location or {0, 0, 0},
+				override.rotation or {0, 0, 0},
+				override.scale or {1, 1, 1}
+			)
+		end)
+		if not ok then
+			mcReparentPrint("restore: FAILED pcall: " .. tostring(err))
+		else
+			mcReparentPrint("restore: OK - new chain: " .. describeParentChain(attachment))
+		end
+	end
+
+	accessoryStatus["attachmentParentOverride"] = nil
+end
+
+local function cacheAndReparentAttachmentToMotionController(handed, attachment)
+	if uevrUtils.getValid(attachment) == nil then
+		mcReparentPrint("promote: FAILED - attachment invalid; hand=" .. tostring(handed))
+		return false
+	end
+	if attachment.K2_AttachTo == nil then
+		mcReparentPrint("promote: FAILED - no K2_AttachTo on " .. getObjectName(attachment))
+		return false
+	end
+
+	-- Offhand accessory on a weapon gripped by the other hand does not create an IK feedback
+	-- loop: the weapon follows the grip-hand socket, while the offhand only reads that socket.
+	-- Reparenting is only needed when the grip hand itself targets the attachment.
+	local _, gripHand = getGripMotionController(attachment)
+	if handed ~= gripHand then
+		mcReparentPrint("promote: skip - accessory hand=" .. tostring(handed) .. " is not grip hand=" .. tostring(gripHand))
+		return false
+	end
+
+	local override = accessoryStatus["attachmentParentOverride"]
+	-- Same attachment already promoted: join as a holder and keep it on the MC.
+	if override ~= nil and override.attachment == attachment then
+		override.holders = override.holders or {}
+		override.holders[handed] = true
+		mcReparentPrint("promote: join existing override; hand=" .. tostring(handed) .. " holders=" .. tostring(countOverrideHolders(override)))
+		return ensureOverrideOnMotionController(override)
+	end
+
+	-- Different attachment still overridden: release this hand's claim on the old one first.
+	if override ~= nil and override.attachment ~= attachment then
+		mcReparentPrint("promote: different attachment; releasing prior override claim for hand=" .. tostring(handed))
+		restoreAttachmentFromParentCache(handed)
+		override = accessoryStatus["attachmentParentOverride"]
+		if override ~= nil then
+			mcReparentPrint("promote: prior override still held by another hand; not promoting " .. getObjectName(attachment))
+			return false
+		end
+	end
+
+	mcReparentPrint("promote: hand=" .. tostring(handed) .. " attachment=" .. getObjectName(attachment) .. " chain=" .. describeParentChain(attachment))
+
+	local upcoming = collectUpcomingAttachComponents(handed)
+	local conflictingAncestor = findUpcomingAttachAncestor(attachment, upcoming)
+	if conflictingAncestor == nil then
+		mcReparentPrint("promote: skip - no hierarchy cycle risk")
+		return false
+	end
+
+	local motionController, gripHand = getGripMotionController(attachment)
+	if motionController == nil then
+		mcReparentPrint("promote: FAILED - cycle risk with " .. getObjectName(conflictingAncestor) .. " but no MC for gripHand=" .. tostring(gripHand))
+		return false
+	end
+	mcReparentPrint("promote: using gripHand=" .. tostring(gripHand) .. " MC=" .. getObjectName(motionController))
+
+	local parent = attachment.AttachParent
+	if parent == motionController then
+		-- Second hand normally joins the shared override above. Hitting this means we're on the
+		-- MC with no override to join — keep world pose and avoid caching MC-relative offsets
+		-- as if they were the original grip-mesh transform (that snaps/spins on restore).
+		mcReparentPrint("promote: skip - already on MC with no shared override to join")
+		return false
+	end
+
+	if parent == nil then
+		mcReparentPrint("promote: FAILED - AttachParent nil (cannot cache original parent)")
+		return false
+	end
+
+	local socket = ""
+	if attachment.AttachSocketName ~= nil and attachment.AttachSocketName.to_string ~= nil then
+		socket = attachment.AttachSocketName:to_string() or ""
+	end
+
+	local scale = attachment.RelativeScale3D
+	local loc = {
+		X = attachment.RelativeLocation.X,
+		Y = attachment.RelativeLocation.Y,
+		Z = attachment.RelativeLocation.Z,
+	}
+	local rot = {
+		Pitch = attachment.RelativeRotation.Pitch,
+		Yaw = attachment.RelativeRotation.Yaw,
+		Roll = attachment.RelativeRotation.Roll,
+	}
+	accessoryStatus["attachmentParentOverride"] = {
+		attachment = attachment,
+		parent = parent,
+		socket = socket,
+		location = loc,
+		rotation = rot,
+		scale = scale ~= nil and {X = scale.X, Y = scale.Y, Z = scale.Z} or {X = 1, Y = 1, Z = 1},
+		motionController = motionController,
+		holders = { [handed] = true },
+	}
+
+	mcReparentPrint("promote: caching parent=" .. getObjectName(parent) ..
+		" socket=" .. tostring(socket) ..
+		" loc=(" .. tostring(loc.X) .. "," .. tostring(loc.Y) .. "," .. tostring(loc.Z) .. ")" ..
+		" rot=(" .. tostring(rot.Pitch) .. "," .. tostring(rot.Yaw) .. "," .. tostring(rot.Roll) .. ")" ..
+		" conflict=" .. getObjectName(conflictingAncestor) ..
+		" -> MC=" .. getObjectName(motionController))
+
+	local keepWorld = (EAttachLocation and EAttachLocation.KeepWorldPosition) or 1
+	local ok, err = pcall(function()
+		attachment:K2_AttachTo(motionController, uevrUtils.fname_from_string(""), keepWorld, false)
+	end)
+	if not ok then
+		accessoryStatus["attachmentParentOverride"] = nil
+		mcReparentPrint("promote: FAILED K2_AttachTo pcall: " .. tostring(err))
+		return false
+	end
+	mcReparentPrint("promote: OK - new chain: " .. describeParentChain(attachment))
+	return true
+end
+
+-- While an accessory has promoted an attachment off its grip mesh, stop attachments.lua
+-- from re-parenting it back onto the IK/hand mesh (which recreates the feedback loop).
+uevrUtils.registerUEVRCallback("attachment_suppress_mesh_reattach", function(attachment, mesh)
+	local override = accessoryStatus["attachmentParentOverride"]
+	if override ~= nil and override.attachment == attachment then
+		mcReparentPrint("suppress reattach: " .. getObjectName(attachment) .. " (override active, holders=" .. tostring(countOverrideHolders(override)) .. ")")
+		return true
+	end
+end)
+-------------------- End of reparenting logic --------------------
+
 local function resolveAccessoryMarkerParamsForAttach(accessoryParams, useMontageProximity, animInstance, montageObject, markerIndexOverride, strictMontageTime)
 	if accessoryParams == nil then return nil, nil end
 
@@ -255,6 +548,7 @@ function M.attachHandToAccessory(handed, accessoryID, useMontageProximity, animI
 		--if accessoryStatus[statusKey] ~= nil then
 			markerDebugPrint("[MarkerDebug] Detaching hand=" .. tostring(handed) .. " (restoring previous parent/socket)")
 			--restoreHandSnapshot(handed)
+			restoreAttachmentFromParentCache(handed)
 			uevrUtils.executeUEVRCallbacks("on_accessory_detach", handed)
 		--end
 		-- Reset grip animation to open hand
@@ -329,8 +623,10 @@ function M.attachHandToAccessory(handed, accessoryID, useMontageProximity, animI
 					-- end
 
 					--attachHandToTarget(handed, currentAttachment, socketName, markerParams.attach_type or 0, markerParams.location or {0,0,0}, markerParams.rotation or {0,0,0})
+					-- Flatten nested MC hierarchy once for a stable hand attach; restore on detach.
+					cacheAndReparentAttachmentToMotionController(handed, currentAttachment)
 					uevrUtils.executeUEVRCallbacks("on_accessory_attach", handed, currentAttachment, markerParams.socket_name or "", markerParams.attach_type or 0, markerParams.location or {0,0,0}, markerParams.rotation or {0,0,0})
-					
+
 					-- Set grip animation from accessory params
 					local gripAnim = markerParams.grip_animation
 					uevrUtils.executeUEVRCallbacks("on_accessory_animation", handed, (gripAnim and gripAnim ~= "") and gripAnim or nil)
@@ -379,10 +675,12 @@ local function refreshAccessoryForHand(handed, force)
 	local key = (handed == Handed.Right) and "activeRightAccessory" or "activeLeftAccessory"
 
 	if force then
-		-- IMPORTANT: detach first so we restore original state,
-		-- then attach again so it saves original state correctly.
-		--TODO This is ugly to detach, reattach. look for a better way
-		M.attachHandToAccessory(handed, nil)
+		-- Detach only when switching away from the current accessory. Re-applying the same
+		-- one (preview slider tweaks) must not restore the weapon onto the IK mesh — that
+		-- briefly recreates the hierarchy feedback loop and makes the arms go crazy.
+		if accessoryStatus[key] ~= activeAccessory then
+			M.attachHandToAccessory(handed, nil)
+		end
 		M.attachHandToAccessory(handed, activeAccessory)
 		accessoryStatus[key] = activeAccessory
 		return
@@ -398,7 +696,11 @@ end
 uevrUtils.registerUEVRCallback("on_accessory_preview_changed", function(handed, accessoryID, enabled, markerIndex)
 	local key = (handed == Handed.Right) and "activeRightAccessory" or "activeLeftAccessory"
 	if enabled then
-		M.attachHandToAccessory(handed, nil)
+		-- Same as refreshAccessoryForHand(force): only tear down when the accessory changes.
+		-- Preview transform/socket tweaks poke this callback every update with the same ID.
+		if accessoryStatus[key] ~= accessoryID then
+			M.attachHandToAccessory(handed, nil)
+		end
 		M.attachHandToAccessory(handed, accessoryID, false, nil, nil, markerIndex)
 		accessoryStatus[key] = accessoryID
 		return

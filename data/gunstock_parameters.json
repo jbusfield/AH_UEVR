@@ -1,0 +1,368 @@
+{
+    "attachments": [
+        {
+            "id": "BP_AK47_C_SK_AK47_Base",
+            "label": "BP_AK47_C_SK_AK47_Base",
+            "offhand_location_offset": [
+                10.800000190734863,
+                6.800000190734863,
+                0.5
+            ],
+            "rotation": [
+                -5.0,
+                17.0,
+                -35.400001525878906
+            ]
+        },
+        {
+            "id": "BP_Railgun_C_SK_Railgun_Base",
+            "label": "BP_Railgun_C_SK_Railgun_Base",
+            "offhand_location_offset": [
+                -15.5,
+                0.0,
+                14.699999809265137
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Zvezdochka_C_SK_ZvezdochkaBase",
+            "label": "BP_Zvezdochka_C_SK_ZvezdochkaBase",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_ShotgunKS23_C_SK_ShotgunKS23_Base",
+            "label": "BP_ShotgunKS23_C_SK_ShotgunKS23_Base",
+            "offhand_location_offset": [
+                0.0,
+                0.0,
+                -19.200000762939453
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Dominator_C_SK_Dominator_Base",
+            "label": "BP_Dominator_C_SK_Dominator_Base",
+            "offhand_location_offset": [
+                -18.899999618530273,
+                0.0,
+                0.0
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Electro_C_SK_Electro",
+            "label": "BP_Electro_C_SK_Electro",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_PM_DLC1_C_SK_PM_Handle",
+            "label": "BP_PM_DLC1_C_SK_PM_Handle",
+            "offhand_location_offset": [
+                -3.0,
+                12.0,
+                0.0
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Snejok_C_SK_Snejok_Base",
+            "label": "BP_Snejok_C_SK_Snejok_Base",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Pashtet_C_SK_Pashtet",
+            "label": "BP_Pashtet_C_SK_Pashtet",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Shved_C_SK_Shved_Base",
+            "label": "BP_Shved_C_SK_Shved_Base",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Krepysh_C_SK_Krepysh_Base",
+            "label": "BP_Krepysh_C_SK_Krepysh_Base",
+            "offhand_location_offset": [
+                -6.900000095367432,
+                -2.200000047683716,
+                -6.900000095367432
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Plasmagun_C_SK_Plasmagun_Cutter02",
+            "label": "BP_Plasmagun_C_SK_Plasmagun_Cutter02",
+            "offhand_location_offset": [
+                -26.399999618530273,
+                0.0,
+                20.200000762939453
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Klusha_C_SK_Klusha_Handle01",
+            "label": "BP_Klusha_C_SK_Klusha_Handle01",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_EmptyHands_C_Mesh",
+            "label": "BP_EmptyHands_C_Mesh",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Gromoverzhec_C_SK_Gromoverzec_Base02",
+            "label": "BP_Gromoverzhec_C_SK_Gromoverzec_Base02",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Kuzmich_C_SK_Kuzmich_Base01",
+            "label": "BP_Kuzmich_C_SK_Kuzmich_Base01",
+            "offhand_location_offset": [
+                1.399999976158142,
+                0.0,
+                -26.799999237060547
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02",
+            "label": "BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_AK47_DLC4_C_SK_AK47_Base",
+            "label": "BP_AK47_DLC4_C_SK_AK47_Base",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4",
+            "label": "BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Plasmagun_C_SK_Plasmagun_Cutter01",
+            "label": "BP_Plasmagun_C_SK_Plasmagun_Cutter01",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_PM_C_SK_PM_Base0",
+            "label": "BP_PM_C_SK_PM_Base0",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle",
+            "label": "BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_NewtonEmptyHands_C_Mesh",
+            "label": "BP_NewtonEmptyHands_C_Mesh",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Shved_Limbo_C_SK_Shved_Limbo_Base",
+            "label": "BP_Shved_Limbo_C_SK_Shved_Limbo_Base",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_AK47_Limbo_C_SK_AK_Limbo_Base",
+            "label": "BP_AK47_Limbo_C_SK_AK_Limbo_Base",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        },
+        {
+            "id": "BP_Lisa_C_SK_Lisa_HandleBase",
+            "label": "BP_Lisa_C_SK_Lisa_HandleBase",
+            "offhand_location_offset": [
+                14.800000190734863,
+                0.0,
+                -5.300000190734863
+            ],
+            "rotation": [
+                -10.0,
+                27.5,
+                -30.0
+            ]
+        }
+    ]
+}

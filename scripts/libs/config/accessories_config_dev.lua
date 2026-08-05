@@ -636,7 +636,7 @@ local function refreshSocketList(id, prefix)
     else
        --need to get all the sockets for the mesh represented by id
         if callerModule ~= nil then
-            print("Requesting sockets for attachment ID: " .. tostring(id))
+            --print("Requesting sockets for attachment ID: " .. tostring(id))
             callerModule.getSocketsForAttachmentID(id, function(names)
                 print(names)
                 local socketList = {}

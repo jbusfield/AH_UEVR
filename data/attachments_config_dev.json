@@ -1,37 +1,243 @@
 {
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_end_time": 0.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_existing_guid": 1,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_activation_distance": 100.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_attach_type": 1,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_grip_animation": 13,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_id": "2d275d10-a76e-40bb-807f-6b9d97a3ed13",
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_label": "Trigger Grip",
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_location": [
+        -1.5,
+        -5.599999904632568,
+        7.099999904632568
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_rotation": [
+        3.9000000953674316,
+        86.0,
+        -16.5
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_socket": "",
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_socket_list": 4,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_socket_name": "",
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_test_hand": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_marker_picker": 1,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_picker": 4,
+    "attachment_BP_AK47_C_SK_AK47_Base_accessory_start_time": 0.0,
     "attachment_BP_AK47_C_SK_AK47_Base_all_children": false,
     "attachment_BP_AK47_C_SK_AK47_Base_any_child": false,
-    "attachment_BP_AK47_C_SK_AK47_Base_any_parent": false,
-    "attachment_BP_AK47_C_SK_AK47_Base_grip_animation": 6,
+    "attachment_BP_AK47_C_SK_AK47_Base_any_parent": true,
+    "attachment_BP_AK47_C_SK_AK47_Base_delete_accessory_override": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_grip_animation": 14,
     "attachment_BP_AK47_C_SK_AK47_Base_is_melee": false,
     "attachment_BP_AK47_C_SK_AK47_Base_is_scoped": false,
     "attachment_BP_AK47_C_SK_AK47_Base_is_two_handed": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_AK47_C_SK_AK47_Base_position": [
-        5.599999904632568,
-        -4.099999904632568,
-        -6.400000095367432
+        12.300000190734863,
+        3.5999999046325684,
+        -3.0
     ],
     "attachment_BP_AK47_C_SK_AK47_Base_rotation": [
-        23.799999237060547,
-        -90.69999694824219,
-        0.0
+        -69.80000305175781,
+        31.299999237060547,
+        -29.299999237060547
     ],
     "attachment_BP_AK47_C_SK_AK47_Base_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_brightness": 2.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_max_fov": 20.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_min_fov": 2.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_show_debug": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_AK47_C_SK_AK47_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_AK47_C_SK_AK47_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        12.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        12.0
+    ],
+    "attachment_BP_AK47_C_SK_AK47_Base_strip_child_suffix_length": false,
+    "attachment_BP_AK47_C_SK_AK47_Base_use_laser": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_end_time": 0.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_existing_guid": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_attach_type": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_id": "",
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_label": "",
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_socket_list": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_socket_name": "",
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_marker_picker": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_picker": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_accessory_start_time": 0.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_any_child": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_any_parent": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_delete_accessory_override": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_grip_animation": 1,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_is_melee": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_is_scoped": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_is_two_handed": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_brightness": 2.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_max_fov": 20.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_min_fov": 2.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_show_debug": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_strip_child_suffix_length": false,
+    "attachment_BP_AK47_DLC4_C_SK_AK47_Base_use_laser": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_end_time": 0.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_existing_guid": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_attach_type": 0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_id": "",
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_label": "",
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_socket": "",
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_socket_list": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_socket_name": "",
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_test_hand": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_marker_picker": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_picker": 1,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_accessory_start_time": 0.0,
     "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_any_child": false,
     "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_any_parent": true,
-    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_grip_animation": 6,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_delete_accessory_override": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_grip_animation": 14,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_is_melee": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_is_scoped": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_is_two_handed": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_position": [
-        4.599999904632568,
-        -4.099999904632568,
-        -7.0
+        10.899999618530273,
+        4.699999809265137,
+        -3.700000047683716
     ],
     "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_rotation": [
-        23.799999237060547,
-        -90.69999694824219,
+        -86.5999984741211,
+        -1.7000000476837158,
         0.0
     ],
     "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scale": [
@@ -39,21 +245,96 @@
         1.0,
         1.0
     ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_brightness": 2.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_max_fov": 20.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_min_fov": 2.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_show_debug": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_strip_child_suffix_length": false,
+    "attachment_BP_AK47_Limbo_C_SK_AK_Limbo_Base_use_laser": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_end_time": 0.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_existing_guid": 1,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_activation_distance": 9.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_activation_hand": 2,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_attach_type": 1,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_grip_animation": 15,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_id": "309f3a68-6f57-4e9d-bc85-8afe97b13ecb",
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_label": "Offhand Grip",
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_location": [
+        16.600000381469727,
+        14.0,
+        5.400000095367432
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_rotation": [
+        -10.100000381469727,
+        25.0,
+        -116.9000015258789
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_socket": "",
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_socket_list": 2,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_socket_name": "Scope_01",
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_test_hand": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_marker_picker": 1,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_picker": 2,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_accessory_start_time": 0.0,
     "attachment_BP_Dominator_C_SK_Dominator_Base_all_children": false,
     "attachment_BP_Dominator_C_SK_Dominator_Base_any_child": false,
     "attachment_BP_Dominator_C_SK_Dominator_Base_any_parent": false,
-    "attachment_BP_Dominator_C_SK_Dominator_Base_grip_animation": 4,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_delete_accessory_override": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_grip_animation": 17,
     "attachment_BP_Dominator_C_SK_Dominator_Base_is_melee": false,
     "attachment_BP_Dominator_C_SK_Dominator_Base_is_scoped": false,
     "attachment_BP_Dominator_C_SK_Dominator_Base_is_two_handed": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Dominator_C_SK_Dominator_Base_position": [
-        2.0,
+        9.100000381469727,
         -2.4000000953674316,
-        -1.7000000476837158
+        -2.799999952316284
     ],
     "attachment_BP_Dominator_C_SK_Dominator_Base_rotation": [
-        15.300000190734863,
-        -91.4000015258789,
+        -74.69999694824219,
+        6.900000095367432,
         0.0
     ],
     "attachment_BP_Dominator_C_SK_Dominator_Base_scale": [
@@ -61,35 +342,185 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_brightness": 2.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_max_fov": 20.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_min_fov": 2.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_show_debug": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Dominator_C_SK_Dominator_Base_strip_child_suffix_length": false,
+    "attachment_BP_Dominator_C_SK_Dominator_Base_use_laser": false,
+    "attachment_BP_Electro_C_SK_Electro_accessory_end_time": 0.0,
+    "attachment_BP_Electro_C_SK_Electro_accessory_existing_guid": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_activation_hand": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_attach_type": 0,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_grip_animation": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_grip_priority": "1",
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_id": "",
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_label": "",
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_socket": "",
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_socket_list": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_socket_name": "",
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_test_hand": false,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_test_left_hand": false,
+    "attachment_BP_Electro_C_SK_Electro_accessory_item_test_right_hand": false,
+    "attachment_BP_Electro_C_SK_Electro_accessory_marker_picker": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_picker": 1,
+    "attachment_BP_Electro_C_SK_Electro_accessory_start_time": 0.0,
     "attachment_BP_Electro_C_SK_Electro_all_children": false,
     "attachment_BP_Electro_C_SK_Electro_any_child": false,
     "attachment_BP_Electro_C_SK_Electro_any_parent": false,
-    "attachment_BP_Electro_C_SK_Electro_grip_animation": 3,
+    "attachment_BP_Electro_C_SK_Electro_delete_accessory_override": false,
+    "attachment_BP_Electro_C_SK_Electro_grip_animation": 8,
     "attachment_BP_Electro_C_SK_Electro_is_melee": false,
     "attachment_BP_Electro_C_SK_Electro_is_scoped": false,
     "attachment_BP_Electro_C_SK_Electro_is_two_handed": false,
+    "attachment_BP_Electro_C_SK_Electro_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Electro_C_SK_Electro_position": [
-        4.400000095367432,
-        -2.299999952316284,
-        -1.100000023841858
+        11.199999809265137,
+        -2.4000000953674316,
+        -2.299999952316284
     ],
     "attachment_BP_Electro_C_SK_Electro_rotation": [
-        14.199999809265137,
-        -90.0,
-        0.0
+        -100.0,
+        169.5,
+        -166.3000030517578
     ],
     "attachment_BP_Electro_C_SK_Electro_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Electro_C_SK_Electro_scope_brightness": 2.0,
+    "attachment_BP_Electro_C_SK_Electro_scope_deactivate_distance": 50.0,
+    "attachment_BP_Electro_C_SK_Electro_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Electro_C_SK_Electro_scope_max_fov": 20.0,
+    "attachment_BP_Electro_C_SK_Electro_scope_min_fov": 2.0,
+    "attachment_BP_Electro_C_SK_Electro_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Electro_C_SK_Electro_scope_show_debug": false,
+    "attachment_BP_Electro_C_SK_Electro_scope_zoom_exponential": 0.5,
+    "attachment_BP_Electro_C_SK_Electro_scope_zoom_speed": 1.0,
+    "attachment_BP_Electro_C_SK_Electro_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Electro_C_SK_Electro_strip_child_suffix_length": false,
+    "attachment_BP_Electro_C_SK_Electro_use_laser": false,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_end_time": 0.0,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_existing_guid": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_activation_distance": 0.0,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_activation_hand": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_attach_type": 0,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_grip_animation": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_grip_priority": "1",
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_id": "",
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_label": "",
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_socket": "",
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_socket_list": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_socket_name": "",
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_test_hand": false,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_test_left_hand": false,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_item_test_right_hand": false,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_marker_picker": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_picker": 1,
+    "attachment_BP_EmptyHands_C_Mesh_accessory_start_time": 0.0,
     "attachment_BP_EmptyHands_C_Mesh_all_children": false,
     "attachment_BP_EmptyHands_C_Mesh_any_child": false,
     "attachment_BP_EmptyHands_C_Mesh_any_parent": false,
+    "attachment_BP_EmptyHands_C_Mesh_delete_accessory_override": false,
     "attachment_BP_EmptyHands_C_Mesh_grip_animation": 1,
     "attachment_BP_EmptyHands_C_Mesh_is_melee": true,
     "attachment_BP_EmptyHands_C_Mesh_is_scoped": false,
     "attachment_BP_EmptyHands_C_Mesh_is_two_handed": false,
+    "attachment_BP_EmptyHands_C_Mesh_melee_rotation_offset": [
+        80.80000305175781,
+        0.0,
+        0.0
+    ],
     "attachment_BP_EmptyHands_C_Mesh_position": [
         0.0,
         0.0,
@@ -105,44 +536,333 @@
         1.0,
         1.0
     ],
+    "attachment_BP_EmptyHands_C_Mesh_scope_brightness": 2.0,
+    "attachment_BP_EmptyHands_C_Mesh_scope_deactivate_distance": 50.0,
+    "attachment_BP_EmptyHands_C_Mesh_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_EmptyHands_C_Mesh_scope_max_fov": 20.0,
+    "attachment_BP_EmptyHands_C_Mesh_scope_min_fov": 2.0,
+    "attachment_BP_EmptyHands_C_Mesh_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_EmptyHands_C_Mesh_scope_show_debug": false,
+    "attachment_BP_EmptyHands_C_Mesh_scope_zoom_exponential": 0.5,
+    "attachment_BP_EmptyHands_C_Mesh_scope_zoom_speed": 1.0,
+    "attachment_BP_EmptyHands_C_Mesh_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_EmptyHands_C_Mesh_strip_child_suffix_length": false,
+    "attachment_BP_EmptyHands_C_Mesh_use_laser": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_end_time": 0.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_existing_guid": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_activation_hand": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_attach_type": 0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_grip_animation": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_grip_priority": "1",
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_id": "",
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_label": "",
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_socket": "",
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_socket_list": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_socket_name": "",
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_test_hand": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_test_left_hand": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_item_test_right_hand": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_marker_picker": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_picker": 1,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_accessory_start_time": 0.0,
     "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_any_child": false,
-    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_any_parent": false,
-    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_grip_animation": 9,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_any_parent": true,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_delete_accessory_override": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_grip_animation": 5,
     "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_is_melee": true,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_is_scoped": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_is_two_handed": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_melee_rotation_offset": [
+        59.20000076293945,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_position": [
-        1.0,
-        -2.299999952316284,
-        3.700000047683716
+        7.099999904632568,
+        -2.5,
+        -3.9000000953674316
     ],
     "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_rotation": [
-        18.600000381469727,
-        -96.9000015258789,
-        9.600000381469727
+        -79.4000015258789,
+        5.300000190734863,
+        -3.4000000953674316
     ],
     "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scale": [
         1.0,
         1.0,
         1.0
     ],
-    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_child": true,
-    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_parent": false,
-    "attachment_BP_Klusha_C_SK_Klusha_Handle01_grip_animation": 9,
-    "attachment_BP_Klusha_C_SK_Klusha_Handle01_is_melee": true,
-    "attachment_BP_Klusha_C_SK_Klusha_Handle01_position": [
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_brightness": 2.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_deactivate_distance": 50.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_max_fov": 20.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_min_fov": 2.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_objective_lens_location": [
         0.0,
-        -2.700000047683716,
-        0.800000011920929
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_show_debug": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_zoom_exponential": 0.5,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_scope_zoom_speed": 1.0,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_strip_child_suffix_length": false,
+    "attachment_BP_Gromoverzhec_C_SK_Gromoverzec_Base02_use_laser": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_end_time": 0.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_existing_guid": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_activation_hand": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_attach_type": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_grip_animation": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_grip_priority": "1",
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_id": "",
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_label": "",
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_socket_list": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_socket_name": "",
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_test_left_hand": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_item_test_right_hand": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_marker_picker": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_picker": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_accessory_start_time": 0.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_any_child": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_any_parent": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_delete_accessory_override": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_grip_animation": 1,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_is_melee": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_is_scoped": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_is_two_handed": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_brightness": 2.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_deactivate_distance": 50.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_max_fov": 20.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_min_fov": 2.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_show_debug": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_zoom_exponential": 0.5,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_scope_zoom_speed": 1.0,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_strip_child_suffix_length": false,
+    "attachment_BP_Gromoverzhec_DLC4_C_SK_Gromoverzec_Base02_use_laser": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_end_time": 0.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_existing_guid": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_activation_hand": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_attach_type": 0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_grip_animation": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_grip_priority": "1",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_id": "",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_label": "",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_socket": "",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_socket_list": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_socket_name": "",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_test_hand": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_test_left_hand": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_item_test_right_hand": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_marker_picker": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_picker": 1,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_accessory_start_time": 0.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_child": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_any_parent": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_delete_accessory_override": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_grip_animation": 5,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_is_melee": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_is_scoped": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_is_two_handed": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_melee_rotation_offset": [
+        84.30000305175781,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_position": [
+        6.800000190734863,
+        -4.199999809265137,
+        -3.200000047683716
     ],
     "attachment_BP_Klusha_C_SK_Klusha_Handle01_rotation": [
-        13.100000381469727,
-        -90.0,
-        3.200000047683716
+        7.900000095367432,
+        -83.9000015258789,
+        78.0
     ],
     "attachment_BP_Klusha_C_SK_Klusha_Handle01_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_brightness": 2.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_deactivate_distance": 50.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_max_fov": 20.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_min_fov": 2.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_show_debug": false,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_zoom_exponential": 0.5,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_scope_zoom_speed": 1.0,
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_strip_child_suffix_length": "9",
+    "attachment_BP_Klusha_C_SK_Klusha_Handle01_use_laser": false,
     "attachment_BP_Klusha_C_SK_Klusha_Handle02_any_child": false,
     "attachment_BP_Klusha_C_SK_Klusha_Handle02_any_parent": false,
     "attachment_BP_Klusha_C_SK_Klusha_Handle02_grip_animation": 1,
@@ -161,62 +881,342 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_end_time": 0.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_existing_guid": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_activation_hand": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_attach_type": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_grip_animation": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_grip_priority": "1",
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_id": "",
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_label": "",
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_socket_list": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_socket_name": "",
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_test_left_hand": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_item_test_right_hand": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_marker_picker": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_picker": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_accessory_start_time": 0.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_any_child": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_any_parent": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_delete_accessory_override": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_grip_animation": 1,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_is_melee": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_is_scoped": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_is_two_handed": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_rotation": [
+        -6.830188794992864e-06,
+        89.99999237060547,
+        -6.037091679900186e-07
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scale": [
+        1.000000238418579,
+        1.0,
+        1.000000238418579
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_brightness": 2.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_deactivate_distance": 50.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_max_fov": 20.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_min_fov": 2.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_show_debug": false,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_zoom_exponential": 0.5,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_scope_zoom_speed": 1.0,
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_strip_child_suffix_length": "11",
+    "attachment_BP_Klusha_DLC4_C_SK_KlushaDLC4_Handle_use_laser": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_end_time": 0.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_existing_guid": 1,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_attach_type": 1,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_id": "ff4e0d7f-b826-49f6-aa66-a8c141f7226d",
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_label": "Reload",
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_location": [
+        -1.2000000476837158,
+        0.20000000298023224,
+        -8.899999618530273
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_rotation": [
+        179.0,
+        124.30000305175781,
+        43.599998474121094
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_socket": "",
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_socket_list": 3,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_socket_name": "Bullet",
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_test_hand": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_marker_picker": 1,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_picker": 2,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_accessory_start_time": 0.0,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_all_children": false,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_any_child": false,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_any_parent": false,
-    "attachment_BP_Krepysh_C_SK_Krepysh_Base_grip_animation": 4,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_delete_accessory_override": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_grip_animation": 15,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_melee": false,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_scoped": false,
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_is_two_handed": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_position": [
-        -1.7999999523162842,
-        13.0,
-        -2.200000047683716
+        9.899999618530273,
+        8.399999618530273,
+        -6.400000095367432
     ],
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_rotation": [
-        0.0,
-        180.0,
-        -13.100000381469727
+        -70.19999694824219,
+        15.0,
+        0.4000000059604645
     ],
     "attachment_BP_Krepysh_C_SK_Krepysh_Base_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_brightness": 2.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_max_fov": 20.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_min_fov": 2.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_show_debug": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_strip_child_suffix_length": false,
+    "attachment_BP_Krepysh_C_SK_Krepysh_Base_use_laser": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_end_time": 0.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_existing_guid": 1,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_activation_distance": 100.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_activation_hand": 1,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_attach_type": 1,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_grip_animation": 10,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_grip_priority": "1",
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_id": "8ae87f5a-7823-44b0-a6ef-d4a74f51656d",
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_label": "Trigger Grip",
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_location": [
+        -2.5,
+        -1.600000023841858,
+        2.799999952316284
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_rotation": [
+        0.699999988079071,
+        82.4000015258789,
+        -9.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_socket": "",
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_socket_list": 7,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_socket_name": "Root",
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_test_hand": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_test_left_hand": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_item_test_right_hand": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_marker_picker": 1,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_picker": 1,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_accessory_start_time": 0.0,
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_any_child": false,
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_any_parent": false,
-    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_grip_animation": 6,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_delete_accessory_override": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_grip_animation": 11,
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_is_melee": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_is_scoped": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_is_two_handed": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_position": [
-        -1.2000000476837158,
-        1.899999976158142,
-        0.699999988079071
+        9.199999809265137,
+        -0.8999999761581421,
+        -3.0999999046325684
     ],
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_rotation": [
-        0.0,
-        0.6000000238418579,
-        -21.899999618530273
+        -79.80000305175781,
+        0.10000000149011612,
+        0.4000000059604645
     ],
     "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_brightness": 2.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_deactivate_distance": 50.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_max_fov": 20.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_min_fov": 2.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_show_debug": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_zoom_exponential": 0.5,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_scope_zoom_speed": 1.0,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_sights_position_offset": [
+        0.0,
+        0.0,
+        12.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_sights_rotation_offset": [
+        0.0,
+        0.0,
+        12.0
+    ],
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_strip_child_suffix_length": false,
+    "attachment_BP_Kuzmich_C_SK_Kuzmich_Base01_use_laser": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_end_time": 0.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_existing_guid": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_activation_hand": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_attach_type": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_grip_animation": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_grip_priority": "1",
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_id": "e5b1e1c3-8e55-4f98-acfd-32cf3fcc6b7e",
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_label": "Cassette",
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_location": [
+        -0.699999988079071,
+        4.900000095367432,
+        -7.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_rotation": [
+        27.0,
+        48.0,
+        -21.200000762939453
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_socket": "",
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_socket_list": 3,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_socket_name": "cassete_jnt",
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_test_hand": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_test_left_hand": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_item_test_right_hand": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_marker_picker": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_picker": 1,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_accessory_start_time": 0.0,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_all_children": false,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_any_child": false,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_any_parent": false,
-    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_grip_animation": 9,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_delete_accessory_override": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_grip_animation": 5,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_melee": true,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_scoped": false,
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_is_two_handed": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_melee_rotation_offset": [
+        65.4000015258789,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_position": [
-        0.30000001192092896,
-        -4.599999904632568,
-        -0.10000000149011612
+        7.699999809265137,
+        -6.300000190734863,
+        -3.799999952316284
     ],
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_rotation": [
-        10.0,
-        -94.0,
+        -75.69999694824219,
+        6.5,
         0.0
     ],
     "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scale": [
@@ -224,10 +1224,87 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_brightness": 2.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_deactivate_distance": 50.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_max_fov": 20.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_min_fov": 2.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_show_debug": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_zoom_exponential": 0.5,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_scope_zoom_speed": 1.0,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_strip_child_suffix_length": false,
+    "attachment_BP_Lisa_C_SK_Lisa_HandleBase_use_laser": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_end_time": 0.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_existing_guid": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_activation_distance": 0.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_activation_hand": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_attach_type": 0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_grip_animation": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_grip_priority": "1",
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_id": "",
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_label": "",
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_socket": "",
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_socket_list": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_socket_name": "",
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_test_hand": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_test_left_hand": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_item_test_right_hand": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_marker_picker": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_picker": 1,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_accessory_start_time": 0.0,
     "attachment_BP_NewtonEmptyHands_C_Mesh_any_child": false,
     "attachment_BP_NewtonEmptyHands_C_Mesh_any_parent": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_delete_accessory_override": false,
     "attachment_BP_NewtonEmptyHands_C_Mesh_grip_animation": 1,
     "attachment_BP_NewtonEmptyHands_C_Mesh_is_melee": true,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_is_scoped": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_is_two_handed": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_melee_rotation_offset": [
+        72.19999694824219,
+        0.0,
+        0.0
+    ],
     "attachment_BP_NewtonEmptyHands_C_Mesh_position": [
         0.0,
         0.0,
@@ -243,21 +1320,96 @@
         1.0,
         1.0
     ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_brightness": 2.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_deactivate_distance": 50.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_max_fov": 20.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_min_fov": 2.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_show_debug": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_zoom_exponential": 0.5,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_scope_zoom_speed": 1.0,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_NewtonEmptyHands_C_Mesh_strip_child_suffix_length": false,
+    "attachment_BP_NewtonEmptyHands_C_Mesh_use_laser": false,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_end_time": 0.0,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_existing_guid": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_activation_distance": 0.0,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_activation_hand": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_attach_type": 0,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_grip_animation": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_grip_priority": "1",
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_id": "",
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_label": "",
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_socket": "",
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_socket_list": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_socket_name": "",
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_test_hand": false,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_test_left_hand": false,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_item_test_right_hand": false,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_marker_picker": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_picker": 1,
+    "attachment_BP_PM_C_SK_PM_Base0_accessory_start_time": 0.0,
     "attachment_BP_PM_C_SK_PM_Base0_all_children": true,
     "attachment_BP_PM_C_SK_PM_Base0_any_child": false,
     "attachment_BP_PM_C_SK_PM_Base0_any_parent": true,
-    "attachment_BP_PM_C_SK_PM_Base0_grip_animation": 8,
+    "attachment_BP_PM_C_SK_PM_Base0_delete_accessory_override": false,
+    "attachment_BP_PM_C_SK_PM_Base0_grip_animation": 12,
     "attachment_BP_PM_C_SK_PM_Base0_is_melee": false,
     "attachment_BP_PM_C_SK_PM_Base0_is_scoped": false,
     "attachment_BP_PM_C_SK_PM_Base0_is_two_handed": false,
+    "attachment_BP_PM_C_SK_PM_Base0_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_PM_C_SK_PM_Base0_position": [
-        6.5,
+        13.699999809265137,
         -1.7000000476837158,
         -2.0999999046325684
     ],
     "attachment_BP_PM_C_SK_PM_Base0_rotation": [
-        18.0,
-        -90.5999984741211,
+        -79.69999694824219,
+        -0.6000000238418579,
         0.0
     ],
     "attachment_BP_PM_C_SK_PM_Base0_scale": [
@@ -265,6 +1417,47 @@
         1.0,
         1.0
     ],
+    "attachment_BP_PM_C_SK_PM_Base0_scope_brightness": 2.0,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_deactivate_distance": 50.0,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_max_fov": 20.0,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_min_fov": 2.0,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_show_debug": false,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_zoom_exponential": 0.5,
+    "attachment_BP_PM_C_SK_PM_Base0_scope_zoom_speed": 1.0,
+    "attachment_BP_PM_C_SK_PM_Base0_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_C_SK_PM_Base0_strip_child_suffix_length": false,
+    "attachment_BP_PM_C_SK_PM_Base0_use_laser": false,
     "attachment_BP_PM_C_SK_PM_Handle_all_children": false,
     "attachment_BP_PM_C_SK_PM_Handle_any_child": false,
     "attachment_BP_PM_C_SK_PM_Handle_grip_animation": 9,
@@ -283,17 +1476,54 @@
         1.0,
         1.0
     ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_end_time": 0.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_existing_guid": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_activation_distance": 0.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_activation_hand": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_attach_type": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_grip_animation": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_grip_priority": "1",
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_id": "fedb9f97-352b-4cb9-b4f2-cf5ff0b158c9",
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_label": "Cassette",
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_location": [
+        -3.299999952316284,
+        0.4000000059604645,
+        -10.300000190734863
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_rotation": [
+        14.5,
+        97.0,
+        -41.099998474121094
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_socket": "",
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_socket_list": 8,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_socket_name": "cassete_jnt",
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_test_hand": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_test_left_hand": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_item_test_right_hand": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_marker_picker": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_picker": 1,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_accessory_start_time": 0.0,
     "attachment_BP_PM_DLC1_C_SK_PM_Handle_any_child": false,
     "attachment_BP_PM_DLC1_C_SK_PM_Handle_any_parent": true,
-    "attachment_BP_PM_DLC1_C_SK_PM_Handle_grip_animation": 8,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_delete_accessory_override": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_grip_animation": 12,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_is_melee": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_is_scoped": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_is_two_handed": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_PM_DLC1_C_SK_PM_Handle_position": [
-        6.900000095367432,
+        13.5,
         -1.7000000476837158,
-        -1.7000000476837158
+        -2.0999999046325684
     ],
     "attachment_BP_PM_DLC1_C_SK_PM_Handle_rotation": [
-        18.0,
-        -90.5999984741211,
+        -76.0999984741211,
+        1.600000023841858,
         0.0
     ],
     "attachment_BP_PM_DLC1_C_SK_PM_Handle_scale": [
@@ -301,21 +1531,96 @@
         1.0,
         1.0
     ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_brightness": 2.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_deactivate_distance": 50.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_max_fov": 20.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_min_fov": 2.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_show_debug": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_zoom_exponential": 0.5,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_scope_zoom_speed": 1.0,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_sights_position_offset": [
+        0.0,
+        0.0,
+        4.699999809265137
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_sights_rotation_offset": [
+        0.0,
+        0.0,
+        4.699999809265137
+    ],
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_strip_child_suffix_length": false,
+    "attachment_BP_PM_DLC1_C_SK_PM_Handle_use_laser": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_end_time": 0.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_existing_guid": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_activation_hand": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_attach_type": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_grip_animation": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_grip_priority": "1",
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_id": "e5241653-6a67-46ca-b9f9-8155c66bea4a",
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_label": "Cassette",
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_location": [
+        2.0,
+        5.400000095367432,
+        -6.900000095367432
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_rotation": [
+        22.700000762939453,
+        -0.10000000149011612,
+        -59.20000076293945
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_socket": "",
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_socket_list": 5,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_socket_name": "cassete_jnt",
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_test_hand": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_test_left_hand": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_item_test_right_hand": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_marker_picker": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_picker": 1,
+    "attachment_BP_Pashtet_C_SK_Pashtet_accessory_start_time": 0.0,
     "attachment_BP_Pashtet_C_SK_Pashtet_all_children": false,
     "attachment_BP_Pashtet_C_SK_Pashtet_any_child": false,
     "attachment_BP_Pashtet_C_SK_Pashtet_any_parent": false,
-    "attachment_BP_Pashtet_C_SK_Pashtet_grip_animation": 9,
+    "attachment_BP_Pashtet_C_SK_Pashtet_delete_accessory_override": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_grip_animation": 5,
     "attachment_BP_Pashtet_C_SK_Pashtet_is_melee": true,
     "attachment_BP_Pashtet_C_SK_Pashtet_is_scoped": false,
     "attachment_BP_Pashtet_C_SK_Pashtet_is_two_handed": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_melee_rotation_offset": [
+        65.19999694824219,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Pashtet_C_SK_Pashtet_position": [
-        -0.30000001192092896,
-        -4.900000095367432,
-        -2.700000047683716
+        7.0,
+        -3.700000047683716,
+        -4.199999809265137
     ],
     "attachment_BP_Pashtet_C_SK_Pashtet_rotation": [
-        18.600000381469727,
-        -104.19999694824219,
+        -70.30000305175781,
+        8.800000190734863,
         2.0
     ],
     "attachment_BP_Pashtet_C_SK_Pashtet_scale": [
@@ -323,57 +1628,382 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_brightness": 2.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_deactivate_distance": 50.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_max_fov": 20.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_min_fov": 2.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_show_debug": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_zoom_exponential": 0.5,
+    "attachment_BP_Pashtet_C_SK_Pashtet_scope_zoom_speed": 1.0,
+    "attachment_BP_Pashtet_C_SK_Pashtet_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Pashtet_C_SK_Pashtet_strip_child_suffix_length": false,
+    "attachment_BP_Pashtet_C_SK_Pashtet_use_laser": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_end_time": 0.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_existing_guid": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_activation_hand": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_attach_type": 0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_grip_animation": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_grip_priority": "1",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_id": "",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_label": "",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_socket": "",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_socket_list": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_socket_name": "",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_test_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_test_left_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_item_test_right_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_marker_picker": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_picker": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_accessory_start_time": 0.0,
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_any_child": false,
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_any_parent": false,
-    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_grip_animation": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_delete_accessory_override": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_grip_animation": 17,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_is_melee": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_is_scoped": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_is_two_handed": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_position": [
-        3.017544984817505,
-        17.09813690185547,
-        -2.916271209716797
+        15.418000221252441,
+        -6.9019999504089355,
+        -11.715999603271484
     ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_rotation": [
-        -7.196498870849609,
-        4.937005043029785,
-        -84.93299102783203
+        16.003999710083008,
+        0.0,
+        0.0
     ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scale": [
         1.0,
         1.0,
         1.0
     ],
-    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_child": true,
-    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_parent": false,
-    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_grip_animation": 4,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_brightness": 2.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_deactivate_distance": 50.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_max_fov": 20.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_min_fov": 2.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_show_debug": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_zoom_exponential": 0.5,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_scope_zoom_speed": 1.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_strip_child_suffix_length": "2",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter01_use_laser": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_end_time": 0.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_existing_guid": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_activation_distance": 100.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_activation_hand": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_attach_type": 2,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_grip_animation": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_grip_priority": "1",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_id": "6680bca8-ca0b-4a2c-9718-d09da5e020a6",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_label": "Handle",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_location": [
+        -0.6000000238418579,
+        -6.599999904632568,
+        4.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_rotation": [
+        121.5999984741211,
+        59.599998474121094,
+        -61.400001525878906
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_socket": "",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_socket_list": 58,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_socket_name": "handle_top",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_test_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_test_left_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_item_test_right_hand": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_marker_picker": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_picker": 1,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_accessory_start_time": 0.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_child": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_any_parent": true,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_delete_accessory_override": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_grip_animation": 10,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_is_melee": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_is_scoped": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_is_two_handed": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_position": [
-        15.600000381469727,
-        -6.300000190734863,
-        -11.0
+        19.5,
+        8.600000381469727,
+        -5.900000095367432
     ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_rotation": [
-        15.5,
-        -90.0,
-        0.0
+        -81.5,
+        9.800000190734863,
+        -1.100000023841858
     ],
     "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_brightness": 2.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_deactivate_distance": 50.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_max_fov": 20.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_min_fov": 2.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_show_debug": false,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_zoom_exponential": 0.5,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_scope_zoom_speed": 1.0,
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_sights_position_offset": [
+        0.0,
+        0.0,
+        -5.5
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_sights_rotation_offset": [
+        0.0,
+        0.0,
+        -5.5
+    ],
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_strip_child_suffix_length": "2",
+    "attachment_BP_Plasmagun_C_SK_Plasmagun_Cutter02_use_laser": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_end_time": 0.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_existing_guid": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_activation_hand": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_attach_type": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_grip_animation": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_grip_priority": "1",
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_id": "",
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_label": "",
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_socket_list": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_socket_name": "",
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_test_left_hand": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_item_test_right_hand": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_marker_picker": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_picker": 1,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_accessory_start_time": 0.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_any_child": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_any_parent": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_delete_accessory_override": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_grip_animation": 17,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_is_melee": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_is_scoped": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_is_two_handed": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_brightness": 2.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_deactivate_distance": 50.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_max_fov": 20.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_min_fov": 2.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_show_debug": false,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_zoom_exponential": 0.5,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_scope_zoom_speed": 1.0,
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_strip_child_suffix_length": "7",
+    "attachment_BP_Plasmagun_DLC4_C_SK_Plasmagun_Cutter01_DLC4_use_laser": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_end_time": 0.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_existing_guid": 1,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_activation_distance": 100.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_attach_type": 1,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_grip_animation": 16,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_id": "3c583b84-fd9a-4a26-8d60-26cc0db53ab7",
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_label": "Trigger Grip",
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_location": [
+        11.199999809265137,
+        0.4000000059604645,
+        4.400000095367432
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_rotation": [
+        -10.199999809265137,
+        -0.20000000298023224,
+        -108.80000305175781
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_socket": "",
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_socket_list": 8,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_socket_name": "Handle",
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_test_hand": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_marker_picker": 1,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_picker": 2,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_accessory_start_time": 0.0,
     "attachment_BP_Railgun_C_SK_Railgun_Base_all_children": false,
     "attachment_BP_Railgun_C_SK_Railgun_Base_any_child": false,
     "attachment_BP_Railgun_C_SK_Railgun_Base_any_parent": false,
-    "attachment_BP_Railgun_C_SK_Railgun_Base_grip_animation": 4,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_delete_accessory_override": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_grip_animation": 17,
     "attachment_BP_Railgun_C_SK_Railgun_Base_is_melee": false,
     "attachment_BP_Railgun_C_SK_Railgun_Base_is_scoped": false,
     "attachment_BP_Railgun_C_SK_Railgun_Base_is_two_handed": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Railgun_C_SK_Railgun_Base_position": [
-        2.5999999046325684,
-        -2.4000000953674316,
-        -1.100000023841858
+        9.5,
+        -2.700000047683716,
+        -2.4000000953674316
     ],
     "attachment_BP_Railgun_C_SK_Railgun_Base_rotation": [
-        14.0,
-        -90.5,
+        -67.0999984741211,
+        3.4000000953674316,
         0.0
     ],
     "attachment_BP_Railgun_C_SK_Railgun_Base_scale": [
@@ -381,28 +2011,144 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_brightness": 2.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_max_fov": 20.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_min_fov": 2.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_show_debug": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Railgun_C_SK_Railgun_Base_strip_child_suffix_length": false,
+    "attachment_BP_Railgun_C_SK_Railgun_Base_use_laser": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_end_time": 0.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_existing_guid": 1,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_attach_type": 1,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_id": "bf6af63f-f517-4147-8e38-a3ed094da354",
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_label": "Reload Right Hand",
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_location": [
+        -4.800000190734863,
+        -1.7999999523162842,
+        3.9000000953674316
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_rotation": [
+        64.0,
+        67.69999694824219,
+        -76.5999984741211
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_socket": 2,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_socket_list": 5,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_socket_name": "loading_port",
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_test_hand": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_marker_picker": 1,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_picker": 5,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_accessory_start_time": 0.0,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_all_children": false,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_any_child": false,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_any_parent": true,
-    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_grip_animation": 5,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_delete_accessory_override": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_grip_animation": 3,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_melee": false,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_scoped": false,
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_is_two_handed": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_position": [
-        0.30000001192092896,
-        -2.0,
-        -1.600000023841858
+        7.300000190734863,
+        -1.7000000476837158,
+        -2.4000000953674316
     ],
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_rotation": [
-        13.0,
-        -90.0,
-        0.5
+        -80.30000305175781,
+        0.0,
+        0.0
     ],
     "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_brightness": 2.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_max_fov": 20.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_min_fov": 2.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_show_debug": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        7.800000190734863
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        7.800000190734863
+    ],
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_strip_child_suffix_length": false,
+    "attachment_BP_ShotgunKS23_C_SK_ShotgunKS23_Base_use_laser": false,
     "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_any_child": false,
     "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_any_parent": false,
     "attachment_BP_ShotgunKS23_DLC1_C_SK_ShotgunKS23_Base_grip_animation": 1,
@@ -421,40 +2167,151 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_end_time": 0.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_existing_guid": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_attach_type": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_id": "6bfac33f-ce6f-47f5-ab19-ef5973beb0b6",
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_label": "Cassette",
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_location": [
+        -2.0,
+        3.4000000953674316,
+        -8.699999809265137
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_rotation": [
+        175.0,
+        156.39999389648438,
+        29.299999237060547
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_socket": "",
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_socket_list": 3,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_socket_name": "Cassette",
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_test_hand": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_marker_picker": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_picker": 1,
+    "attachment_BP_Shved_C_SK_Shved_Base_accessory_start_time": 0.0,
     "attachment_BP_Shved_C_SK_Shved_Base_all_children": false,
     "attachment_BP_Shved_C_SK_Shved_Base_any_child": false,
     "attachment_BP_Shved_C_SK_Shved_Base_any_parent": false,
-    "attachment_BP_Shved_C_SK_Shved_Base_grip_animation": 9,
+    "attachment_BP_Shved_C_SK_Shved_Base_delete_accessory_override": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_grip_animation": 5,
     "attachment_BP_Shved_C_SK_Shved_Base_is_melee": true,
     "attachment_BP_Shved_C_SK_Shved_Base_is_scoped": false,
     "attachment_BP_Shved_C_SK_Shved_Base_is_two_handed": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_melee_rotation_offset": [
+        66.69999694824219,
+        -20.600000381469727,
+        0.0
+    ],
     "attachment_BP_Shved_C_SK_Shved_Base_position": [
-        0.30000001192092896,
-        -3.200000047683716,
-        -0.10000000149011612
+        11.699999809265137,
+        -15.399999618530273,
+        1.5
     ],
     "attachment_BP_Shved_C_SK_Shved_Base_rotation": [
-        13.399999618530273,
-        -63.099998474121094,
-        10.800000190734863
+        -121.4000015258789,
+        -108.30000305175781,
+        135.1999969482422
     ],
     "attachment_BP_Shved_C_SK_Shved_Base_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_brightness": 2.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_max_fov": 20.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_min_fov": 2.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_show_debug": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Shved_C_SK_Shved_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Shved_C_SK_Shved_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_C_SK_Shved_Base_strip_child_suffix_length": false,
+    "attachment_BP_Shved_C_SK_Shved_Base_use_laser": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_end_time": 0.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_existing_guid": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_attach_type": 0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_id": "",
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_label": "",
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_socket": "",
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_socket_list": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_socket_name": "",
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_test_hand": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_marker_picker": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_picker": 1,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_accessory_start_time": 0.0,
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_any_child": false,
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_any_parent": false,
-    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_grip_animation": 9,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_delete_accessory_override": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_grip_animation": 5,
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_is_melee": true,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_is_scoped": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_is_two_handed": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_melee_rotation_offset": [
+        63.599998474121094,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_position": [
-        0.30000001192092896,
-        -3.200000047683716,
-        -0.10000000149011612
+        7.199999809265137,
+        -5.300000190734863,
+        -3.200000047683716
     ],
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_rotation": [
-        13.399999618530273,
-        -63.20000076293945,
+        -79.9000015258789,
+        -0.30000001192092896,
         10.899999618530273
     ],
     "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scale": [
@@ -462,53 +2319,281 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_brightness": 2.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_max_fov": 20.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_min_fov": 2.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_show_debug": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_strip_child_suffix_length": false,
+    "attachment_BP_Shved_Limbo_C_SK_Shved_Limbo_Base_use_laser": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_end_time": 0.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_existing_guid": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_activation_hand": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_attach_type": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_grip_animation": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_grip_priority": "1",
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_id": "e3e37ceb-f03d-4b74-ae09-07a87bff6328",
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_label": "Cassette",
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_location": [
+        5.199999809265137,
+        0.20000000298023224,
+        -9.899999618530273
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_rotation": [
+        163.0,
+        114.30000305175781,
+        141.60000610351563
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_socket": "",
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_socket_list": 4,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_socket_name": "cassete_snap",
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_test_hand": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_test_left_hand": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_item_test_right_hand": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_marker_picker": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_picker": 1,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_accessory_start_time": 0.0,
     "attachment_BP_Snejok_C_SK_Snejok_Base_all_children": false,
     "attachment_BP_Snejok_C_SK_Snejok_Base_any_child": false,
     "attachment_BP_Snejok_C_SK_Snejok_Base_any_parent": false,
-    "attachment_BP_Snejok_C_SK_Snejok_Base_grip_animation": 9,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_delete_accessory_override": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_grip_animation": 5,
     "attachment_BP_Snejok_C_SK_Snejok_Base_is_melee": true,
     "attachment_BP_Snejok_C_SK_Snejok_Base_is_scoped": false,
     "attachment_BP_Snejok_C_SK_Snejok_Base_is_two_handed": false,
-    "attachment_BP_Snejok_C_SK_Snejok_Base_position": [
-        0.30000001192092896,
-        -3.4000000953674316,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_melee_rotation_offset": [
+        70.4000015258789,
+        -9.399999618530273,
         0.0
     ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_position": [
+        7.099999904632568,
+        -4.099999904632568,
+        -3.0999999046325684
+    ],
     "attachment_BP_Snejok_C_SK_Snejok_Base_rotation": [
-        9.800000190734863,
-        -79.0999984741211,
-        0.0
+        130.1999969482422,
+        82.80000305175781,
+        -113.69999694824219
     ],
     "attachment_BP_Snejok_C_SK_Snejok_Base_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_brightness": 2.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_deactivate_distance": 50.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_max_fov": 20.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_min_fov": 2.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_show_debug": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_zoom_exponential": 0.5,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_scope_zoom_speed": 1.0,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Snejok_C_SK_Snejok_Base_strip_child_suffix_length": false,
+    "attachment_BP_Snejok_C_SK_Snejok_Base_use_laser": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_end_time": 0.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_existing_guid": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_activation_hand": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_attach_type": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_grip_animation": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_grip_priority": "1",
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_id": "1da27b58-1872-4e5a-9872-ff3f2e287a3a",
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_label": "Cassette",
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_location": [
+        1.0,
+        0.0,
+        -9.199999809265137
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_rotation": [
+        175.6999969482422,
+        33.79999923706055,
+        29.399999618530273
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_socket": "",
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_socket_list": 44,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_socket_name": "cassete",
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_test_hand": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_test_left_hand": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_item_test_right_hand": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_marker_picker": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_picker": 1,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_accessory_start_time": 0.0,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_all_children": false,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_any_child": false,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_any_parent": true,
-    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_grip_animation": 9,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_delete_accessory_override": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_grip_animation": 5,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_melee": true,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_scoped": false,
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_is_two_handed": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_melee_rotation_offset": [
+        75.19999694824219,
+        -10.199999809265137,
+        0.0
+    ],
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_position": [
-        -0.4000000059604645,
-        -3.799999952316284,
-        -6.0
+        7.0,
+        -1.2999999523162842,
+        -3.799999952316284
     ],
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_rotation": [
-        -14.399999618530273,
-        22.0,
-        10.399999618530273
+        -76.4000015258789,
+        7.599999904632568,
+        3.0
     ],
     "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scale": [
         1.0,
         1.0,
         1.0
     ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_brightness": 2.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_deactivate_distance": 50.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_max_fov": 20.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_min_fov": 2.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_show_debug": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_zoom_exponential": 0.5,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_scope_zoom_speed": 1.0,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_strip_child_suffix_length": false,
+    "attachment_BP_Zvezdochka_C_SK_ZvezdochkaBase_use_laser": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_end_time": 0.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_existing_guid": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_activation_distance": 0.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_activation_hand": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_attach_type": 0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_grip_animation": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_grip_priority": "1",
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_id": "",
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_label": "",
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_location": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_socket": "",
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_socket_list": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_socket_name": "",
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_test_hand": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_test_left_hand": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_item_test_right_hand": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_marker_picker": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_picker": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_accessory_start_time": 0.0,
     "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_any_child": false,
     "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_any_parent": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_delete_accessory_override": false,
     "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_grip_animation": 1,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_is_melee": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_is_scoped": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_is_two_handed": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_melee_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
     "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_position": [
         0.0,
         0.0,
@@ -524,5 +2609,80 @@
         1.0,
         1.0
     ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_brightness": 2.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_deactivate_distance": 50.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_hide_ocular_lens_on_disable": true,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_max_fov": 20.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_min_fov": 2.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_objective_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_objective_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_ocular_lens_location": [
+        0.0,
+        0.0,
+        20.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_ocular_lens_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_ocular_lens_scale": 1.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_show_debug": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_zoom_exponential": 0.5,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_scope_zoom_speed": 1.0,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_sights_position_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_sights_rotation_offset": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_strip_child_suffix_length": false,
+    "attachment_BP_Zvezdochka_DLC1_C_SK_ZvezdochkaBase_use_laser": false,
+    "attachment_laser_rotation": [
+        90.0,
+        -0.699999988079071,
+        -0.20000000298023224
+    ],
+    "uevr_attachment_base_rotation": [
+        0.0,
+        90.0,
+        0.0
+    ],
+    "uevr_attachment_laser_rotation": [
+        0.0,
+        90.0,
+        0.0
+    ],
+    "uevr_attachments_left_hand_flip_x": false,
+    "uevr_attachments_left_hand_flip_y": false,
+    "uevr_attachments_left_hand_flip_z": false,
+    "uevr_attachments_left_hand_position": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_attachments_left_hand_rotation": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "uevr_attachments_left_hand_scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "uevr_attachments_use_left_hand_offsets": false,
     "use_uevr_attachments_strip_parent_name_numeric_suffix": false
 }

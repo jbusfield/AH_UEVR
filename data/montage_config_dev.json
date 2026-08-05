@@ -1,8 +1,12 @@
 {
     "handsWhenActive": 1,
     "handsWhenActivePriority": "0",
+    "inputWhenActive": 1,
+    "inputWhenActivePriority": "0",
     "knownMontageList": 1,
     "lastMontagePlayed": "AM_PlayerCharacterHands_FrozenSkill_Unequip_PreparationCancelled",
+    "leftAccessoryWhenActive": 1,
+    "leftAccessoryWhenActivePriority": "0",
     "leftArmWhenActive": 1,
     "leftArmWhenActivePriority": "0",
     "motionSicknessCompensationWhenActive": 1,
@@ -13,7 +17,10 @@
     "pawnArmsWhenActivePriority": "0",
     "pawnBodyWhenActive": 1,
     "pawnBodyWhenActivePriority": "0",
-    "recentMontagesPlayed": "AM_PlayerCharacterHands_ShvedFastUnequip\nAM_PlayerCharacterHands_ShvedEquip\nAnimMontage_35244\nAnimMontage_35241\nAnimMontage_35237\nAM_PlayerCharacterHands_ShvedFastUnequip\nAM_PlayerCharacterHands_ContinuousPickup_EndShort\nAM_PlayerCharacterHands_ContinuousPickup_Start\nAM_PlayerCharacterHands_FrozenSkill_Unequip_PreparationCancelled\nAM_PlayerCharacterHards_CastingActiveIdleShortLength",
+    "recentMontagesPlayed": "AM_PlayerCharacterHands_AK_FastUnequip_Montage\nAM_PlayerCharacterHands_AK_Equip_Montage\nAM_PlayerCharacterHands_FrozenSkill_Unequip_PreparationCancelled\nAM_PlayerCharacterHards_CastingActiveIdleShortLength\nAM_PlayerCharacterHands_AK_FastUnequip_Montage\nAM_PlayerCharacterHands_AK_Equip_Montage\nAM_PlayerCharacterHands_AK_FastUnequip_Montage\nAM_PlayerCharacterHands_AK_Equip_Montage",
+    "rightAccessoryWhenActive": 1,
+    "rightAccessoryWhenActivePriority": "0",
     "rightArmWhenActive": 1,
-    "rightArmWhenActivePriority": "0"
+    "rightArmWhenActivePriority": "0",
+    "uevr_montage_ignore_generic": true
 }

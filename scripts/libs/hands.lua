@@ -135,7 +135,6 @@ local controllers = require("libs/controllers")
 local animation = require("libs/animation")
 local attachments = require("libs/attachments")
 local handsAnimation = require("libs/hands_animation")
-local accessoriesConfig = require("libs/config/accessories_config_dev")
 local pawnModule = require("libs/pawn")
 local mathLib = require("libs/core/math_lib")
 require("libs/accessories")
@@ -318,6 +317,18 @@ function M.getAllHandComponents()
 	return result
 end
 
+function M.getHandComponentsForHand(hand)
+	local result = {}
+	if hand == nil then return result end
+	for name, components in pairs(handComponents) do
+		local component = uevrUtils.getValid(components[hand])
+		if component ~= nil then
+			table.insert(result, component)
+		end
+	end
+	return result
+end
+
 local fixEnabled = false
 local currentProfile = nil
 local function registerFOVFix(profile)
@@ -430,7 +441,6 @@ function M.createFromConfig(configuration, profileName, animationName)
 			--if M.exists() then
 				-- TODO replace this with a global event
 				attachments.setAnimationIDs(configuration["attachments"])
-				accessoriesConfig.setAnimationIDs(configuration["attachments"])
 				--going to need to call fixMeshFOV on lazy poll
 				for name, handComponent in pairs(handComponents) do
 					--print(name, profileName, handComponent[0], handComponent[1])
@@ -1439,6 +1449,15 @@ local function attachHandToTarget(handed, parentAttachment, socketName, attachTy
 
 end
 
+
+-- Tell accessories which components this handler will parent onto the attachment
+-- so it can break hierarchy cycles before on_accessory_attach runs.
+uevrUtils.registerUEVRCallback("accessory_attach_components", function(handed, outList)
+	if type(outList) ~= "table" then return end
+	for _, component in ipairs(M.getHandComponentsForHand(handed)) do
+		table.insert(outList, component)
+	end
+end)
 
 uevrUtils.registerUEVRCallback("on_accessory_attach", function(handed, parentAttachment, socketName, attachType, loc, rot)
 	attachHandToTarget(handed, parentAttachment, socketName, attachType, loc, rot)

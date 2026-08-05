@@ -72,6 +72,16 @@
                         "state": "on"
                     }
                 },
+                "negative_actions": {
+                    "b_button": {
+                        "state": "on"
+                    }
+                },
+                "positive_actions": {
+                    "a_button": {
+                        "state": "on"
+                    }
+                },
                 "state": "on",
                 "threshold": 30367,
                 "unpress": true

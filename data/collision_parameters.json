@@ -1,0 +1,73 @@
+{
+    "_profileLabels": {
+        "default": "Default"
+    },
+    "_profileState": {
+        "currentEditingProfile": "default"
+    },
+    "default": {
+        "active": false,
+        "attachTo": 2,
+        "channels": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+        ],
+        "collision_enabled": 1,
+        "collision_object_type": 1,
+        "extents": [
+            10.0,
+            10.0,
+            10.0
+        ],
+        "generate_overlap_events": true,
+        "half_height": 20.0,
+        "position": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "radius": 5.0,
+        "rotation": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "scale": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "shape": 1,
+        "visible": false
+    }
+}

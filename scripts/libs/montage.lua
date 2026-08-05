@@ -930,8 +930,14 @@ function M.playMontage(montageName, speed)
 		if className ~= nil then
 			--this should be get_class so it caches
 			local montage = uevrUtils.get_class(className)
-			if montage ~= nil then
-				local result = pawn:PlayAnimMontage(montage, speed or 1.0, uevrUtils.fname_from_string(""))
+			if montage ~= nil and pawn.PlayAnimMontage ~= nil then
+				local ok, result = pcall(function()
+					return pawn:PlayAnimMontage(montage, speed or 1.0, uevrUtils.fname_from_string(""))
+				end)
+				if not ok then
+					print("Error playing montage " .. montageName .. ": " .. result)
+				end
+				--local result = pawn:PlayAnimMontage(montage, speed or 1.0, uevrUtils.fname_from_string(""))
 			end
 		end
 	end

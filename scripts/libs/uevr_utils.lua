@@ -1087,12 +1087,18 @@ end
 
 local function updateDelay(delta)
 	for i = #delayList, 1, -1 do
-		delayList[i]["countDown"] = delayList[i]["countDown"] - delta
-		if delayList[i]["countDown"] < 0 then
-			if delayList[i]["func"] ~= nil then
-				delayList[i]["func"]()
+		local entry = delayList[i]
+		if entry ~= nil then
+			entry.countDown = entry.countDown - delta
+			if entry.countDown < 0 then
+				if entry.func ~= nil then
+					entry.func()
+				end
+				-- Only remove if this slot is still the same entry (callback may have mutated the list).
+				if delayList[i] == entry then
+					table.remove(delayList, i)
+				end
 			end
-			table.remove(delayList, i)
 		end
 	end
 end
@@ -1108,7 +1114,8 @@ function M.setInterval(msec, func)
 end
 function M.clearInterval(id)
 	for i = #timerList, 1, -1 do
-		if timerList[i].id == id then
+		local timer = timerList[i]
+		if timer ~= nil and timer.id == id then
 			table.remove(timerList, i)
 			break
 		end
@@ -1117,12 +1124,18 @@ end
 
 local function updateTimer(delta)
 	for i = #timerList, 1, -1 do
-		timerList[i]["countDown"] = timerList[i]["countDown"] - delta
-		if timerList[i]["countDown"] < 0 then
-			if timerList[i]["func"] ~= nil then
-				timerList[i]["func"]()
+		local timer = timerList[i]
+		if timer ~= nil then
+			timer.countDown = timer.countDown - delta
+			if timer.countDown < 0 then
+				if timer.func ~= nil then
+					timer.func()
+				end
+				-- clearInterval() from inside func() removes this entry; do not touch a shifted/nil slot.
+				if timerList[i] == timer then
+					timer.countDown = timer.countDown + timer.period
+				end
 			end
-			timerList[i]["countDown"] = timerList[i]["countDown"] + timerList[i]["period"]
 		end
 	end
 end
@@ -2541,7 +2554,7 @@ function M.getSocketNames(object, callback)
 
 	local arr = {}
 	if checkPluginExists() then
-		plugin.showDebug = true
+		--plugin.showDebug = true
 		---@diagnostic disable-next-line: need-check-nil
 		local result = plugin.executeFunction(object, "GetAllSocketNames")
 		if result ~= nil then
@@ -2551,7 +2564,7 @@ function M.getSocketNames(object, callback)
 				table.insert(arr, name)
 			end
 		end
-		plugin.showDebug = false
+		--plugin.showDebug = false
 	end
 	callback(arr)
 end
