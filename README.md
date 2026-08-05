@@ -3,6 +3,7 @@ A VR first persion mod for UEVR when playing Atomic Heart
 
 ## Features include:
 - Full 1st person 6DOF Motion controls
+- Optional IK Arms
 - Articulated and animated hands
 - Physical gestures for melee combat
 - Option to attach the UI to head movement
