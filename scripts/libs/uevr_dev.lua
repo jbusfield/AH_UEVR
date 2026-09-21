@@ -1,7 +1,9 @@
+local uevrLib = require("libs/core/uevr_lib")
 local uevrUtils = require("libs/uevr_utils")
 local configui = require("libs/configui")
 local controllers = require("libs/controllers")
 local reticule = require("libs/reticule")
+local plugin = require("libs/core/plugin")
 
 local M = {}
 
@@ -16,8 +18,7 @@ function M.print(text, logLevel)
 	end
 end
 
----@class currentComponent
----@field [any] any
+---@type any
 local currentComponent = nil
 
 local meshNames = {}
@@ -34,11 +35,11 @@ local currentReticuleSelectionIndex = 1
 
 local configDefinition = {
 	{
-		panelLabel = "Dev Utils", 
-		windowed = false, 
-		saveFile = "config_dev_utils", 
+		panelLabel = "Dev Utils",
+		windowed = false,
+		saveFile = "config_dev_utils",
 		id = "uevr_dev_panel",
-		layout = 
+		layout =
 		{
 			{
 				widgetType = "tree_node",
@@ -91,6 +92,12 @@ local configDefinition = {
 					id = "uevr_dev_mesh_next",
 					label = ">",
 					size = {40,22}
+				},
+				{
+					widgetType = "input_text",
+					id = "uevr_dev_mesh_selected_name",
+					label = "Current Selection",
+					initialValue = ""
 				},
 				{
 					widgetType = "begin_group"
@@ -389,20 +396,30 @@ function M.init()
 end
 
 
-function setCurrentComponentScale(relativeScale)
+local function setCurrentComponentScale(relativeScale)
 	if configui.getValue("uevr_dev_mesh_nativescale") == false then
 		local radius = 10
 		if configui.getValue("uevr_dev_mesh_type") == 1 then
-			radius = currentComponent.StaticMesh.ExtendedBounds.SphereRadius
+			print("1",currentComponent)
+			print("2",currentComponent.StaticMesh)
+			print("3",currentComponent.StaticMesh.ExtendedBounds)
+			if uevrLib.extremeCompatibilityMode == false then
+				radius = currentComponent.StaticMesh.ExtendedBounds.SphereRadius
+			else
+				local result = plugin.getProperty(currentComponent.StaticMesh.ExtendedBounds, "SphereRadius")
+				radius = result and result.ReturnValue or 10
+				print("Radius: " , radius)
+			end
 		elseif configui.getValue("uevr_dev_mesh_type") == 2 and currentComponent.SkeletalMesh ~= nil then
 			radius = currentComponent.SkeletalMesh.ExtendedBounds.SphereRadius
 		end
 
 		local scale = 10 / radius
 		local scaleMultiplier = relativeScale
-		currentComponent.RelativeScale3D.X = scale * scaleMultiplier
-		currentComponent.RelativeScale3D.Y = scale * scaleMultiplier
-		currentComponent.RelativeScale3D.Z = scale * scaleMultiplier
+		uevrUtils.set_component_relative_scale(currentComponent, {X=scale * scaleMultiplier, Y=scale * scaleMultiplier, Z=scale * scaleMultiplier})
+		-- currentComponent.RelativeScale3D.X = scale * scaleMultiplier
+		-- currentComponent.RelativeScale3D.Y = scale * scaleMultiplier
+		-- currentComponent.RelativeScale3D.Z = scale * scaleMultiplier
 	end
 end
 
@@ -418,7 +435,7 @@ local function updateMesh()
 		currentComponent = uevrUtils.createSkeletalMeshComponent(meshNames[currentSelectionIndex])
 		--currentComponent = uevrUtils.createPoseableMeshFromSkeletalMesh(meshNames[currentSelectionIndex], {parent=nil, useDefaultPose = true, showDebug = true})
 	end
-	
+
 	if uevrUtils.getValid(currentComponent) ~= nil then
 		M.print("Created component " .. currentComponent:get_full_name(), LogLevel.Critical)
 		setCurrentComponentScale(configui.getValue("uevr_dev_mesh_relativescale"))
@@ -431,14 +448,16 @@ local function updateMaterial()
 		uevrUtils.detachAndDestroyComponent(currentComponent, false)
 		currentComponent = nil
 	end
-	
+
 	currentComponent = uevrUtils.createStaticMeshComponent("StaticMesh /Engine/EngineMeshes/Sphere.Sphere")
 	if uevrUtils.getValid(currentComponent) ~= nil then
 		setCurrentComponentScale(1.0)
 		local leftConnected = controllers.attachComponentToController(Handed.Left, currentComponent, nil, nil, nil, true)
-		local material = uevrUtils.find_instance_of("Class /Script/Engine.Material", materialNames[currentMaterialSelectionIndex]) 
+		local material = uevrUtils.find_instance_of("Class /Script/Engine.Material", materialNames[currentMaterialSelectionIndex])
 		if uevrUtils.getValid(material) ~= nil then
+---@diagnostic disable-next-line: need-check-nil
 			currentComponent:SetMaterial(0, material)
+---@diagnostic disable-next-line: need-check-nil
 			M.print("Applied material " .. material:get_full_name(), LogLevel.Critical)
 		end
 	end
@@ -449,11 +468,11 @@ local function updateWidget()
 		uevrUtils.detachAndDestroyComponent(currentComponent, false)
 		currentComponent = nil
 	end
-	
+
 	if widgetNames ~= nil and currentWidgetSelectionIndex <= #widgetNames and currentWidgetSelectionIndex > 0 then
 		local className = "Class /Script/UMG.Widget"
 		if configui.getValue("uevr_dev_widget_user_only") == true then className = "Class /Script/UMG.UserWidget" end
-		local widget = uevrUtils.find_instance_of(className, widgetNames[currentWidgetSelectionIndex]) 
+		local widget = uevrUtils.find_instance_of(className, widgetNames[currentWidgetSelectionIndex])
 		if widget == nil then
 			configui.hideWidget("uevr_dev_widget_error" ,false)
 		else
@@ -475,10 +494,10 @@ local function updateReticule()
 		uevrUtils.detachAndDestroyComponent(currentComponent, false)
 		currentComponent = nil
 	end
-	
+
 	if reticuleNames ~= nil and currentReticuleSelectionIndex <= #reticuleNames and currentReticuleSelectionIndex > 0 then
 		--local widget = uevrUtils.getLoadedAsset(reticuleNames[currentReticuleSelectionIndex])	
-		local widget = uevrUtils.find_instance_of("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex]) 
+		local widget = uevrUtils.find_instance_of("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
 		if widget == nil then
 			configui.hideWidget("uevr_dev_reticule_error" ,false)
 		else
@@ -486,7 +505,7 @@ local function updateReticule()
 			-- print(reticuleNames[currentReticuleSelectionIndex])
 			-- print(widget:get_full_name())
 			-- print("Has function", widget.HandleShowTargetReticule ~= nil)
-			
+
 			currentComponent = uevrUtils.createWidgetComponent(widget, {removeFromViewport=false, twoSided=true})--, drawSize=vector_2(620, 620)})
 			if uevrUtils.getValid(currentComponent) ~= nil then
 				--setCurrentComponentScale(1.0)
@@ -527,16 +546,18 @@ function M.displayStaticMeshes(searchText)
 	if meshes ~= nil then
 		for name, mesh in pairs(meshes) do
 			--print(mesh:get_full_name())
-			if searchText == nil or searchText == "" or string.find(mesh:get_full_name(), searchText) then
+			if searchText == nil or searchText == "" or string.find(string.lower(mesh:get_full_name()), string.lower(searchText)) then
 				table.insert(meshNames, mesh:get_full_name())
 			end
 		end
 	end
 	--print(#meshNames)
-	
+
 	configui.setLabel("uevr_dev_mesh_total_count", "Total" .. typeName .. " meshes:" .. #meshes)
 	configui.setLabel("uevr_dev_mesh_filtered_count", "Filtered" .. typeName .. " meshes:" .. #meshNames)
 	configui.setSelections("uevr_dev_mesh_list", meshNames)
+	local selectedIndex = configui.getValue("uevr_dev_mesh_list")
+	configui.setValue("uevr_dev_mesh_selected_name", (selectedIndex and meshNames[selectedIndex]) or "")
 end
 
 function M.displayMaterials(searchText)
@@ -545,14 +566,17 @@ function M.displayMaterials(searchText)
 	local materials = uevrUtils.find_all_instances("Class /Script/Engine.Material", false)
 	--print(#materials, searchText)
 	materialNames = {}
-	for name, material in pairs(materials) do
-		--print(material:get_full_name())
-		if searchText == nil or searchText == "" or string.find(material:get_full_name(), searchText) then
-			table.insert(materialNames, material:get_full_name())
+
+	if materials ~= nil then
+		for name, material in pairs(materials) do
+			--print(material:get_full_name())
+			if searchText == nil or searchText == "" or string.find(string.lower(material:get_full_name()), string.lower(searchText)) then
+				table.insert(materialNames, material:get_full_name())
+			end
 		end
 	end
 	--print(#materialNames)
-	
+
 	configui.setLabel("uevr_dev_material_total_count", "Total materials:" .. #materials)
 	configui.setLabel("uevr_dev_material_filtered_count", "Filtered materials:" .. #materialNames)
 	configui.setSelections("uevr_dev_material_list", materialNames)
@@ -577,15 +601,18 @@ function M.displayWidgets(searchText)
 	local widgets = uevrUtils.find_all_instances(className, false)
 --	print("Widget count ", #widgets, searchText)
 	widgetNames = {}
-	for name, widget in pairs(widgets) do
-		--print(widget:get_full_name())
-		local widgetName = widget:get_full_name()
-		if searchText == nil or searchText == "" or string.find(widgetName, searchText) then
-			table.insert(widgetNames, widgetName)
+
+	if widgets ~= nil then
+		for name, widget in pairs(widgets) do
+			--print(widget:get_full_name())
+			local widgetName = widget:get_full_name()
+			if searchText == nil or searchText == "" or string.find(string.lower(widgetName), string.lower(searchText)) then
+				table.insert(widgetNames, widgetName)
+			end
 		end
 	end
 --	print(#widgetNames)
-	
+
 	configui.setLabel("uevr_dev_widget_total_count", "Total widgets:" .. #widgets)
 	configui.setLabel("uevr_dev_widget_filtered_count", "Filtered widgets:" .. #widgetNames)
 	configui.setSelections("uevr_dev_widget_list", widgetNames)
@@ -597,26 +624,29 @@ function M.displayReticules(searchText)
 	local widgets = uevrUtils.find_all_instances("Class /Script/UMG.Widget", false)
 	reticuleNames = {}
 	--local activeWidgets = {}
-	
-	for name, widget in pairs(widgets) do
-		local widgetName = widget:get_full_name()
-		if string.find(widgetName, "Cursor") or string.find(widgetName, "Reticule") or string.find(widgetName, "Reticle") or string.find(widgetName, "Crosshair") or (searchText ~= nil and searchText ~= "" and string.find(widgetName, searchText)) then
-			if configui.getValue("uevr_dev_reticule_active") == true then
-				local isActive = false
-				if uevrUtils.getValid(pawn) ~= nil and widget.GetOwningPlayerPawn ~= nil then
-					isActive = widget:GetOwningPlayerPawn() == pawn
-					if isActive then
-						--table.insert(activeWidgets, widget)
-						table.insert(reticuleNames, widgetName)
+
+	if widgets ~= nil then
+		for name, widget in pairs(widgets) do
+			local widgetName = widget:get_full_name()
+			local widgetNameLower = string.lower(widgetName)
+			if string.find(widgetNameLower, "cursor") or string.find(widgetNameLower, "reticule") or string.find(widgetNameLower, "reticle") or string.find(widgetNameLower, "crosshair") or (searchText ~= nil and searchText ~= "" and string.find(widgetNameLower, string.lower(searchText))) then
+				if configui.getValue("uevr_dev_reticule_active") == true then
+					local isActive = false
+					if uevrUtils.getValid(pawn) ~= nil and widget.GetOwningPlayerPawn ~= nil then
+						isActive = widget:GetOwningPlayerPawn() == pawn
+						if isActive then
+							--table.insert(activeWidgets, widget)
+							table.insert(reticuleNames, widgetName)
+						end
 					end
+					--print(widget:get_full_name(), isActive and "true" or "false")
+				else
+					table.insert(reticuleNames, widgetName)
 				end
-				--print(widget:get_full_name(), isActive and "true" or "false")
-			else
-				table.insert(reticuleNames, widgetName)	
 			end
 		end
 	end
-	
+
 	configui.setLabel("uevr_dev_reticule_total_count", "Reticule count:" .. #reticuleNames)
 	configui.setSelections("uevr_dev_reticule_list", reticuleNames)
 end
@@ -625,10 +655,11 @@ function M.useCurrentReticule()
 	if #reticuleNames > 0 and currentReticuleSelectionIndex > 0 and currentReticuleSelectionIndex <= #reticuleNames then
 		local widget = uevrUtils.find_instance_of("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
 		if uevrUtils.getValid(widget) ~= nil then
+---@diagnostic disable-next-line: need-check-nil
 			local widgetClassName = widget:get_class():get_full_name()
 			--print(widgetClassName)
 			--local widget = uevrUtils.getActiveWidgetByClass(widgetClassName)
-			
+
 			reticule.createFromWidget(widget, {removeFromViewport=false, twoSided=true, scale={X=-0.1, Y=-0.1, Z=0.1}})
 			local str = "--lua code to create reticule\n"
 			--str = str .. "local reticule = require(\"libs/reticule\")" .. "\n"
@@ -686,6 +717,7 @@ end)
 configui.onUpdate("uevr_dev_mesh_list", function(value)
 	M.print("Using mesh at index " .. value .. " - " .. meshNames[value], LogLevel.Critical)
 	currentSelectionIndex = value
+	configui.setValue("uevr_dev_mesh_selected_name", meshNames[value] or "")
 	updateMesh()
 end)
 

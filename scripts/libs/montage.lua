@@ -62,6 +62,15 @@ Usage
     montage.getDeveloperConfigurationWidgets(options) - gets developer configuration UI widgets
         example:
             local widgets = montage.getDeveloperConfigurationWidgets()
+
+    montage.onUpdate(stateKey, func) - registers a callback invoked when a montage state value changes.
+        Callback receives (value, priority). value may be true, false, or nil (default/cleared).
+        Valid stateKey values: hands, leftArm, rightArm, pawnBody, pawnArms, pawnArmBones,
+        motionSicknessCompensation, inputEnabled, leftAccessory, rightAccessory
+        example:
+            montage.onUpdate("pawnArmBones", function(value)
+                print("pawnArmBones changed:", value)
+            end)
 ]]--
 
 --TODO add a filter to get rid of random number montages
@@ -141,10 +150,13 @@ local function refreshAccessorySelections()
 	end
 
 	-- Update selections if the UI is already created.
-	pcall(function()
+	local ok, err = pcall(function()
 		configui.setSelections("leftAccessoryWhenActive", accessorySelectionLabels)
 		configui.setSelections("rightAccessoryWhenActive", accessorySelectionLabels)
 	end)
+	if not ok then
+		M.print("Error updating accessory selections: " .. err)
+	end
 end
 
 local function guidToAccessoryIndex(guid)
@@ -451,7 +463,7 @@ local function showMontageEditFields()
         end
     end
 end
-
+						 							 														 								
 -- local function updateMontageList()
 --     montageList = {}
 -- 	montageIDList = {}
@@ -622,7 +634,9 @@ end
 
 local function handleMontageChanged(montage, montageName, label, animInstance)
 	--print("Montage changed: " .. tostring(montageName))
+	local previous = {}
 	for _, config in ipairs(stateConfig) do
+		previous[config.stateKey] = montageState[config.stateKey]
 		montageState[config.stateKey] = nil
 		montageState[config.stateKey .. "Priority"] = 0
 	end
@@ -635,6 +649,12 @@ local function handleMontageChanged(montage, montageName, label, animInstance)
 			elseif config.kind == "accessory" then
 				updateAccessoryStateIfHigherPriority(data, config.stateKey, config.valueKey)
 			end
+		end
+	end
+
+	for _, config in ipairs(stateConfig) do
+		if previous[config.stateKey] ~= montageState[config.stateKey] then
+			uevrUtils.executeUEVRCallbacksWithPriorityResult("montage_state_change_" .. config.stateKey, montageState[config.stateKey], montageState[config.stateKey .. "Priority"])
 		end
 	end
 
@@ -997,6 +1017,12 @@ function M.registerMontageChangeCallback(func)
     if func ~= nil and type(func) == "function" then
 	    uevrUtils.registerUEVRCallback("on_module_montage_change", func)
     end
+end
+
+function M.onUpdate(stateKey, func)
+	if stateKey ~= nil and stateKey ~= "" and type(stateKey) == "string" and type(func) == "function" then
+		uevrUtils.registerUEVRCallback("montage_state_change_" .. stateKey, func)
+	end
 end
 
 -- Register update handlers for all state configs and their priorities

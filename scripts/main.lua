@@ -29,7 +29,7 @@ ik.setInitialTransformOnAnimationCompleteEnabled(false)
 -- ik.setLogLevel(LogLevel.Debug)
 
 -- uncomment the next line to see the full developer UI
-uevrUtils.setDeveloperMode(true)
+--uevrUtils.setDeveloperMode(true)
 --hands.enableConfigurationTool()
 
 ui.init()
@@ -44,6 +44,7 @@ input.init()
 gunstock.showConfiguration()
 collision.init()
 ik.init()
+gestures.init()
 
 --since weapons are attached to the hand sockets for this game
 --only let the hands be affected by gunstock offsets
@@ -65,7 +66,7 @@ local uccInitialBoneTransforms = {}
 hands.setAutoCreateHands(false)
 ik.setAutoCreateArms(false)
 
-local versionTxt = "v1.0.8"
+local versionTxt = "v1.0.9"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -261,6 +262,14 @@ end)
 
 attachments.registerAttachmentChangeCallback(function()
 	local currentWeapon = pawn:GetCurrentWeapon()
+	-- Shved shaft is a child mesh the game clears on VR attach; restore it and unhide the weapon.
+	if currentWeapon ~= nil and currentWeapon.RootComponent ~= nil then
+		currentWeapon.RootComponent:SetVisibility(true, true)
+		if currentWeapon.SK_Shved_Handle ~= nil and currentWeapon.SK_Shved_Handle.SkeletalMesh == nil then
+			local handleMesh = uevrUtils.find_required_object("SkeletalMesh /Game/Development/Weapons/Shved/SK_Shved_Handle.SK_Shved_Handle")
+			if handleMesh ~= nil then currentWeapon.SK_Shved_Handle:SetSkeletalMesh(handleMesh) end
+		end
+	end
 	--fixes plasma gun beam FX not hiding properly on activation
 	if currentWeapon.BaseWeaponAttack ~= nil and currentWeapon.BaseWeaponAttack.BeamCenter ~= nil then
 		currentWeapon.BaseWeaponAttack.BeamCenter:SetVisibility(false, false)
@@ -348,9 +357,14 @@ setInterval(1000, function()
 --PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png
 end)
 
+local function cleanup()
+    status = {}
+end
+
 --callback from uevrUtils that fires whenever the level changes
 function on_level_change(level, levelName)
 	uevrUtils.print("Level changed to " .. levelName)
+    cleanup()
 	isInCar = false
 
 	--Get the Atomic Heart Specific MaterialUtils in order to fix panini projection
@@ -361,6 +375,10 @@ function on_level_change(level, levelName)
 
 	regenerateHands(configui.getValue("hands_type"))
 end
+
+uevr.params.sdk.callbacks.on_script_reset(function()
+	cleanup()
+end)
 
 --callback from uevrUtils that fires whenever a cutscene change is detected
 function on_cutscene_change(isActive)
@@ -405,26 +423,43 @@ local function setDefaultTargeting(handed)
 	end
 	status["currentTargetingHand"] = handed
 end
+
+local meleePlayRate = 8.0
+local function setMeleeAnimRate(rate)
+	local pawn = uevrUtils.get_local_pawn()
+	local mesh = uevrUtils.getValid(pawn, {"Mesh"})
+	if mesh ~= nil then
+		mesh.GlobalAnimRateScale = rate
+	end
+	-- if pawn ~= nil and pawn.GetCurrentWeapon ~= nil then
+	-- 	local weaponMesh = uevrUtils.getValid(pawn:GetCurrentWeapon(), {"Mesh"})
+	-- 	if weaponMesh ~= nil then
+	-- 		weaponMesh.GlobalAnimRateScale = rate
+	-- 	end
+	-- end
+end
+
 --won't callback unless an updateDeferral hasnt been called in the last 1000ms
 uevrUtils.createDeferral("melee_attack", 1000, function()
 	setDefaultTargeting(Handed.Right)
 	--reticule.setHidden(false)
+	setMeleeAnimRate(1.0)
 
 	uevr.api:get_player_controller(0):EquippedItemPrimaryInputReleased(0.0)
 	uevrUtils.print("Melee attack ended")
 end)
 
-local weaponMontages = {
-	BP_Shved_C_SK_Shved_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"}, --reversed anims look better for some reason
-	BP_Lisa_C_SK_Lisa_HandleBase = {"AM_PlayerCharacterHands_Lisa_Attack_Left", "AM_PlayerCharacterHands_Lisa_Attack_Right"},
-	BP_Pashtet_C_SK_Pashtet = {"AM_PlayerCharacterHands_Pashtet_Right_Attack", "AM_PlayerCharacterHands_Pashtet_Attack_Left"},
-	BP_Zvezdochka_C_SK_ZvezdochkaBase = {"AM_PlayerCharacterHands_Zvezdochka_Attack_Left", "AM_PlayerCharacterHands_Zvezdochka_Attack_Right"},
-	BP_Snejok_C_SK_Snejok_Base = {"AM_Snejok_PlayerHands_Right_Attack", "AM_Snejok_Hands_Release_Left_Attack"},
-	BP_EmptyHands_C_Mesh = {"AM_PlayerCharacterHands_Arms_Attack01_Release_Montage", "AM_PlayerCharacterHands_Arms_Attack01_Release_Montage"},
-	BP_Klusha_C_SK_Klusha_Handle01 = {"AM_PlayerCharacterHands_Klusha_Combo_A1", "AM_PlayerCharacterHands_Klusha_Combo_A2"},
-	BP_Shved_Limbo_C_SK_Shved_Limbo_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"},
-	BP_Gromoverzhec_C_SK_Gromoverzec_Base02 = {"AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_01", "AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_02"},
-}
+-- local weaponMontages = {
+-- 	BP_Shved_C_SK_Shved_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"}, --reversed anims look better for some reason
+-- 	BP_Lisa_C_SK_Lisa_HandleBase = {"AM_PlayerCharacterHands_Lisa_Attack_Left", "AM_PlayerCharacterHands_Lisa_Attack_Right"},
+-- 	BP_Pashtet_C_SK_Pashtet = {"AM_PlayerCharacterHands_Pashtet_Right_Attack", "AM_PlayerCharacterHands_Pashtet_Attack_Left"},
+-- 	BP_Zvezdochka_C_SK_ZvezdochkaBase = {"AM_PlayerCharacterHands_Zvezdochka_Attack_Left", "AM_PlayerCharacterHands_Zvezdochka_Attack_Right"},
+-- 	BP_Snejok_C_SK_Snejok_Base = {"AM_Snejok_PlayerHands_Right_Attack", "AM_Snejok_Hands_Release_Left_Attack"},
+-- 	BP_EmptyHands_C_Mesh = {"AM_PlayerCharacterHands_Arms_Attack01_Release_Montage", "AM_PlayerCharacterHands_Arms_Attack01_Release_Montage"},
+-- 	BP_Klusha_C_SK_Klusha_Handle01 = {"AM_PlayerCharacterHands_Klusha_Combo_A1", "AM_PlayerCharacterHands_Klusha_Combo_A2"},
+-- 	BP_Shved_Limbo_C_SK_Shved_Limbo_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"},
+-- 	BP_Gromoverzhec_C_SK_Gromoverzec_Base02 = {"AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_01", "AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_02"},
+-- }
 local function animateMelee(direction) -- 0-left, 1-right
 	--print("Animating melee in direction:", direction)
 	if attachments.isActiveAttachmentMelee(Handed.Right) == true then
@@ -432,30 +467,38 @@ local function animateMelee(direction) -- 0-left, 1-right
 		input.setAimMethod(input.AimMethod.RIGHT_WEAPON)
 		local offset = attachments.getActiveAttachmentMeleeRotationOffset(Handed.Right)
 		input.setAimRotationOffset(offset) --adjust reticule during melee to match the melee weapon head
+		setMeleeAnimRate(meleePlayRate)
 		uevr.api:get_player_controller(0):EquippedItemPrimaryInputPressed(1.0) -- Trigger melee attack
 
 		local id = attachments.getActiveAttachmentID(Handed.Right)
-		if id ~= nil and weaponMontages[id] ~= nil and weaponMontages[id][direction + 1] ~= nil then
-			local animName = weaponMontages[id][direction + 1]
-			if id == "BP_Klusha_C_SK_Klusha_Handle01" then
-				status.updateAttachmentTransform = true
-				if status.montageCheck == nil then
-					status.montageExtension = ""
-					status.montageCheck = true
-					local className = montage.getMontageClassName(animName)
-					if className ~= nil then
-						if uevrUtils.get_class(className) == nil then
-							status.montageExtension = "_DLC4"
-						end
-					end
-				end
-				animName = animName .. status.montageExtension
-			end
-			uevrUtils.print("Animating melee with animation: " .. animName)
-			montage.playMontage(animName, 5.0) -- set speed to 5.0 to make it more responsive
-		else
-			uevrUtils.print("No melee animation found for attachment ID: " .. id)
+		if id == "BP_Klusha_C_SK_Klusha_Handle01" then
+	 		status.updateAttachmentTransform = true
 		end
+		--moved to setMeleeAnimRate function and now using the game animations directly
+		--because when we used our own the first use didnt cause damage
+		-- local id = attachments.getActiveAttachmentID(Handed.Right)
+		-- if id ~= nil and weaponMontages[id] ~= nil and weaponMontages[id][direction + 1] ~= nil then
+		-- 	local animName = weaponMontages[id][direction + 1]
+		-- 	if id == "BP_Klusha_C_SK_Klusha_Handle01" then
+		-- 		status.updateAttachmentTransform = true
+		-- 		if status.montageCheck == nil then
+		-- 			status.montageExtension = ""
+		-- 			status.montageCheck = true
+		-- 			local className = montage.getMontageClassName(animName)
+		-- 			if className ~= nil then
+		-- 				if uevrUtils.get_class(className) == nil then
+		-- 					status.montageExtension = "_DLC4"
+		-- 				end
+		-- 			end
+		-- 		end
+		-- 		animName = animName .. status.montageExtension
+		-- 	end
+
+		-- 	uevrUtils.print("Animating melee with animation: " .. animName)
+		-- 	montage.playMontage(animName, 5.0) -- set speed to 5.0 to make it more responsive
+		-- else
+		-- 	uevrUtils.print("No melee animation found for attachment ID: " .. id)
+		-- end
 		uevrUtils.updateDeferral("melee_attack")
 	end
 end
@@ -575,7 +618,7 @@ end)
 ui.registerWidgetChangeCallback("WBP_MainMenu_C", function(active)
 	if active then
 		local widget = uevrUtils.find_first_instance("WidgetBlueprintGeneratedClass /Game/Core/UI/Widgets/MainMenu/WBP_MainMenu.WBP_MainMenu_C", false)
-		if widget ~= nil and widget.i_BG ~= nil and widget.i_BG.SetVisibility ~= nil then
+		if widget ~= nil and widget.i_BG ~= nil and type(widget.i_BG) ~= "boolean" and widget.i_BG.SetVisibility ~= nil then
 			widget.i_BG:SetVisibility(1)
 		end
 	end
@@ -590,10 +633,51 @@ ui.registerWidgetChangeCallback("WBP_Dialogue_C", function(active)
 end)
 ----------------------------------
 
+-- Mass TK: LT→LB toggle remap cancels hang on release. While TK is up, keep remap
+-- seeing LT held; on a second tap (or left flick) inject LT for slam, then drop the
+-- fake hold so remap toggle_off ends the ability.
+local TELEKINETIC_SMASH = 49
+local massTkLtHeld, massTkFakeHold, massTkSlamming, massTkSlamFrames = false, false, false, 0
+
+local function isMassTkActive()
+	local p = uevrUtils.getValid(pawn)
+	return p ~= nil and p.IsAbilityActive ~= nil and p:IsAbilityActive(TELEKINETIC_SMASH)
+end
+
+local function requestMassTkSlam()
+	if massTkSlamming then return end
+	if not (isMassTkActive() or massTkFakeHold) then return end
+	massTkFakeHold, massTkSlamming, massTkSlamFrames = true, true, 2
+	uevrUtils.delay(300, function()
+		massTkFakeHold, massTkSlamming = false, false
+	end)
+end
+
+gestures.registerFlickCallback(function(strength, hand)
+	if hand == Handed.Left then
+		requestMassTkSlam()
+	end
+end, false, true)
+
 uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+	local lt = state.Gamepad.bLeftTrigger > 0
+	local tk = isMassTkActive()
+	if not tk then
+		massTkFakeHold, massTkSlamming = false, false
+	elseif not lt and massTkLtHeld and not massTkSlamming then
+		massTkFakeHold = true
+	elseif lt and not massTkLtHeld and not massTkSlamming and (tk or massTkFakeHold) then
+		requestMassTkSlam()
+	end
+	if massTkFakeHold then
+		state.Gamepad.bLeftTrigger = 255
+	end
+	massTkLtHeld = lt
+
 	-- When using laser, let left trigger work the same as pressing A
 	if status.isUsingCodeLock or interaction.isHovering() then
-		if state.Gamepad.bLeftTrigger > 0 then
+		massTkFakeHold, massTkSlamming, massTkSlamFrames = false, false, 0
+		if lt then
 			uevrUtils.pressButton(state, XINPUT_GAMEPAD_A)
 		end
 		state.Gamepad.bRightTrigger = 0
@@ -601,6 +685,7 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		return
 	end
 
+	local leftTriggerHeld = lt
 	if ui.isRemapDisabled() ~= true then
 		local isHolstering = gestures.detectGestureWithState(gestures.Gesture.HOLSTER, state, Handed.Right, false)
 		if isHolstering then
@@ -613,7 +698,6 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		-- Only suppress LT on a rising edge when switching hands. Zeroing an already-held LT
 		-- creates a fake release that the left_trigger toggle remap treats as a real edge
 		-- (hose toggles off, then a later real release toggles it back on).
-		local leftTriggerHeld = state.Gamepad.bLeftTrigger > 0
 		if state.Gamepad.bRightTrigger > 0 or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_RIGHT_SHOULDER) then
 			local currentHand = status["currentTargetingHand"]
 			setDefaultTargeting(Handed.Right)
@@ -657,6 +741,15 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 	end
 
 end, 5) --increased priority to get values before remap occurs
+
+uevrUtils.registerOnPostInputGetStateCallback(function(retval, user_index, state)
+	if massTkSlamFrames > 0 then
+		state.Gamepad.bLeftTrigger = 255
+		massTkSlamFrames = massTkSlamFrames - 1
+	elseif massTkFakeHold then
+		state.Gamepad.bLeftTrigger = 0
+	end
+end)
 
 ui.registerWidgetChangeCallback("WBP_RadialMenu_C", function(active)
 	if active and isGrabbingCassette then
@@ -740,10 +833,10 @@ register_key_bind("F2", function()
 	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
 end)
 
-register_key_bind("F3", function()
-	print("F3 pressed")
-	pawn:SetHolsteredMode(true)
-end)
+-- register_key_bind("F3", function()
+-- 	print("F3 pressed")
+-- 	pawn:SetHolsteredMode(true)
+-- end)
 
 hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEPlay", true, nil,
 	function(fn, obj, locals, result)

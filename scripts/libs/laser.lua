@@ -23,6 +23,11 @@ Usage
                 Additional length added to computed hit distance.
             laserColor: string|number (default: "#0000FFFF")
                 Hex string or integer color; applied to CapsuleComponent.ShapeColor.
+                When useEmissive is true, also applied as an HDR emissive color.
+            useEmissive: boolean (default: false, or the last laser.setUseEmissive value)
+                If true, renders an unlit emissive cylinder so the beam stays bright
+                regardless of world lighting / auto-exposure. If false, uses the original
+                CapsuleComponent ShapeColor path.
             relativePosition: FVector|table (default: vector(0,0,0))
                 Component relative offset before the internal “half-height” offset.
             target: table|nil (optional)
@@ -47,6 +52,9 @@ Usage
     laser.setLaserLengthPercentage(val)
         Sets a global multiplier applied to all laser lengths (clamped 0.0–1.0).
 
+    laser.setUseEmissive(enabled)
+        Sets a global emissive default and applies it to every existing laser.
+
     laser.LengthType - enum:
         FIXED, CAMERA, LEFT_CONTROLLER, RIGHT_CONTROLLER, HUD, CUSTOM
         (Non-standard types fall back to CUSTOM behavior and require customCallback.)
@@ -64,6 +72,7 @@ Usage
         laser:setVisibility(isVisible)
         laser:setLaserLengthOffset(val)
         laser:setLaserColor(val)
+        laser:setUseEmissive(enabled)
         laser:updateCustomTargetingOptions(options)
         laser:getLastHitResult() -> hitResult|nil
 
@@ -115,6 +124,16 @@ M.LengthType = {
 }
 
 local laserLengthPerecentage = 1.0 --global multiplier for laser length 0.0 - 1.0
+local lasersUseEmissive = false
+local activeLasers = {}
+-- HDR multiplier so emissive white still reads as a beam under auto-exposure
+local laserEmissiveIntensity = 25.0
+local cylinderMeshPath = "StaticMesh /Engine/BasicShapes/Cylinder.Cylinder"
+local emissiveMaterialPath = "Material /Engine/EngineMaterials/EmissiveMeshMaterial.EmissiveMeshMaterial"
+local whiteTexturePath = "Texture2D /Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"
+local defaultCylinderRadius = 50.0
+local defaultCylinderHeight = 100.0
+local visualRadius = 0.35
 
 local Laser = {}
 Laser.__index = Laser
@@ -124,12 +143,133 @@ local function normalizeColor(val)
     return uevrUtils.intToHexString(val)
 end
 
+local function hexToLinearRgba(hex)
+    hex = normalizeColor(hex)
+    if type(hex) ~= "string" or #hex < 7 then
+        return 0, 0, 0, 1
+    end
+    local r = (tonumber(string.sub(hex, 2, 3), 16) or 0) / 255
+    local g = (tonumber(string.sub(hex, 4, 5), 16) or 0) / 255
+    local b = (tonumber(string.sub(hex, 6, 7), 16) or 0) / 255
+    local a = #hex >= 9 and ((tonumber(string.sub(hex, 8, 9), 16) or 255) / 255) or 1
+    return r, g, b, a
+end
+
+function Laser:updateVisualScale()
+    local c = uevrUtils.getValid(self.component)
+    local v = uevrUtils.getValid(self.visualComponent)
+    if c == nil or v == nil or c.GetUnscaledCapsuleHalfHeight == nil then
+        return
+    end
+    local halfHeight = c:GetUnscaledCapsuleHalfHeight()
+    v.RelativeScale3D = uevrUtils.vector(
+        visualRadius / defaultCylinderRadius,
+        visualRadius / defaultCylinderRadius,
+        (halfHeight * 2) / defaultCylinderHeight
+    )
+end
+
+function Laser:applyLaserColor()
+    local c = uevrUtils.getValid(self.component)
+    if c ~= nil then
+        c.ShapeColor = uevrUtils.hexToColor(self.laserColor)
+    end
+    local mat = uevrUtils.getValid(self.visualMaterial)
+    if mat ~= nil and mat.SetVectorParameterValue ~= nil then
+        local r, g, b, a = hexToLinearRgba(self.laserColor)
+        mat:SetVectorParameterValue("Color", uevrUtils.color_from_rgba(
+            r * laserEmissiveIntensity,
+            g * laserEmissiveIntensity,
+            b * laserEmissiveIntensity,
+            a
+        ))
+    end
+end
+
+function Laser:createVisual()
+    if self.visualComponent ~= nil then
+        return
+    end
+    local c = uevrUtils.getValid(self.component)
+    if c == nil then
+        return
+    end
+
+    -- Engine BasicShapes/EngineResources often aren't in the AssetRegistry (getLoadedAsset fails);
+    -- resolve via find_instance_of / find_required_object like createStaticMeshComponent does.
+    self.visualComponent = uevrUtils.createStaticMeshComponent(cylinderMeshPath, {visible = true, collisionEnabled = false})
+    local v = uevrUtils.getValid(self.visualComponent)
+    if v == nil then
+        return
+    end
+
+    v:SetCollisionEnabled(ECollisionEnabled.NoCollision)
+    v:SetGenerateOverlapEvents(false)
+    v:SetCastShadow(false)
+    v.bCastDynamicShadow = false
+    v:SetRenderInMainPass(true)
+    v.bRenderInDepthPass = false
+    v:SetRenderCustomDepth(true)
+    v:SetCustomDepthStencilValue(100)
+    v:SetCustomDepthStencilWriteMask(ERendererStencilMask.ERSM_255)
+    v:K2_AttachTo(c, uevrUtils.fname_from_string(""), 0, false)
+
+    local templateMaterial = uevrUtils.find_required_object(emissiveMaterialPath)
+    if templateMaterial ~= nil and v.CreateDynamicMaterialInstance ~= nil then
+        self.visualMaterial = v:CreateDynamicMaterialInstance(0, templateMaterial, "laser_material")
+        local mat = uevrUtils.getValid(self.visualMaterial)
+        if mat ~= nil and mat.SetTextureParameterValue ~= nil then
+            local whiteTex = uevrUtils.find_required_object(whiteTexturePath)
+                or uevrUtils.find_instance_of("Class /Script/Engine.Texture2D", whiteTexturePath)
+            if whiteTex ~= nil then
+                mat:SetTextureParameterValue("LinearColor", whiteTex)
+            end
+        end
+    end
+
+    self:updateVisualScale()
+    self:applyLaserColor()
+
+    -- Capsule ShapeColor is lit/exposed; hide it once the emissive mesh exists.
+    c:SetVisibility(false, false)
+    c.bRenderInDepthPass = false
+end
+
+function Laser:destroyVisual()
+    if self.visualComponent ~= nil then
+        uevrUtils.destroyComponent(self.visualComponent, true, true)
+        self.visualComponent = nil
+        self.visualMaterial = nil
+    end
+    local c = uevrUtils.getValid(self.component)
+    if c ~= nil then
+        c:SetVisibility(true, false)
+        c.bRenderInDepthPass = true
+    end
+end
+
+function Laser:setUseEmissive(enabled)
+    self.useEmissive = enabled == true
+    if self.useEmissive then
+        self:createVisual()
+    else
+        self:destroyVisual()
+    end
+end
+
 -- options.target = {type="particle", options={...}} -- optional target to spawn at laser end
 function M.new(options)
     options = options or {}
+    local useEmissive = lasersUseEmissive
+    if options.useEmissive ~= nil then
+        useEmissive = options.useEmissive == true
+    end
     local self = setmetatable({
         component = nil,
+        visualComponent = nil,
+        visualMaterial = nil,
         targetComponent = nil,
+        useEmissive = useEmissive,
         laserLengthOffset = options.laserLengthOffset or 0,
         laserColor = normalizeColor(options.laserColor or "#0000FFFF"),
         relativePosition = options.relativePosition or uevrUtils.vector(0,0,0),
@@ -155,6 +295,7 @@ function M.new(options)
     }, Laser)
 
     self:create() -- auto-create component
+    activeLasers[self] = true
     return self
 end
 
@@ -206,6 +347,9 @@ function Laser:create()
                 c:K2_AttachTo(self.attachmentComponent, uevrUtils.fname_from_string(""), 0, false)
             end
 
+            if self.useEmissive then
+                self:createVisual()
+            end
         end
 
     end
@@ -256,6 +400,8 @@ function Laser:create()
 end
 
 function Laser:destroy()
+    activeLasers[self] = nil
+    self:destroyVisual()
     local c = uevrUtils.getValid(self.component)
     if c ~= nil then
         c:DetachFromParent(false,false)
@@ -301,6 +447,7 @@ function Laser:draw(origin, target)
     if c ~= nil and origin ~= nil and target ~= nil then
         local hitDistance = kismet_math_library:Vector_Distance(origin, target) + self.laserLengthOffset
         c:SetCapsuleHalfHeight(hitDistance / 2, false)
+        self:updateVisualScale()
         c:K2_SetWorldLocation(
             uevrUtils.vector(
                 origin.X + ((target.X-origin.X)/2),
@@ -334,7 +481,7 @@ function Laser:setRelativePosition(pos)
 end
 function Laser:setRelativeRotation(rot)
     local c = uevrUtils.getValid(self.attachmentComponent)
-    if c ~= nil then
+    if c ~= nil and c.RelativeRotation ~= nil then
         c.RelativeRotation = rot
     end
 end
@@ -343,13 +490,19 @@ function Laser:setLength(length)
     local c = uevrUtils.getValid(self.component)
     if c ~= nil and c.SetCapsuleHalfHeight then
         c:SetCapsuleHalfHeight((length / 2) * (laserLengthPerecentage * (self.lengthSettings.lengthPercentage or 1.0) / 2), false)
+        self:updateVisualScale()
     end
 end
 
 function Laser:setVisibility(isVisible)
-    local c = uevrUtils.getValid(self.component)
-    if c ~= nil and c.SetVisibility ~= nil then
-        c:SetVisibility(isVisible, false)
+    local v = uevrUtils.getValid(self.visualComponent)
+    if v ~= nil and v.SetVisibility ~= nil then
+        v:SetVisibility(isVisible, false)
+    else
+        local c = uevrUtils.getValid(self.component)
+        if c ~= nil and c.SetVisibility ~= nil then
+            c:SetVisibility(isVisible, false)
+        end
     end
     if self.targetComponent ~= nil then
         self.targetComponent:setVisibility(isVisible)
@@ -379,11 +532,9 @@ end
 
 function Laser:setLaserColor(val)
     self.laserColor = normalizeColor(val)
-    local c = uevrUtils.getValid(self.component)
-    if c ~= nil then
-        c.ShapeColor = uevrUtils.hexToColor(self.laserColor)
-    end
+    self:applyLaserColor()
 end
+Laser.setColor = Laser.setLaserColor
 
 -- Note that this function does not actually draw the laser to the target location
 -- It finds the distance to the target location and sets the laser length accordingly
@@ -447,6 +598,13 @@ end
 
 function M.setLaserLengthPercentage(val)
     laserLengthPerecentage = math.max(0.0, math.min(1.0, val or 1.0))
+end
+
+function M.setUseEmissive(enabled)
+    lasersUseEmissive = enabled == true
+    for instance, _ in pairs(activeLasers) do
+        instance:setUseEmissive(lasersUseEmissive)
+    end
 end
 
 return M

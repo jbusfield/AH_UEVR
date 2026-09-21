@@ -1,6 +1,8 @@
 
 local M = {}
 
+M.extremeCompatibilityMode = false
+
 local classCache = {}
 local structCache = {}
 

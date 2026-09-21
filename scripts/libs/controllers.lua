@@ -100,11 +100,16 @@ Usage
 ]]--
 
 local uevrUtils = require("libs/uevr_utils")
+local plugin = require("libs/core/plugin")
 
 local M = {}
 
 local sourceNames = {[0]="Left",[1]="Right"}
 local actors = {}
+-- Motions/HMD components created via AddComponentByClass often do NOT appear in
+-- BlueprintCreatedComponents, so looking them up from the actor always returned nil
+-- and made every createController() think nothing existed (spawn leak).
+local cachedComponents = {}
 
 local currentLogLevel = LogLevel.Error
 function M.setLogLevel(val)
@@ -118,41 +123,54 @@ function M.print(text, logLevel)
 end
 
 local function getCachedController(controllerID)
+	local component = cachedComponents[controllerID]
+	if component ~= nil then
+		if uevrUtils.getValid(component) ~= nil then
+			return component
+		end
+		cachedComponents[controllerID] = nil
+	end
+
+	-- Legacy fallback for sessions that only stored the owning actor
 	local actor = actors[controllerID]
 	if actor ~= nil and UEVR_UObjectHook.exists(actor) then
 		local components = actor.BlueprintCreatedComponents
 		if components ~= nil then
-			for index, component in pairs(components) do
-				if component ~= nil then
-					return component	
+			for _, candidate in pairs(components) do
+				if candidate ~= nil and uevrUtils.getValid(candidate) ~= nil then
+					cachedComponents[controllerID] = candidate
+					return candidate
 				end
 			end
 		end
 	end
 	return nil
-end 
+end
 
 
 local function destroyActor(actor)
 	if actor ~= nil then
-		pcall(function()
+		local ok, err = pcall(function()
 			local components = actor.BlueprintCreatedComponents
 			for index, component in pairs(components) do
 				if component ~= nil then
 					M.print("Destroying controller component " .. component:get_full_name()) 
-					pcall(function()
+					--pcall(function()
 						if actor.K2_DestroyComponent ~= nil then
 							actor:K2_DestroyComponent(component)
 							M.print("HMD Controller component destroyed")
 						end
-					end)
+					--end)
 				end
 			end
 			if actor.K2_DestroyActor ~= nil then
 				actor:K2_DestroyActor()
 				M.print("HMD Controller actor destroyed")
 			end
-		end)	
+		end)
+		if not ok then
+			M.print("Error destroying actor: " .. err)
+		end
 	end
 end
 
@@ -166,11 +184,15 @@ local function createControllerComponent(parentActor, sourceName, handIndex)
 		if motionControllerComponent ~= nil then
 			motionControllerComponent:SetCollisionEnabled(0, false)
 			--motionControllerComponent:SetCollisionResponseToAllChannels(0)
-			motionControllerComponent.MotionSource = uevrUtils.fname_from_string(sourceName)
+			-- UE4.14 MotionControllerComponent exposes Hand, not the newer MotionSource field.
+			if motionControllerComponent.MotionSource ~= nil then
+				motionControllerComponent.MotionSource = uevrUtils.fname_from_string(sourceName)
+			end
 			if motionControllerComponent.Hand ~= nil then
 				motionControllerComponent.Hand = handIndex
 			end
-			
+
+			cachedComponents[handIndex] = motionControllerComponent
 			M.print("Controller created")
 			return motionControllerComponent
 		end
@@ -194,6 +216,7 @@ local function createHMDControllerComponent()
 				hmdState:set_hand(hmdIndex) 
 				hmdState:set_permanent(true)
 				actors[hmdIndex] = parentActor
+				cachedComponents[hmdIndex] = motionControllerComponent
 				M.print("Controller created")
 				return motionControllerComponent
 			else
@@ -288,6 +311,7 @@ function M.restoreExistingComponents()
 				local ownerName = owner and owner:get_full_name() or "No Owner"
 				print("Restoring existing controller " .. i .. ": " .. controller:get_full_name() .. " " .. ownerName)
 				actors[i] = owner
+				cachedComponents[i] = controller
 				if owner == nil then isRestored = false end
 				--end)
 			end
@@ -329,16 +353,24 @@ end
 function M.createController(controllerID)
 	M.print("Creating controller " ..  controllerID)
 	if controllerID == 2 then
+		local existing = getCachedController(2)
+		if existing ~= nil then
+			return existing
+		end
 		return M.createHMDController()
 	else
+		local existing = getCachedController(controllerID)
+		if existing ~= nil then
+			return existing
+		end
 		local controller = nil
-		if not M.controllerExists(controllerID, true) then
-			if not M.controllerExists(controllerID, false) then
+		if not M.controllerExists(controllerID, false) then
+			controller = createControllerComponent(createActor(controllerID), sourceNames[controllerID], controllerID)
+		else
+			if M.restoreExistingComponents() == false then
 				controller = createControllerComponent(createActor(controllerID), sourceNames[controllerID], controllerID)
 			else
-				if M.restoreExistingComponents() == false then
-					controller = createControllerComponent(createActor(controllerID), sourceNames[controllerID], controllerID)
-				end
+				controller = getCachedController(controllerID)
 			end
 		end
 		return controller
@@ -348,6 +380,7 @@ end
 function M.destroyController(controllerID)
 	destroyActor(actors[controllerID])
 	actors[controllerID] = nil
+	cachedComponents[controllerID] = nil
 end
 
 function M.destroyControllers()
@@ -362,6 +395,10 @@ function M.resetControllers()
 	actors[1] = nil
 	actors[2] = nil
 	actors = {}
+	cachedComponents[0] = nil
+	cachedComponents[1] = nil
+	cachedComponents[2] = nil
+	cachedComponents = {}
 end
 
 --controllerID 0-left, 1-right, 2-head
@@ -390,14 +427,7 @@ end
 function M.getControllerLocation(controllerID)
 	local controller = M.getController(controllerID, true)
 	if controller ~= nil then
-		return controller:K2_GetComponentLocation()
-	-- else
-		-- --try getting the pose directly
-		-- local index = uevrUtils.getControllerIndex(controllerID)
-		-- if index ~= nil then
-			-- uevr.params.vr.get_pose(index, temp_vec3f, temp_quatf)
-			-- return uevrUtils.vector(temp_vec3f.X,temp_vec3f.Y,temp_vec3f.Z)
-		-- end	
+		return uevrUtils.getComponentLocation(controller)
 	end
 	return nil
 end
@@ -405,16 +435,7 @@ end
 function M.getControllerRotation(controllerID)
 	local controller = M.getController(controllerID, true)
 	if controller ~= nil then
-		return controller:K2_GetComponentRotation()
-	-- else
-		-- --try getting the pose directly
-		-- local index = uevrUtils.getControllerIndex(controllerID)
-		-- if index ~= nil then
-			-- uevr.params.vr.get_pose(index, temp_vec3f, temp_quatf)
-			-- local poseQuat = uevrUtils.quat(temp_quatf.Z, temp_quatf.X, -temp_quatf.Y, -temp_quatf.W)  --reordered terms to convert UEVR to unreal coord system
-			-- local poseRotator = kismet_math_library:Quat_Rotator(poseQuat)
-			-- return poseRotator
-		-- end	
+		return uevrUtils.getComponentRotation(controller)
 	end
 	return nil
 end

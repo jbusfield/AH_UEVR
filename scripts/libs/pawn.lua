@@ -315,6 +315,14 @@ function M.setBodyMeshName(val)
 	saveParameter("bodyMeshName", "Pawn." .. val)
 end
 
+function M.setArmsMeshName(val)
+	saveParameter("armsMeshName", "Pawn." .. val)
+end
+
+function M.setArmsAnimationMeshName(val)
+	saveParameter("armsAnimationMeshName", "Pawn." .. val)
+end
+
 function M.getPawnBaseName()
 	return getParameter("basePawnName") or "Pawn"
 end

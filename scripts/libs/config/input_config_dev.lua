@@ -86,6 +86,7 @@ local function getConfigWidgets(m_paramManager)
 		label = "Use HMD Offset",
 		initialValue = configDefaults["useRootOffset"] or true
 	},
+	{ widgetType = "indent", width = 20} ,
 	{
 		widgetType = "drag_float3",
 		id = widgetPrefix .. "rootOffset",
@@ -93,6 +94,49 @@ local function getConfigWidgets(m_paramManager)
 		speed = .1,
 		range = {-200, 200},
 		initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
+	},
+	{ widgetType = "unindent", width = 20} ,
+	{
+		widgetType = "checkbox",
+		id = widgetPrefix .. "overridePlayerControllerPitch",
+		label = "Override Player Controller Pitch",
+		initialValue = configDefaults["overridePlayerControllerPitch"] or false
+	},
+	{ widgetType = "same_line" },
+	{
+		widgetType = "input_text",
+		id = widgetPrefix .. "overridePlayerControllerPitchValue",
+		label = "##overridePlayerControllerPitchValue",
+		initialValue = tostring(configDefaults["overridePlayerControllerPitchValue"] or 0),
+		width = 50
+	},
+	{
+		widgetType = "checkbox",
+		id = widgetPrefix .. "overridePlayerControllerYaw",
+		label = "Override Player Controller Yaw  ",
+		initialValue = configDefaults["overridePlayerControllerYaw"] or false
+	},
+	{ widgetType = "same_line" },
+	{
+		widgetType = "input_text",
+		id = widgetPrefix .. "overridePlayerControllerYawValue",
+		label = "##overridePlayerControllerYawValue",
+		initialValue = tostring(configDefaults["overridePlayerControllerYawValue"] or 0),
+		width = 50
+	},
+	{
+		widgetType = "checkbox",
+		id = widgetPrefix .. "overridePlayerControllerRoll",
+		label = "Override Player Controller Roll   ",
+		initialValue = configDefaults["overridePlayerControllerRoll"] or false
+	},
+	{ widgetType = "same_line" },
+	{
+		widgetType = "input_text",
+		id = widgetPrefix .. "overridePlayerControllerRollValue",
+		label = "##overridePlayerControllerRollValue",
+		initialValue = tostring(configDefaults["overridePlayerControllerRollValue"] or 0),
+		width = 50
 	},
 	{
 		widgetType = "tree_node",
@@ -534,6 +578,30 @@ configui.onUpdate(widgetPrefix .. "rootOffset", function(value)
     updateSetting("rootOffset", {X=arr[1],Y=arr[2],Z=arr[3]})
 end)
 
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerPitch", function(value)
+	updateSetting("overridePlayerControllerPitch", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerPitchValue", function(value)
+	updateSetting("overridePlayerControllerPitchValue", tonumber(value) or 0)
+end)
+
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerYaw", function(value)
+	updateSetting("overridePlayerControllerYaw", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerYawValue", function(value)
+	updateSetting("overridePlayerControllerYawValue", tonumber(value) or 0)
+end)
+
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerRoll", function(value)
+	updateSetting("overridePlayerControllerRoll", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "overridePlayerControllerRollValue", function(value)
+	updateSetting("overridePlayerControllerRollValue", tonumber(value) or 0)
+end)
+
 configui.onUpdate(widgetPrefix .. "headBones", function(value)
 	setCurrentHeadBone(value)
 end)
@@ -689,6 +757,10 @@ configui.onUpdate(widgetPrefix .. "aimCameraList", function(value)
 	updateUIState("aimCameraList")
 end)
 
+configui.onCreate(widgetPrefix .. "aimCameraList", function(value)
+	configui.hideWidget(widgetPrefix .. "usePawnControlRotation", value == 1)
+	configui.hideWidget(widgetPrefix .. "cameraResetAction", value == 1)
+end)
 
 -- configui.onUpdate(widgetPrefix .. "handedness", function(value)
 -- 	uevrUtils.setHandedness(value-1)

@@ -11,9 +11,19 @@ Usage
 
     Available functions:
 
+    ui.ShapeEnum - head-locked UI shape values (Flat = 1, Cylinder = 2)
+
     ui.init(isDeveloperMode, logLevel) - initializes the UI system
         example:
             ui.init(true, LogLevel.Debug)
+
+    ui.setLogLevel(val) - sets the logging level for UI system messages
+        example:
+            ui.setLogLevel(LogLevel.Debug)
+
+    ui.print(text, (optional)logLevel) - prints a message at the given (or Debug) log level
+        example:
+            ui.print("UI updated", LogLevel.Debug)
 
     ui.setIsHeadLocked(value) - enables/disables head-locked UI mode
         example:
@@ -27,9 +37,21 @@ Usage
         example:
             ui.setHeadLockedUISize(2.0)
 
+    ui.setHeadLockedUIShape(value) - sets the shape of head-locked UI (ui.ShapeEnum.Flat or ui.ShapeEnum.Cylinder)
+        example:
+            ui.setHeadLockedUIShape(ui.ShapeEnum.Cylinder)
+
+    ui.setHeadLockedUIOptions(newOptions) - passes head-locked UI option overrides to the config UI
+        example:
+            ui.setHeadLockedUIOptions({ showShape = true })
+
     ui.disableHeadLockedUI(value) - temporarily disables head-locked UI without changing its state
         example:
             ui.disableHeadLockedUI(true)
+
+    ui.isViewLocked() - returns true if UI view is currently forced locked (vs free-follow head-locked mode)
+        example:
+            if ui.isViewLocked() then return end
 
     ui.setIsInMotionSicknessCausingScene(value) - sets whether current scene may cause motion sickness
         example:
@@ -40,6 +62,11 @@ Usage
         Set this to true to require that the widget's GetOpenState() returns 0 (open) for it to be considered active
         example:
             ui.setRequireWidgetOpenState(true)
+
+    ui.setRequireWidgetVisibility(value) - sets whether to require widget visibility to consider it active
+        When true, only widgets with GetVisibility() of 0, 3, or 4 are treated as active
+        example:
+            ui.setRequireWidgetVisibility(true)
 
     ui.registerIsInMotionSicknessCausingSceneCallback(func) - registers a callback for motion sickness scene changes
         Second param  is an optional priority. Higher priority callbacks override lower priority ones.
@@ -57,11 +84,30 @@ Usage
         example:
             ui.showConfiguration("ui_config")
 
-    ui.registerWidgetChangeCallback(widgetName, func) - registers a callback for when specific high level 
-        viewport widgets become active/inactive. The widgetName can be found in the UI interface list
+    ui.addViewportWidget(widget) - registers a custom widget so UI state treats it like a viewport widget
+        In developer mode also lists it in the UI config tool
         example:
-            ui.registerWidgetChangeCallback("WBP_UniversalLockTooltipWidget_C", function(active)
-                print("Widget changed:", active)
+            ui.addViewportWidget(myWidget)
+
+    ui.removeViewportWidget(widget) - unregisters a previously added custom viewport widget
+        example:
+            ui.removeViewportWidget(myWidget)
+
+    ui.registerWidgetChangeCallback(widgetName, func) - registers a callback for when specific high level 
+        viewport widgets become active/inactive. The widgetName can be found in the UI interface list.
+        Callback receives (active, widget). widget is the live viewport instance when active, else nil.
+        example:
+            ui.registerWidgetChangeCallback("WBP_UniversalLockTooltipWidget_C", function(active, widget)
+                print("Widget changed:", active, widget)
+            end)
+
+    ui.onUpdate(stateKey, func) - registers a callback invoked when a UI state value changes.
+        Callback receives (value, priority). value may be true, false, or nil (default/cleared).
+        Valid stateKey values: viewLocked, screen2D, decouplePitch, autoAdjustUI, inputEnabled,
+        handsEnabled, remapEnabled, fadeCamera, pawnArmBones
+        example:
+            ui.onUpdate("remapEnabled", function(value)
+                print("remapEnabled changed:", value)
             end)
 
     ui.setCustomState(stateKey, value, priority) -- allow you to force a specific state value, overriding normal behavior
@@ -69,6 +115,42 @@ Usage
         example:
             ui.setCustomState("handsEnabled", false, 2)
             ui.setCustomState("handsEnabled", nil)
+
+    ui.isInputDisabled() - returns true if UI state currently disables input
+        example:
+            if ui.isInputDisabled() then return end
+
+    ui.isInputDisabledWithPriority() - returns disabled state (or nil) and priority for input callbacks
+        example:
+            local disabled, priority = ui.isInputDisabledWithPriority()
+
+    ui.isRemapDisabled() - returns true if UI state currently disables remapping
+        example:
+            if ui.isRemapDisabled() then return end
+
+    ui.isRemapDisabledWithPriority() - returns disabled state (or nil) and priority for remap callbacks
+        example:
+            local disabled, priority = ui.isRemapDisabledWithPriority()
+
+    ui.isArmBonesHidden() - returns true if UI state currently hides pawn arm bones
+        example:
+            if ui.isArmBonesHidden() then return end
+
+    ui.isArmBonesHiddenWithPriority() - returns hidden state (or nil) and priority for arm-bone callbacks
+        example:
+            local hidden, priority = ui.isArmBonesHiddenWithPriority()
+
+    ui.isFadeCameraEnabled() - returns true if UI state currently enables camera fade
+        example:
+            if ui.isFadeCameraEnabled() then return end
+
+    ui.isFadeCameraEnabledWithPriority() - returns enabled state (or nil) and priority for fade-camera callbacks
+        example:
+            local enabled, priority = ui.isFadeCameraEnabledWithPriority()
+
+    ui.forceUpdate() - immediately recalculates UI state and applies view/UI settings
+        example:
+            ui.forceUpdate()
 
 ]]--
 
@@ -180,7 +262,7 @@ local function updateUI(force)
             uevrUtils.setUIFollowsViewOffset(headLockedUIPosition)
             uevrUtils.setUIFollowsViewSize(headLockedUISize)
             uevrUtils.setUIShape(headLockedUIShape - 1)
-        else
+        elseif headLockedUI then
             uevrUtils.setUIFollowsViewOffset({X=0, Y=0, Z=2.0})
             uevrUtils.setUIFollowsViewSize(2.0)
             uevrUtils.setUIShape(0)
@@ -205,7 +287,7 @@ local function updateUI(force)
 
     if uiState["fadeCamera_last"] ~= uiState["fadeCamera"] then
         if uiState["fadeCamera"] == true then
-            uevrUtils.fadeCamera(0.1, true)
+            uevrUtils.fadeCamera(0.1, true, false, true)
         else
             uevrUtils.stopFadeCamera()
         end
@@ -327,16 +409,19 @@ end
 
 local newWidgetViewportState = {}
 local function updateWidgetChangeCallbacks()
-    for id, isInViewport in pairs(newWidgetViewportState) do
-        if currentWidgetViewportState[id] ~= isInViewport then
-            currentWidgetViewportState[id] = isInViewport
-            M.print("Widget " .. id .. " change, isInViewport = " .. tostring(isInViewport))
-            uevrUtils.executeUEVRCallbacks("widget_change_" .. id, isInViewport)
-        end
-    end
-    for id, isInViewport in pairs(currentWidgetViewportState) do
-       newWidgetViewportState[id] = false
-    end
+	for id, entry in pairs(newWidgetViewportState) do
+		local active = entry and true or false
+		local wasActive = currentWidgetViewportState[id] and true or false
+		if wasActive ~= active then
+			currentWidgetViewportState[id] = active
+			local widget = active and entry or nil
+			M.print("Widget " .. id .. " change, isInViewport = " .. tostring(active))
+			uevrUtils.executeUEVRCallbacks("widget_change_" .. id, active, widget)
+		end
+	end
+	for id, _ in pairs(currentWidgetViewportState) do
+		newWidgetViewportState[id] = false
+	end
 end
 
 local function setCurrentViewportWidgetsStr(str)
@@ -394,7 +479,7 @@ local function updateUIState()
                         for _, config in ipairs(stateConfigWidget) do
                             updateStateIfHigherPriority(data, config.stateKey, config.valueKey)
                         end
-                        newWidgetViewportState[data["label"]] = true
+                        newWidgetViewportState[data["label"]] = widget
                         uevrUtils.setWidgetLayout(widget, data["scale"], data["alignment"])
                         --updateCurrentWidgetChangeCallbackState(data["label"], true)
                     end
@@ -411,7 +496,7 @@ local function updateUIState()
     local currentGameStateText = "Current Game State: "
     local isInCutscene = uevrUtils.isInCutscene()
     local isPaused = uevrUtils.isGamePaused()
-    local isCharacterHidden = uevrUtils.getValid(pawn,{ "Controller", "Character", "bHidden"}) or false
+    local isCharacterHidden = uevrUtils.isCharacterHidden() --or uevrUtils.getValid(pawn,{ "Controller", "Character", "bHidden"}) or false
     currentGameStateText = currentGameStateText .. "Is In Cutscene = " .. tostring(isInCutscene) .. ", Is Paused = " .. tostring(isPaused) .. ", Is Character Hidden = " .. tostring(isCharacterHidden)
     for index, gameStateName in ipairs(gameStates) do
         local isActive = (gameStateName == "cutscene" and isInCutscene) or (gameStateName == "paused" and isPaused) or (gameStateName == "character_hidden" and isCharacterHidden)
@@ -435,7 +520,7 @@ local function updateUIState()
 
     -- let any listeners know about state changes
     -- use like this
-    -- uevrUtils.registerUEVRCallback("ui_state_change_remapEnabled", function(state, priority)
+    -- ui.onUpdate("remapEnabled", function(state, priority)
     --     print("Remap enabled changed to " .. tostring(state) .. " with priority " .. tostring(priority))
     -- end)
     for _, config in ipairs(stateConfigWidget) do
@@ -650,6 +735,12 @@ function M.registerWidgetChangeCallback(widgetName, func)
     end
 end
 
+function M.onUpdate(stateKey, func)
+    if stateKey ~= nil and stateKey ~= "" and type(stateKey) == "string" and type(func) == "function" then
+        uevrUtils.registerUEVRCallback("ui_state_change_" .. stateKey, func)
+    end
+end
+
 function M.forceUpdate()
     updateUIState()
     updateUI()
@@ -669,7 +760,12 @@ end)
 uevrUtils.registerPreLevelChangeCallback(function(level)
 	isInMotionSicknessCausingSceneLast = false
     uevrUtils.enableCameraLerp(false, true, true, true)
+    -- Level loads clear the engine fade while fadeCamera_last can stay true; force re-apply.
+    uiState["fadeCamera_last"] = nil
+end)
 
+uevrUtils.registerLevelChangeCallback(function(level)
+    M.forceUpdate()
 end)
 
 return M

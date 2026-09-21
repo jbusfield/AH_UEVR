@@ -680,7 +680,10 @@ function M.createFromMesh(mesh, options)
 		---@cast reticuleComponent -nil
 		if currentReticuleOptions.materialName ~= nil and currentReticuleOptions.materialName ~= "" then
 			M.print("Adding material to reticule component")
-			local material = uevrUtils.getLoadedAsset(currentReticuleOptions.materialName)
+			local material = uevrUtils.find_instance_of("Class /Script/Engine.Material", currentReticuleOptions.materialName)
+			if material == nil then
+				material = uevrUtils.getLoadedAsset(currentReticuleOptions.materialName)
+			end
 			if uevrUtils.getValid(material) ~= nil then
 				reticuleComponent:SetMaterial(0, material)
 			else
@@ -771,6 +774,7 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 		if isHidden or scopeHidden then
 			reticuleComponent:SetVisibility(false)
 			unsubscribeFromLineTracer()
+			--print("[DI2][reticule] hidden or scope hidden")
 			return
 		end
 

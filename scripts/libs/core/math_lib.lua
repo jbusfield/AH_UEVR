@@ -1,6 +1,8 @@
 local uevrLib = require('libs/core/uevr_lib')
+local plugin = require('libs/core/plugin')
 
 local M = {}
+
 
 function M.print(text, logLevel)
 	print("[math_lib] " .. text)
@@ -75,6 +77,16 @@ function M.vectorSet(v, x, y, z)
 	else
 		v.x = x; v.y = y; v.z = z
 	end
+end
+
+-- Mutate an existing FVector so UEVR hook locals write through instead of replacing userdata.
+function M.assignVectorInPlace(dst, src)
+	if dst == nil or src == nil then
+		return
+	end
+	if src.X ~= nil then dst.X = src.X end
+	if src.Y ~= nil then dst.Y = src.Y end
+	if src.Z ~= nil then dst.Z = src.Z end
 end
 
 function M.vectorCross(a, b, preferKismet)
@@ -657,13 +669,32 @@ function M.vector(...)
 		end
 	end
 
-	local vector = uevrLib.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", reuseable)
-	if vector ~= nil then
-		if vector["X"] ~= nil then vector.X = x else vector.x = x end
-		if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
-		if vector["Z"] ~= nil then vector.Z = z else vector.z = z end
+	--plugin.showDebug = true
+	if uevrLib.extremeCompatibilityMode == false then
+		local vector = uevrLib.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", reuseable)
+		if vector ~= nil then
+			if vector["X"] ~= nil then vector.X = x else vector.x = x end
+			if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
+			if vector["Z"] ~= nil then vector.Z = z else vector.z = z end
+		end
+		return vector
+	else
+		local result = plugin.executeFunction(kismet_math_library, "MakeVector", x, y, z)
+		local val = result and result.ReturnValue or {X=0.0, Y=0.0, Z=0.0}
+		print("Vector Out: " , val.X, val.Y, val.Z)
+		return val
 	end
-	return vector
+	--plugin.showDebug = false
+	-- print("Vector In: " , x, y, z)
+	-- local vector = uevrLib.get_struct_object("ScriptStruct /Script/CoreUObject.Vector", reuseable)
+	-- print("Vector Out: " , vector.X, vector.Y, vector.Z)
+	-- if vector ~= nil then
+	-- 	if vector["X"] ~= nil then vector.X = x else vector.x = x end
+	-- 	if vector["Y"] ~= nil then vector.Y = y else vector.y = y end
+	-- 	if vector["Z"] ~= nil then vector.Z = z else vector.z = z end
+	-- end
+	-- print("Vector Out2: " , vector.X, vector.Y, vector.Z)
+	-- return vector
 
 	--this should work but doesnt, at least in robocop
 	--return kismet_math_library:MakeVector(x, y, z)
@@ -710,7 +741,7 @@ function M.rotator(...)
 		end
 	end
 
-	if kismet_math_library.MakeRotator ~= nil then
+	if uevrLib.extremeCompatibilityMode == false and kismet_math_library.MakeRotator ~= nil then
 		return kismet_math_library:MakeRotator(roll, pitch, yaw)
 	end
 
@@ -762,18 +793,50 @@ function M.getTransform(position, rotation, scale, reuseable)
 	if scale == nil then scale = {X=1.0, Y=1.0, Z=1.0} end
 	local transform = uevrLib.get_struct_object("ScriptStruct /Script/CoreUObject.Transform", reuseable)
 	if transform ~= nil then
-		transform.Translation = vector_3f(position.X, position.Y, position.Z)
-		if rotation == nil then
-			transform.Rotation.X = 0.0
-			transform.Rotation.Y = 0.0
-			transform.Rotation.Z = 0.0
-			transform.Rotation.W = 1.0
+		if uevrLib.extremeCompatibilityMode == false then
+			transform.Translation = vector_3f(position.X, position.Y, position.Z)
+			if rotation == nil then
+				transform.Rotation.X = 0.0
+				transform.Rotation.Y = 0.0
+				transform.Rotation.Z = 0.0
+				transform.Rotation.W = 1.0
+			else
+				transform.Rotation = rotation
+			end
+			transform.Scale3D = vector_3f(scale.X, scale.Y, scale.Z)
 		else
-			transform.Rotation = rotation
+			transform:write_float(0x00, 0.0) -- X
+			transform:write_float(0x04, 0.0) -- Y
+			transform:write_float(0x08, 0.0) -- Z
+			transform:write_float(0x0C, 1.0) -- W (identity)
+			-- FVector Translation @ 0x10
+			transform:write_float(0x10, position.X) -- X
+			transform:write_float(0x14, position.Y) -- Y
+			transform:write_float(0x18, position.Z) -- Z
+			-- pad @ 0x1C
+			-- FVector Scale3D @ 0x20
+			transform:write_float(0x20, scale.X) -- X
+			transform:write_float(0x24, scale.Y) -- Y
+			transform:write_float(0x28, scale.Z) -- Z
 		end
-		transform.Scale3D = vector_3f(scale.X, scale.Y, scale.Z)
 	end
 	return transform
+end
+
+-- Mutate an existing FTransform so UEVR hook locals write through instead of replacing userdata.
+function M.assignTransformInPlace(dst, srcTransform)
+	if dst == nil or srcTransform == nil then
+		return
+	end
+	if srcTransform.Translation ~= nil then
+		dst.Translation = srcTransform.Translation
+	end
+	if srcTransform.Rotation ~= nil then
+		dst.Rotation = srcTransform.Rotation
+	end
+	if srcTransform.Scale3D ~= nil then
+		dst.Scale3D = srcTransform.Scale3D
+	end
 end
 
 function M.vector2D(...)

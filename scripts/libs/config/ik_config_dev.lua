@@ -34,6 +34,14 @@ local rigDefaults = {
 	animation_rotation_offset = uevrUtils.rotator(0,0,0),
 	animation_ik_pose_authoritative = false,
 	show_debug_meshes = false,
+	debug_sphere_jointTarget = true,
+	debug_sphere_effector = true,
+	debug_sphere_solvedElbow = true,
+	debug_sphere_solvedEnd = true,
+	debug_sphere_desiredPole = true,
+	debug_sphere_boneElbow = true,
+	debug_sphere_boneTwist = true,
+	debug_sphere_forearmTwist = true,
 	parent_type = M.ParentType.PAWN_ROOT,
 	hide_body = false,
 	spine_bone_name = "",
@@ -60,6 +68,11 @@ local solverDefaults = {
 	incremental_forearm_twist = false,
 	sort_order = 0,
 	smoothing = 0,
+	enhanced_stability = false,
+	pole_proj_min_len = 0.30,
+	use_hemisphere_lock = true,
+	max_twist_delta_deg = 12.0,
+	shoulder_swing_only = false,
     wrist_twist_influence = 0.35,
     wrist_twist_max = 75.0,
 	end_bone_lock_pitch = false,
@@ -207,6 +220,56 @@ local function getConfigWidgets(m_paramManager)
                 label = "Show Debug Meshes",
                 initialValue = false
             },
+        	{ widgetType = "begin_group", id = widgetPrefix .. "show_debug_meshes_group", isHidden = true }, { widgetType = "indent", width = 20 },
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_jointTarget",
+					label = "Joint Target",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_effector",
+					label = "Effector",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_solvedElbow",
+					label = "Solved Elbow",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_solvedEnd",
+					label = "Solved End",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_desiredPole",
+					label = "Desired Pole",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_boneElbow",
+					label = "Bone Elbow",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_boneTwist",
+					label = "Bone Twist",
+					initialValue = true
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "debug_sphere_forearmTwist",
+					label = "Forearm Twist",
+					initialValue = true
+				},
+			{ widgetType = "unindent", width = 20 }, { widgetType = "end_group" },
             {
                 widgetType = "tree_node",
                 id = widgetPrefix .. "animation_tree",
@@ -477,6 +540,42 @@ local function getConfigWidgets(m_paramManager)
 							initialValue = 0,
 							isHidden = true
 						},
+						{
+							widgetType = "checkbox",
+							id = widgetPrefix .. "enhanced_stability",
+							label = "Enhanced Stability",
+							initialValue = false
+						},
+						{ widgetType = "begin_group", id = widgetPrefix .. "enhanced_stability_group", isHidden = true }, { widgetType = "indent", width = 20 },
+							{
+								widgetType = "slider_float",
+								id = widgetPrefix .. "pole_proj_min_len",
+								label = "Pole Projection Min Length",
+								speed = 0.01,
+								range = {0.05, 1.0},
+								initialValue = 0.30
+							},
+							{
+								widgetType = "checkbox",
+								id = widgetPrefix .. "use_hemisphere_lock",
+								label = "Hold Pole When Collapsed",
+								initialValue = true
+							},
+							{
+								widgetType = "slider_float",
+								id = widgetPrefix .. "max_twist_delta_deg",
+								label = "Max Twist Delta Degrees",
+								speed = 0.5,
+								range = {1, 90},
+								initialValue = 12.0
+							},
+							{
+								widgetType = "checkbox",
+								id = widgetPrefix .. "shoulder_swing_only",
+								label = "Shoulder Swing Only",
+								initialValue = false
+							},
+						{ widgetType = "unindent", width = 20 }, { widgetType = "end_group" },
 						{ widgetType = "new_line" },
 						{
 							widgetType = "text",
@@ -805,7 +904,9 @@ local function updateSetting(key, value)
 	local profileId = getActiveProfileId()
 	if profileId == nil then return end
 
-	if key == "mesh" or key == "animation_mesh" or key == "animation_location_offset" or key == "animation_rotation_offset" or key == "mesh_location_offset" or key == "mesh_rotation_offset" or key == "show_debug_meshes" or key == "parent_type"  or key == "hide_body" or key == "spine_bone_name" or key == "left_shoulder_bone_name" or key == "right_shoulder_bone_name" or key == "shoulder_width_scale" or key == "animation_ik_pose_authoritative" then
+	if key == "mesh" or key == "animation_mesh" or key == "animation_location_offset" or key == "animation_rotation_offset" or key == "mesh_location_offset" or key == "mesh_rotation_offset" or key == "show_debug_meshes" or key == "parent_type"  or key == "hide_body" or key == "spine_bone_name" or key == "left_shoulder_bone_name" or key == "right_shoulder_bone_name" or key == "shoulder_width_scale" or key == "animation_ik_pose_authoritative"
+		or key == "debug_sphere_jointTarget" or key == "debug_sphere_effector" or key == "debug_sphere_solvedElbow" or key == "debug_sphere_solvedEnd"
+		or key == "debug_sphere_desiredPole" or key == "debug_sphere_boneElbow" or key == "debug_sphere_boneTwist" or key == "debug_sphere_forearmTwist" then
 		pmSet({profileId, key}, value, true)
 		uevrUtils.executeUEVRCallbacks("on_ik_config_param_change", key, value, true)
 		return
@@ -1143,6 +1244,10 @@ configui.onCreateOrUpdate(widgetPrefix .. "hide_body", function(value)
     configui.setHidden(widgetPrefix .. "hide_body_group", not value)
 end)
 
+configui.onCreateOrUpdate(widgetPrefix .. "show_debug_meshes", function(value)
+    configui.setHidden(widgetPrefix .. "show_debug_meshes_group", not value)
+end)
+
 configui.onCreateOrUpdate(widgetPrefix .. "animation_mesh_combo_show_children", function(value)
     setAnimationMeshList(configui.getValue(widgetPrefix .. "animation_mesh"), true)
 end)
@@ -1222,6 +1327,10 @@ end)
 configui.onCreateOrUpdate(widgetPrefix .. "allow_wrist_affects_elbow", function(value)
     configui.setHidden(widgetPrefix .. "wrist_twist_influence", not value)
     configui.setHidden(widgetPrefix .. "wrist_twist_max", not value)
+end)
+
+configui.onCreateOrUpdate(widgetPrefix .. "enhanced_stability", function(value)
+    configui.setHidden(widgetPrefix .. "enhanced_stability_group", not value)
 end)
 
 configui.onCreateOrUpdate(widgetPrefix .. "allow_stretch", function(value)

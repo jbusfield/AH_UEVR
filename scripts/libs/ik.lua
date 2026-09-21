@@ -22,10 +22,10 @@ Usage
 			different ownership of the pose afterward:
 				true  - solvers always run (including after CopyPose). Use when a one-arm montage would
 					otherwise leave the other arm stuck in the game's animated pose and you need IK to
-					reclaim controller tracking on that arm.
+					reclaim controller tracking on that arm. (see Atomic Heart for an example)
 				false - solvers run only when not animating. Use when montages (e.g. weapon reloads)
 					must keep their authored arm/weapon rotations and post-CopyPose IK would twist them
-					toward the controllers.
+					toward the controllers. (see The Outer Worlds for an example)
 			Configure per profile in ik_parameters / the IK Dev Config UI.
 	
 	Available functions:
@@ -214,6 +214,7 @@ local mathLib = require("libs/core/math_lib")
 local paramModule = require("libs/core/params")
 local controllers = require("libs/controllers")
 local handsAnimation = require("libs/hands_animation")
+local input = require("libs/input")
 --local collision = require("libs/collision")
 --local animation = require("libs/animation") --used for debugging only
 require("libs/accessories")
@@ -372,6 +373,14 @@ local parameters = {
 	mesh = "",
     animation_mesh = "",
 	show_debug_meshes = false,
+	debug_sphere_jointTarget = true,
+	debug_sphere_effector = true,
+	debug_sphere_solvedElbow = true,
+	debug_sphere_solvedEnd = true,
+	debug_sphere_desiredPole = true,
+	debug_sphere_boneElbow = true,
+	debug_sphere_boneTwist = true,
+	debug_sphere_forearmTwist = true,
     mesh_location_offset = uevrUtils.vector(0,0,0),
     mesh_rotation_offset = uevrUtils.rotator(0,0,0),
     animation_location_offset = uevrUtils.vector(0,0,0),
@@ -556,8 +565,8 @@ local function getTargetLocationAndRotation(hand, controller)
     local rot = nil
     if accessoryStatus[hand] == nil then
 		if uevrUtils.getValid(controller) ~= nil and controller.K2_GetComponentLocation ~= nil then
-			loc = controller:K2_GetComponentLocation()
-			rot = controller:K2_GetComponentRotation()
+			loc = uevrUtils.getComponentLocation(controller)
+			rot = uevrUtils.getComponentRotation(controller)
 			--TODO hard coded for right handed weapon holding. Add left support
 			if rot ~= nil and hand == Handed.Right and gunstockOffsetsEnabled == true then
 				--rotate the worldspace controller rotation by the gunstock local space offset
@@ -723,6 +732,13 @@ function Rig:create()
 
 	-- Register tick callback
 	self.tickFn = function(engine, delta)
+		-- When body yaw follows a motion controller (RIGHT/LEFT_CONTROLLER), root
+		-- Euler yaw is gimbal-noisy. IK meshes parented to root inherit that and
+		-- spin; lock mesh world yaw to the HMD instead so solvers stay stable.
+		local pawnRotMode = input.getEffectivePawnRotationMode and input.getEffectivePawnRotationMode() or nil
+		local lockMeshYawToHmd = pawnRotMode == input.PawnRotationMode.RIGHT_CONTROLLER
+			or pawnRotMode == input.PawnRotationMode.LEFT_CONTROLLER
+
 		for _, mesh in pairs(self.meshList or {}) do
 			if uevrUtils.getValid(mesh) ~= nil then
 				local rootComponent = uevrUtils.getValid(getPawn(), {"RootComponent"})
@@ -739,7 +755,36 @@ function Rig:create()
 						--mesh:K2_SetWorldLocationAndRotation(rootLocation, rootComponent:K2_GetComponentRotation(), false, reusable_hit_result, nil)
 					elseif self.coupling == 3 then
 						mesh.RelativeLocation.Z = self.meshLocationOffset.Z + (self.meshLocationOffset.Z + capsuleHeight)
-						mesh:K2_SetWorldRotation(rootComponent:K2_GetComponentRotation(), false, reusable_hit_result, nil)
+						if not lockMeshYawToHmd then
+							mesh:K2_SetWorldRotation(rootComponent:K2_GetComponentRotation(), false, reusable_hit_result, nil)
+						end
+					end
+
+					if (self.coupling == 1 or self.coupling == 3) and mesh.K2_SetWorldRotation ~= nil then
+						if lockMeshYawToHmd then
+							local hmdRot = controllers.getControllerRotation(2)
+							if hmdRot ~= nil then
+								if not self.meshYawLockedToHmd and mesh.SetAbsolute ~= nil then
+									mesh:SetAbsolute(false, true, false)
+								end
+								local offsetYaw = (self.meshRotationOffset and self.meshRotationOffset.Yaw) or 0
+								mesh:K2_SetWorldRotation(
+									uevrUtils.rotator(0, hmdRot.Yaw + offsetYaw, 0),
+									false, reusable_hit_result, false
+								)
+								self.meshYawLockedToHmd = true
+							end
+						elseif self.meshYawLockedToHmd then
+							if mesh.SetAbsolute ~= nil then
+								mesh:SetAbsolute(false, false, false)
+							end
+							if self.meshRotationOffset ~= nil and mesh.K2_SetRelativeRotation ~= nil then
+								mesh:K2_SetRelativeRotation(self.meshRotationOffset, false, reusable_hit_result, false)
+							elseif self.meshRotationOffset ~= nil and mesh.RelativeRotation ~= nil then
+								mesh.RelativeRotation = self.meshRotationOffset
+							end
+							self.meshYawLockedToHmd = false
+						end
 					end
 				end
 			end
@@ -1102,6 +1147,7 @@ local function isRigLevelParam(paramName)
 		or paramName == "right_shoulder_bone_name"
 		or paramName == "shoulder_width_scale"
 		or paramName == "hide_body"
+		or (type(paramName) == "string" and string.sub(paramName, 1, 13) == "debug_sphere_")
 end
 
 local function getAncestorBones(mesh, boneName, generations)
@@ -1149,28 +1195,149 @@ function Rig:setAnimationsFromHandsParametersFile(animFile)
 	end
 end
 
-function Rig:createDebugMeshes()
-	if self.leftJointTargetVisualizer == nil then
-		self.leftJointTargetVisualizer = uevrUtils.createStaticMeshComponent("StaticMesh /Engine/EngineMeshes/Sphere.Sphere")
-		if self.leftJointTargetVisualizer ~= nil then
-			self.leftJointTargetVisualizer:SetVisibility(false,true)
-			self.leftJointTargetVisualizer:SetVisibility(true,true)
-			self.leftJointTargetVisualizer:SetHiddenInGame(true,true)
-			self.leftJointTargetVisualizer:SetHiddenInGame(false,true)
-			local scale = 0.05
-			uevrUtils.set_component_relative_transform(self.leftJointTargetVisualizer, nil, nil, {X=scale, Y=scale, Z=scale})
+-- Debug sphere sizes (largest → smallest) so you can tell them apart without colors.
+-- Legend is also printed to the log when Show Debug Meshes is enabled.
+-- Individual visibility is controlled by debug_sphere_<key> params / IK Dev Config checkboxes.
+local IK_DEBUG_SPHERE_DEFS = {
+	{ key = "jointTarget",  scale = 0.030 }, -- TwoBoneIK joint/pole target
+	{ key = "effector",     scale = 0.040 }, -- hand/controller effector target
+	{ key = "solvedElbow",  scale = 0.038 }, -- K2_TwoBoneIK outJoint
+	{ key = "solvedEnd",    scale = 0.032 }, -- K2_TwoBoneIK outEnd
+	{ key = "desiredPole",  scale = 0.035 }, -- solved elbow + outward tip (pole direction)
+	{ key = "boneElbow",    scale = 0.030 }, -- actual joint bone after rotateElbow
+	{ key = "boneTwist",    scale = 0.015 }, -- tip along joint bone pole axis (elbow twist)
+	{ key = "forearmTwist", scale = 0.011 }, -- tip along first twist-bone axis after twistForearm
+}
+
+local IK_DEBUG_POLE_TIP_DIST = 18.0
+
+-- Tip at elbow + outward*dist. Built component-wise so K2_TwoBoneIK out-params
+-- and mixed vector types don't break Lua +/* metamethods.
+local function makeDebugPoleTipWS(elbowWS, outwardWS)
+	if elbowWS == nil or outwardWS == nil then return nil end
+	local dir = safeNormalize(outwardWS)
+	if dir == nil then return nil end
+	local dx = dir.X or dir.x or 0.0
+	local dy = dir.Y or dir.y or 0.0
+	local dz = dir.Z or dir.z or 0.0
+	local ex = elbowWS.X or elbowWS.x or 0.0
+	local ey = elbowWS.Y or elbowWS.y or 0.0
+	local ez = elbowWS.Z or elbowWS.z or 0.0
+	local d = IK_DEBUG_POLE_TIP_DIST
+	return uevrUtils.vector(ex + dx * d, ey + dy * d, ez + dz * d)
+end
+
+local function createIkDebugSphere(scale)
+	local comp = uevrUtils.createStaticMeshComponent("StaticMesh /Engine/EngineMeshes/Sphere.Sphere")
+	if comp == nil then return nil end
+	comp:SetVisibility(false, true)
+	comp:SetVisibility(true, true)
+	comp:SetHiddenInGame(true, true)
+	comp:SetHiddenInGame(false, true)
+	uevrUtils.set_component_relative_transform(comp, nil, nil, {X = scale, Y = scale, Z = scale})
+	return comp
+end
+
+function Rig:isDebugSphereVisible(key)
+	if self.debugSphereVisibility == nil then return true end
+	local visible = self.debugSphereVisibility[key]
+	if visible == nil then return true end
+	return visible == true
+end
+
+function Rig:loadDebugSphereVisibility()
+	self.debugSphereVisibility = self.debugSphereVisibility or {}
+	for _, def in ipairs(IK_DEBUG_SPHERE_DEFS) do
+		local value = getParameter({self.rigId, "debug_sphere_" .. def.key})
+		self.debugSphereVisibility[def.key] = (value ~= false)
+	end
+end
+
+function Rig:applyDebugSphereVisibility(key)
+	if self.debugVisualizers == nil then return end
+	local visible = self:isDebugSphereVisible(key)
+	for _, side in pairs(self.debugVisualizers) do
+		local comp = side and side[key] or nil
+		if comp ~= nil then
+			comp:SetVisibility(visible, true)
+			comp:SetHiddenInGame(not visible, true)
 		end
 	end
-	if self.rightJointTargetVisualizer == nil then
-		self.rightJointTargetVisualizer = uevrUtils.createStaticMeshComponent("StaticMesh /Engine/EngineMeshes/Sphere.Sphere")
-		if self.rightJointTargetVisualizer ~= nil then
-			self.rightJointTargetVisualizer:SetVisibility(false,true)
-			self.rightJointTargetVisualizer:SetVisibility(true,true)
-			self.rightJointTargetVisualizer:SetHiddenInGame(true,true)
-			self.rightJointTargetVisualizer:SetHiddenInGame(false,true)
-			local scale = 0.05
-			uevrUtils.set_component_relative_transform(self.rightJointTargetVisualizer, nil, nil, {X=scale, Y=scale, Z=scale})
+end
+
+function Rig:applyAllDebugSphereVisibility()
+	for _, def in ipairs(IK_DEBUG_SPHERE_DEFS) do
+		self:applyDebugSphereVisibility(def.key)
+	end
+end
+
+function Rig:setDebugSphereVisible(key, visible)
+	self.debugSphereVisibility = self.debugSphereVisibility or {}
+	self.debugSphereVisibility[key] = (visible == true)
+	self:applyDebugSphereVisibility(key)
+end
+
+function Rig:destroyDebugMeshes()
+	if self.debugVisualizers == nil then
+		-- Legacy fields from older builds.
+		if self.leftJointTargetVisualizer ~= nil then
+			uevrUtils.destroyComponent(self.leftJointTargetVisualizer, true, true)
+			self.leftJointTargetVisualizer = nil
 		end
+		if self.rightJointTargetVisualizer ~= nil then
+			uevrUtils.destroyComponent(self.rightJointTargetVisualizer, true, true)
+			self.rightJointTargetVisualizer = nil
+		end
+		return
+	end
+	for _, side in pairs(self.debugVisualizers) do
+		if side ~= nil then
+			for _, comp in pairs(side) do
+				if comp ~= nil then
+					uevrUtils.destroyComponent(comp, true, true)
+				end
+			end
+		end
+	end
+	self.debugVisualizers = nil
+	self.leftJointTargetVisualizer = nil
+	self.rightJointTargetVisualizer = nil
+end
+
+function Rig:createDebugMeshes()
+	self:loadDebugSphereVisibility()
+	-- Always rebuild so scale/shape changes apply after reload.
+	self:destroyDebugMeshes()
+	self.debugVisualizers = { left = {}, right = {} }
+	for _, sideName in ipairs({ "left", "right" }) do
+		local side = self.debugVisualizers[sideName]
+		for _, def in ipairs(IK_DEBUG_SPHERE_DEFS) do
+			side[def.key] = createIkDebugSphere(def.scale)
+		end
+	end
+	-- Keep legacy aliases pointing at jointTarget so old code paths still work.
+	self.leftJointTargetVisualizer = self.debugVisualizers.left.jointTarget
+	self.rightJointTargetVisualizer = self.debugVisualizers.right.jointTarget
+	self:applyAllDebugSphereVisibility()
+
+	M.print("IK debug spheres enabled (largest→smallest):")
+	M.print("  jointTarget  - TwoBoneIK pole/joint target. Erratic => getMeshOutward / getJointTarget")
+	M.print("  effector     - hand target. Erratic => controller / effector path")
+	M.print("  solvedElbow  - IK solved elbow pos. Erratic while jointTarget calm => TwoBoneIK singularity")
+	M.print("  solvedEnd    - IK solved wrist pos. Erratic => reach/stretch / effector mismatch")
+	M.print("  desiredPole  - tip at solved elbow + outward. Erratic => pole/outward direction (twist reference)")
+	M.print("  boneElbow    - actual joint bone after rotateElbow. Erratic while solvedElbow calm => rotateShoulder/Elbow write")
+	M.print("  boneTwist    - tip on joint bone pole axis. Orbits while boneElbow calm => alignBoneAxisToDirCS elbow twist")
+	M.print("  forearmTwist - tip on first twist bone. Orbits while boneTwist calm => twistForearm")
+end
+
+function Rig:setDebugVisualizerLocation(hand, key, location)
+	if self.debugVisualizers == nil or location == nil then return end
+	if not self:isDebugSphereVisible(key) then return end
+	local side = (hand == Handed.Left) and self.debugVisualizers.left or self.debugVisualizers.right
+	local comp = side and side[key] or nil
+	if comp ~= nil then
+		comp:K2_SetWorldLocation(location, false, reusable_hit_result, false)
 	end
 end
 
@@ -1222,15 +1389,15 @@ function Rig:setRigParameter(paramName, value)
 		if value == true then
 			self:createDebugMeshes()
 		else
-			if self.leftJointTargetVisualizer ~= nil then
-				uevrUtils.destroyComponent(self.leftJointTargetVisualizer, true, true)
-				self.leftJointTargetVisualizer = nil
-			end
-			if self.rightJointTargetVisualizer ~= nil then
-				uevrUtils.destroyComponent(self.rightJointTargetVisualizer, true, true)
-				self.rightJointTargetVisualizer = nil
-			end
+			self:destroyDebugMeshes()
 		end
+		return
+	end
+
+	if type(paramName) == "string" and string.sub(paramName, 1, 13) == "debug_sphere_" then
+		local key = string.sub(paramName, 14)
+		self:setDebugSphereVisible(key, value == true)
+		return
 	end
 
     if paramName == "mesh_location_offset" then
@@ -1305,6 +1472,11 @@ local keyMap = {
 	forearm_twist_max = "forearmTwistMax",
     smoothing = "smoothing",
     rot_smoothing = "rotSmoothing",
+	enhanced_stability = "enhancedStability",
+	pole_proj_min_len = "poleProjMinLen",
+	use_hemisphere_lock = "useHemisphereLock",
+	max_twist_delta_deg = "maxTwistDeltaDeg",
+	shoulder_swing_only = "shoulderSwingOnly",
     end_control_type = "hand",
     twist_bones = "twistBones",
 	incremental_forearm_twist = "incrementalForearmTwist",
@@ -1366,6 +1538,8 @@ function Rig:setSolverParameter(solverId, paramName, value)
 				active.state.lastForearmTwistDegApplied = nil
 				active.state.lastForearmTwistHandRotCS = nil
 				active.state.lastForearmTwistArmRotCS = nil
+			elseif runtimeKey == "enhancedStability" and active.state ~= nil then
+				active.state._enhancedStabilityStubLogged = nil
 			end
 		end
 	end
@@ -1474,14 +1648,7 @@ function M.destroy(instance, skipUnregister)
 			instance.springArmList = nil
 		end
 
-		if instance.leftJointTargetVisualizer ~= nil then
-			uevrUtils.destroyComponent(instance.leftJointTargetVisualizer, true, true)
-			instance.leftJointTargetVisualizer = nil
-		end
-		if instance.rightJointTargetVisualizer ~= nil then
-			uevrUtils.destroyComponent(instance.rightJointTargetVisualizer, true, true)
-			instance.rightJointTargetVisualizer = nil
-		end
+		instance:destroyDebugMeshes()
 
 		if uevrUtils.unregisterPreEngineTickCallback then
 			uevrUtils.unregisterPreEngineTickCallback(instance.tickFn)
@@ -1491,16 +1658,25 @@ function M.destroy(instance, skipUnregister)
 		end
 
 		if uevrUtils.unregisterUEVRCallback then
-			pcall(function()
+			local ok, err = pcall(function()
 				uevrUtils.unregisterUEVRCallback("preEngineTick", instance.tickFn)
 				uevrUtils.unregisterUEVRCallback("postEngineTick", instance.tickFn)
 			end)
+			if not ok then
+				M.print("Error unregistering UEVR callback: " .. err)
+			end
 		end
 
 		if uevrUtils.unregisterUEVRCallback then
-			pcall(function() uevrUtils.unregisterUEVRCallback("on_ik_config_param_change", instance.liveUpdateFn) end)
+			local ok, err = pcall(function() uevrUtils.unregisterUEVRCallback("on_ik_config_param_change", instance.liveUpdateFn) end)
+			if not ok then
+				M.print("Error unregistering UEVR callback: " .. err)
+			end
 		end
-		pcall(function() uevrUtils.clearInterval(instance.hideIntervalTimer) end)
+		local ok, err = pcall(function() uevrUtils.clearInterval(instance.hideIntervalTimer) end)
+		if not ok then
+			M.print("Error clearing interval: " .. err)
+		end
 
 		instance.tickFn = nil
 		instance.hideIntervalTimer = nil
@@ -1751,6 +1927,95 @@ local function alignBoneAxisToDirCS(mesh, boneName, childBoneName, desiredDirCS,
 end
 alignBoneAxisToDirCS = uevrUtils.profiler:wrap("alignBoneAxisToDirCS", alignBoneAxisToDirCS)
 
+-- Enhanced Stability only. Never called unless solver enhanced_stability is true.
+-- Keep completely separate from alignBoneAxisToDirCS so the default path cannot change.
+local function alignBoneAxisToDirCSEnhanced(mesh, boneName, childBoneName, desiredDirCS, axisChoice, poleCS, state, es)
+	local vectorLengthLessThan = mathLib.vectorLengthLessThan
+	local vectorDot = mathLib.vectorDot
+	local vectorCross = mathLib.vectorCross
+	local projectVectorOnToPlane = ProjectVectorOnToPlane
+	local currentRot = mesh:GetBoneRotationByName(boneName, EBoneSpaces.ComponentSpace)
+	if currentRot == nil then return nil end
+
+	local currentDir = (childBoneName ~= nil) and getBoneDirCS(mesh, boneName, childBoneName) or nil
+	if currentDir == nil and axisChoice ~= nil then
+		local axisVec = axisVectorFromRotator(currentRot, axisChoice.axis or "X")
+		currentDir = axisVec and safeNormalize(mulVec(axisVec, axisChoice.sign or 1)) or nil
+	end
+	if currentDir == nil or vectorLengthLessThan(currentDir, 0.0001) then return currentRot end
+	local desiredDir = safeNormalize(desiredDirCS)
+	if desiredDir == nil or vectorLengthLessThan(desiredDir, 0.0001) then return currentRot end
+
+	local dot = vectorDot(currentDir, desiredDir) or 1.0
+	dot = kismet_math_library:FClamp(dot, -1.0, 1.0)
+	local swingAngleDeg = math.deg(math.acos(dot))
+	if swingAngleDeg == nil then return currentRot end
+
+	local swingAxis = vectorCross(currentDir, desiredDir)
+	if vectorLengthLessThan(swingAxis, 0.0001) then
+		local pole = safeNormalize(poleCS)
+		if pole == nil or vectorLengthLessThan(pole, 0.0001) then pole = VEC_UNIT_Y end
+		swingAxis = vectorCross(currentDir, pole)
+	end
+	swingAxis = safeNormalize(swingAxis)
+	if swingAxis == nil or vectorLengthLessThan(swingAxis, 0.0001) then return currentRot end
+	local effectiveSwingAngleDeg = math.max(0.0, swingAngleDeg - ALIGN_SWING_DEADBAND_DEG)
+	if effectiveSwingAngleDeg < IK_MIN_SWING_DEG then return currentRot end
+	local deltaSwing = mathLib.rotatorFromAxisAndAngle(swingAxis, effectiveSwingAngleDeg)
+	local swingRot = composeSwingWithCachedOrder(state, currentDir, currentRot, desiredDir, deltaSwing)
+
+	local poleAxisChoice = axisChoice and axisChoice.pole or nil
+	if poleAxisChoice == nil then return swingRot end
+	local poleAxisChar = poleAxisChoice.axis
+	local poleAxisSign = poleAxisChoice.sign or 1
+
+	local rawDesiredPole = projectVectorOnToPlane(poleCS, desiredDir)
+	local rawDesiredPoleLen = (rawDesiredPole ~= nil) and vsize(rawDesiredPole) or 0.0
+	local poleMinLen = (es and es.poleProjMinLen) or 0.30
+	local useHemisphereLock = es == nil or es.useHemisphereLock ~= false
+	local maxTwistDeltaDeg = (es and es.maxTwistDeltaDeg) or 10.0
+
+	-- Strong readings: trust the fresh projection (flipping to lastDesiredPole caused sticky 180° twist).
+	-- Weak/collapsed readings: hold last good pole or skip twist.
+	local desiredPole = nil
+	if rawDesiredPoleLen < poleMinLen then
+		if useHemisphereLock and state ~= nil and state.lastDesiredPole ~= nil and mathLib.vectorLengthGreaterThan(state.lastDesiredPole, 0.0001) then
+			desiredPole = state.lastDesiredPole
+		else
+			return swingRot
+		end
+	else
+		desiredPole = rawDesiredPole * (1.0 / rawDesiredPoleLen)
+		if state ~= nil then state.lastDesiredPole = desiredPole end
+	end
+
+	local poleAxisVec = axisVectorFromRotator(swingRot, poleAxisChar)
+	if poleAxisVec == nil then return swingRot end
+	local rawCurrentPole = projectVectorOnToPlane(mulVec(poleAxisVec, poleAxisSign), desiredDir)
+	local rawCurrentPoleLen = (rawCurrentPole ~= nil) and vsize(rawCurrentPole) or 0.0
+
+	local currentPole = nil
+	if rawCurrentPoleLen < poleMinLen then
+		if useHemisphereLock and state ~= nil and state.lastCurrentPole ~= nil and mathLib.vectorLengthGreaterThan(state.lastCurrentPole, 0.0001) then
+			currentPole = state.lastCurrentPole
+		else
+			return swingRot
+		end
+	else
+		currentPole = rawCurrentPole * (1.0 / rawCurrentPoleLen)
+		if state ~= nil then state.lastCurrentPole = currentPole end
+	end
+
+	local twistAngleDeg = mathLib.signedAngleDegAroundAxis(currentPole, desiredPole, desiredDir)
+	if twistAngleDeg == nil or math.abs(twistAngleDeg) < IK_MIN_TWIST_DEG then return swingRot end
+	if math.abs(twistAngleDeg) > maxTwistDeltaDeg then
+		twistAngleDeg = (twistAngleDeg >= 0.0) and maxTwistDeltaDeg or -maxTwistDeltaDeg
+	end
+
+	local deltaTwist = mathLib.rotatorFromAxisAndAngle(desiredDir, twistAngleDeg)
+	return composeTwistWithCachedOrder(state, swingRot, deltaTwist, desiredDir, desiredPole, poleAxisChar, poleAxisSign)
+end
+
 safeNormalize = function(v)
 	return mathLib.vectorSafeNormalize(v)
 	-- if v == nil then return uevrUtils.vector(0,0,0) end
@@ -1896,11 +2161,11 @@ function Rig:solveTwoBone(solverParams)
 	--------------------------------------------------------------
 	local jointTargetWS = self:getJointTarget(shoulderWS, jointWS, endWS, shoulderToHandVector, shoulderToHandLen, outwardWS, state)
 	--local jointTargetWS = self:calculateProceduralJointTarget(shoulderWS, jointWS, endWS, 20, outwardWS, state)
-	if solverParams.hand == Handed.Left and self.leftJointTargetVisualizer ~= nil then
-		self.leftJointTargetVisualizer:K2_SetWorldLocation(jointTargetWS, false, reusable_hit_result, false)
-	end
-	if solverParams.hand == Handed.Right and self.rightJointTargetVisualizer ~= nil then
-		self.rightJointTargetVisualizer:K2_SetWorldLocation(jointTargetWS, false, reusable_hit_result, false)
+	local debugHand = solverParams.hand
+	local debugEnabled = self.showDebugMeshes == true and self.debugVisualizers ~= nil
+	if debugEnabled then
+		self:setDebugVisualizerLocation(debugHand, "effector", effectorWS)
+		self:setDebugVisualizerLocation(debugHand, "jointTarget", jointTargetWS)
 	end
     --------------------------------------------------------------
     -- 5. Run IK solver
@@ -1915,6 +2180,14 @@ function Rig:solveTwoBone(solverParams)
         outJointWS, outEndWS,
         allowStretch, startStretchRatio, maxStretchScale
     )
+
+	if debugEnabled then
+		self:setDebugVisualizerLocation(debugHand, "solvedElbow", outJointWS)
+		self:setDebugVisualizerLocation(debugHand, "solvedEnd", outEndWS)
+		-- Desired Pole: tip along outward from the solved elbow (pole/twist reference direction).
+		-- Distinct from Joint Target, which is the TwoBoneIK target point.
+		self:setDebugVisualizerLocation(debugHand, "desiredPole", makeDebugPoleTipWS(outJointWS, outwardWS))
+	end
 
     --------------------------------------------------------------
     -- 6. Reconstruct rotations from solved positions
@@ -1955,6 +2228,14 @@ function Rig:solveTwoBone(solverParams)
 		state.smPoleCS = poleCS
 	end
 
+	-- Opt-in per-solver mitigations (off by default so other games/arms are unchanged).
+	self:applyEnhancedStability(solverParams, state, {
+		upperDirCS = upperDirCS,
+		lowerDirCS = lowerDirCS,
+		poleCS = poleCS,
+		outwardWS = outwardWS,
+	})
+
 	-- Cache shoulder pole axis selection once.
 	local axisShoulder = self:getShoulderPoleAxis(mesh, RootBoneFName, JointBoneFName, EndBoneFName, solverParams, state)
 
@@ -1970,6 +2251,22 @@ function Rig:solveTwoBone(solverParams)
 			self:rotateShoulder(meshList, RootBoneFName, JointBoneFName, upperDirCS, axisShoulder, poleCS, state, smoothing)
 			local elbowRotCS = self:rotateElbow(meshList, JointBoneFName, EndBoneFName, lowerDirCS, axisJoint, poleCS, state, smoothing)
 
+			if debugEnabled then
+				local boneElbowWS = mesh:GetBoneLocationByName(JointBoneFName, EBoneSpaces.WorldSpace)
+				self:setDebugVisualizerLocation(debugHand, "boneElbow", boneElbowWS)
+				local boneElbowRotWS = mesh:GetBoneRotationByName(JointBoneFName, EBoneSpaces.WorldSpace)
+				local poleChoice = axisJoint and axisJoint.pole or nil
+				if boneElbowWS ~= nil and boneElbowRotWS ~= nil and poleChoice ~= nil and poleChoice.axis ~= nil then
+					local poleAxisWS = axisVectorFromRotator(boneElbowRotWS, poleChoice.axis)
+					if poleAxisWS ~= nil then
+						local sign = poleChoice.sign or 1
+						self:setDebugVisualizerLocation(debugHand, "boneTwist", boneElbowWS + (poleAxisWS * (sign * IK_DEBUG_POLE_TIP_DIST)))
+					end
+				elseif boneElbowWS ~= nil then
+					self:setDebugVisualizerLocation(debugHand, "boneTwist", boneElbowWS)
+				end
+			end
+
 			--------------------------------------------------------------
 			-- 9. Apply controller rotation to hand/wrist bone 
 			--------------------------------------------------------------
@@ -1979,10 +2276,93 @@ function Rig:solveTwoBone(solverParams)
 			-- 10. Twist the forearm bones based on the hand/wrist rotation
 			--------------------------------------------------------------
 			self:twistForearm(meshList, lowerDirCS, elbowRotCS, finalHandRotCS, twistBones, forearmTwistMax, wristTwistMax, state, solverParams.incrementalForearmTwist)
+
+			if debugEnabled then
+				local placedForearmTwist = false
+				if twistBones ~= nil and twistBones[1] ~= nil then
+					local entry = twistBones[1]
+					local twistBoneFName = entry._fname
+					if twistBoneFName == nil and entry.bone ~= nil then
+						twistBoneFName = uevrUtils.fname_from_string(entry.bone)
+						entry._fname = twistBoneFName
+					end
+					if twistBoneFName ~= nil then
+						local twistBoneWS = mesh:GetBoneLocationByName(twistBoneFName, EBoneSpaces.WorldSpace)
+						local twistBoneRotWS = mesh:GetBoneRotationByName(twistBoneFName, EBoneSpaces.WorldSpace)
+						if twistBoneWS ~= nil and twistBoneRotWS ~= nil then
+							-- Radial tip in the plane perpendicular to the forearm so roll orbits the marker.
+							-- Do not use raw bone +X: left/right twist bones are often mirrored, which
+							-- previously parked this sphere at the fingertips on one side only.
+							local tubeDir = lowerDirWS
+							local tipDirWS = nil
+							if tubeDir ~= nil and (vsize(tubeDir) or 0.0) > 0.0001 then
+								for _, axisChar in ipairs({ "Y", "Z", "X" }) do
+									local axisWS = axisVectorFromRotator(twistBoneRotWS, axisChar)
+									local radial = (axisWS ~= nil) and ProjectVectorOnToPlane(axisWS, tubeDir) or nil
+									local radialLen = (radial ~= nil) and (vsize(radial) or 0.0) or 0.0
+									if radialLen >= 0.0001 then
+										tipDirWS = radial * (1.0 / radialLen)
+										break
+									end
+								end
+							end
+							if tipDirWS ~= nil then
+								self:setDebugVisualizerLocation(debugHand, "forearmTwist", twistBoneWS + (tipDirWS * IK_DEBUG_POLE_TIP_DIST))
+							else
+								self:setDebugVisualizerLocation(debugHand, "forearmTwist", twistBoneWS)
+							end
+							placedForearmTwist = true
+						end
+					end
+				end
+				-- No twist bones configured: park on solved elbow so it doesn't sit at world origin.
+				if not placedForearmTwist then
+					self:setDebugVisualizerLocation(debugHand, "forearmTwist", outJointWS)
+				end
+			end
 --		end
 --	end
 end
 Rig.solveTwoBone = uevrUtils.profiler:wrap("solveTwoBone", Rig.solveTwoBone)
+
+-- Per-solver opt-in hook for twist/singularity mitigations.
+-- Default off: existing games and solvers keep current behavior.
+function Rig:applyEnhancedStability(solverParams, state, context)
+	if state == nil then return end
+	if solverParams == nil or solverParams.enhancedStability ~= true then
+		state.enhancedStabilityAlign = nil
+		return
+	end
+
+	-- Best-guess mitigations for post-solve twist spin (targets/pole stable, bone writes wild).
+	-- Values come from solver config (Enhanced Stability group); defaults match the original guesses.
+	local poleProjMinLen = solverParams.poleProjMinLen
+	if poleProjMinLen == nil then poleProjMinLen = 0.30 end
+	local useHemisphereLock = solverParams.useHemisphereLock
+	if useHemisphereLock == nil then useHemisphereLock = true end
+	local maxTwistDeltaDeg = solverParams.maxTwistDeltaDeg
+	if maxTwistDeltaDeg == nil then maxTwistDeltaDeg = 12.0 end
+	state.enhancedStabilityAlign = {
+		poleProjMinLen = poleProjMinLen,
+		useHemisphereLock = useHemisphereLock,
+		maxTwistDeltaDeg = maxTwistDeltaDeg,
+		shoulderSwingOnly = solverParams.shoulderSwingOnly == true,
+	}
+
+	if state._enhancedStabilityStubLogged ~= true then
+		state._enhancedStabilityStubLogged = true
+		-- Drop any sticky pole hemispheres from before enhanced mode.
+		state.lastDesiredPoleShoulder = nil
+		state.lastCurrentPoleShoulder = nil
+		state.lastDesiredPoleElbow = nil
+		state.lastCurrentPoleElbow = nil
+		local handLabel = (solverParams.hand == Handed.Left and "Left")
+			or (solverParams.hand == Handed.Right and "Right")
+			or tostring(solverParams.hand)
+		M.print("Enhanced Stability active (" .. handLabel .. " solver): singularity freeze, twist clamp", LogLevel.Info)
+	end
+end
+Rig.applyEnhancedStability = uevrUtils.profiler:wrap("applyEnhancedStability", Rig.applyEnhancedStability)
 
 -- Only gets called a few times because result is cached normally
 function Rig:calculateJointTargetForwardDistance(shoulderWS, jointWS, endWS, state)
@@ -2240,7 +2620,15 @@ function Rig:rotateShoulder(meshList, RootBone, JointBone, upperDirCS, axisShoul
 		end
 	end
 
-	local ShoulderCompRot = alignBoneAxisToDirCS(meshList[1], RootBone, JointBone, upperDirCS, axisShoulder, poleCS, shoulderAlignState)
+	local ShoulderCompRot
+	local es = state and state.enhancedStabilityAlign or nil
+	if es ~= nil then
+		-- Opt-in path only. Default solvers never enter here.
+		local axisForAlign = (es.shoulderSwingOnly == true) and {} or axisShoulder
+		ShoulderCompRot = alignBoneAxisToDirCSEnhanced(meshList[1], RootBone, JointBone, upperDirCS, axisForAlign, poleCS, shoulderAlignState, es)
+	else
+		ShoulderCompRot = alignBoneAxisToDirCS(meshList[1], RootBone, JointBone, upperDirCS, axisShoulder, poleCS, shoulderAlignState)
+	end
 	state.composeOrderSwingShoulder = shoulderAlignState.composeOrderSwing
 	state.composeOrderTwistShoulder = shoulderAlignState.composeOrderTwist
 	state.lastDesiredPoleShoulder = shoulderAlignState.lastDesiredPole
@@ -2306,7 +2694,14 @@ function Rig:rotateElbow(meshList, JointBone, EndBone, lowerDirCS, axisJoint, po
 		end
 	end
 
-	local elbowRotCS = alignBoneAxisToDirCS(meshList[1], JointBone, EndBone, lowerDirCS, axisJoint, poleCS, elbowAlignState)
+	local elbowRotCS
+	local es = state and state.enhancedStabilityAlign or nil
+	if es ~= nil then
+		-- Opt-in path only. Default solvers never enter here.
+		elbowRotCS = alignBoneAxisToDirCSEnhanced(meshList[1], JointBone, EndBone, lowerDirCS, axisJoint, poleCS, elbowAlignState, es)
+	else
+		elbowRotCS = alignBoneAxisToDirCS(meshList[1], JointBone, EndBone, lowerDirCS, axisJoint, poleCS, elbowAlignState)
+	end
 	--_dbg_ik_align_label = nil
 	state.composeOrderSwingElbow = elbowAlignState.composeOrderSwing
 	state.composeOrderTwistElbow = elbowAlignState.composeOrderTwist
@@ -2782,6 +3177,11 @@ function Rig:setActive(solverId, value)
 				incrementalForearmTwist = solverParams["incremental_forearm_twist"] or false,
 				smoothing = solverParams["smoothing"] or 0.0,
 				rotSmoothing = solverParams["rot_smoothing"] or 0.85,
+				enhancedStability = solverParams["enhanced_stability"] or false,
+				poleProjMinLen = solverParams["pole_proj_min_len"],
+				useHemisphereLock = solverParams["use_hemisphere_lock"],
+				maxTwistDeltaDeg = solverParams["max_twist_delta_deg"],
+				shoulderSwingOnly = solverParams["shoulder_swing_only"] or false,
 				endBoneLockPitch = solverParams["end_bone_lock_pitch"] or false,
 				endBoneLockYaw = solverParams["end_bone_lock_yaw"] or false,
 				endBoneLockRoll = solverParams["end_bone_lock_roll"] or false,

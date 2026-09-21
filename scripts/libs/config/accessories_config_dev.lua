@@ -957,9 +957,12 @@ end
 local function refreshReplicationDropdownUI(attachmentID, prefix)
     local labels, values = buildExistingGuidDropdown()
     accessoriesMap[attachmentID]["replicationExistingGuidValues"] = values
-    pcall(function()
+    local ok, err = pcall(function()
         configui.setSelections(prefix .. "accessory_existing_guid", labels)
     end)
+    if not ok then
+        M.print("Error refreshing replication dropdown UI: " .. err)
+    end
 end
 
 local function ensureAccessoryInPickerList(attachmentID, prefix, guid)
