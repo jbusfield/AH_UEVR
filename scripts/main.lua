@@ -14,10 +14,13 @@ local remap = require('libs/remap')
 local gestures = require('libs/gestures')
 local gunstock = require('libs/gunstock')
 local collision = require('libs/collision')
+local plugin = require('libs/core/plugin')
 local ik = require('libs/ik')
 ik.setInitialTransformOnAnimationCompleteEnabled(false)
+local melee = require('helpers/melee')
 
--- uevrUtils.setLogLevel(LogLevel.Debug)
+uevrUtils.setLogLevel(LogLevel.Debug)
+melee.setLogLevel(LogLevel.Debug)
 -- reticule.setLogLevel(LogLevel.Debug)
 -- input.setLogLevel(LogLevel.Debug)
 -- attachments.setLogLevel(LogLevel.Debug)
@@ -29,7 +32,7 @@ ik.setInitialTransformOnAnimationCompleteEnabled(false)
 -- ik.setLogLevel(LogLevel.Debug)
 
 -- uncomment the next line to see the full developer UI
---uevrUtils.setDeveloperMode(true)
+uevrUtils.setDeveloperMode(true)
 --hands.enableConfigurationTool()
 
 ui.init()
@@ -260,15 +263,19 @@ attachments.registerOnGripUpdateCallback(function()
 	end
 end)
 
-attachments.registerAttachmentChangeCallback(function()
+attachments.registerAttachmentChangeCallback(function(id, gripHand, attachment)
 	local currentWeapon = pawn:GetCurrentWeapon()
 	-- Shved shaft is a child mesh the game clears on VR attach; restore it and unhide the weapon.
 	if currentWeapon ~= nil and currentWeapon.RootComponent ~= nil then
 		currentWeapon.RootComponent:SetVisibility(true, true)
-		if currentWeapon.SK_Shved_Handle ~= nil and currentWeapon.SK_Shved_Handle.SkeletalMesh == nil then
-			local handleMesh = uevrUtils.find_required_object("SkeletalMesh /Game/Development/Weapons/Shved/SK_Shved_Handle.SK_Shved_Handle")
-			if handleMesh ~= nil then currentWeapon.SK_Shved_Handle:SetSkeletalMesh(handleMesh) end
-		end
+		-- if currentWeapon.SK_Shved_Handle ~= nil and currentWeapon.SK_Shved_Handle.SkeletalMesh == nil and status.shvedHasHandleMesh ~= false then
+		-- 	local handleMesh = uevrUtils.find_required_object("SkeletalMesh /Game/Development/Weapons/Shved/SK_Shved_Handle.SK_Shved_Handle")
+		-- 	if handleMesh ~= nil then 
+		-- 		currentWeapon.SK_Shved_Handle:SetSkeletalMesh(handleMesh)
+		-- 	else
+		-- 		status.shvedHasHandleMesh = false
+		-- 	end
+		-- end
 	end
 	--fixes plasma gun beam FX not hiding properly on activation
 	if currentWeapon.BaseWeaponAttack ~= nil and currentWeapon.BaseWeaponAttack.BeamCenter ~= nil then
@@ -278,9 +285,18 @@ attachments.registerAttachmentChangeCallback(function()
 		currentWeapon.BaseWeaponAttack.ChargingProjectileFX:SetVisibility(false, false)
 	end
 
+	-- local isMeleeWeapon = (attachment ~= nil and attachments.isActiveAttachmentMelee(gripHand))
+	-- if isMeleeWeapon then
+	-- 	attachment:SetCollisionEnabled(ECollisionEnabled.QueryAndPhysics)
+	-- 	attachment:SetCollisionResponseToAllChannels(ECollisionResponse.Ignore)
+	-- 	attachment:SetCollisionResponseToChannel(0, ECollisionResponse.Block)
+	-- 	attachment:SetCollisionResponseToChannel(1, ECollisionResponse.Block)
+	-- 	attachment:SetCollisionResponseToChannel(5, ECollisionResponse.Block)
+	-- 	attachment:SetCollisionResponseToChannel(6, ECollisionResponse.Block)
+	-- end
+
 	-- Reduces processing when no melee weapon is equipped
-	gestures.autoDetectGesture(gestures.Gesture.SWIPE_RIGHT, attachments.isActiveAttachmentMelee(Handed.Right))
-	gestures.autoDetectGesture(gestures.Gesture.SWIPE_LEFT, attachments.isActiveAttachmentMelee(Handed.Right))
+	gestures.autoDetectGesture(gestures.Gesture.SWING, attachments.isActiveAttachmentMelee(Handed.Right))
 end)
 
 local function isPlayerPlaying()
@@ -358,6 +374,7 @@ setInterval(1000, function()
 end)
 
 local function cleanup()
+	melee.reset()
     status = {}
 end
 
@@ -460,57 +477,27 @@ end)
 -- 	BP_Shved_Limbo_C_SK_Shved_Limbo_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"},
 -- 	BP_Gromoverzhec_C_SK_Gromoverzec_Base02 = {"AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_01", "AM_PlayerCharacterHands_Gromoverzec_SimpleAttack_02"},
 -- }
-local function animateMelee(direction) -- 0-left, 1-right
-	--print("Animating melee in direction:", direction)
-	if attachments.isActiveAttachmentMelee(Handed.Right) == true then
-		--print("Melee attack started")
+local function animateMelee()
+	local activeMelee = attachments.isActiveAttachmentMelee(Handed.Right) == true
+	local id = attachments.getActiveAttachmentID(Handed.Right)
+	if activeMelee then
 		input.setAimMethod(input.AimMethod.RIGHT_WEAPON)
 		local offset = attachments.getActiveAttachmentMeleeRotationOffset(Handed.Right)
 		input.setAimRotationOffset(offset) --adjust reticule during melee to match the melee weapon head
-		setMeleeAnimRate(meleePlayRate)
-		uevr.api:get_player_controller(0):EquippedItemPrimaryInputPressed(1.0) -- Trigger melee attack
+		melee.animateMelee(id)
 
-		local id = attachments.getActiveAttachmentID(Handed.Right)
 		if id == "BP_Klusha_C_SK_Klusha_Handle01" then
-	 		status.updateAttachmentTransform = true
+			status.updateAttachmentTransform = true
 		end
-		--moved to setMeleeAnimRate function and now using the game animations directly
-		--because when we used our own the first use didnt cause damage
-		-- local id = attachments.getActiveAttachmentID(Handed.Right)
-		-- if id ~= nil and weaponMontages[id] ~= nil and weaponMontages[id][direction + 1] ~= nil then
-		-- 	local animName = weaponMontages[id][direction + 1]
-		-- 	if id == "BP_Klusha_C_SK_Klusha_Handle01" then
-		-- 		status.updateAttachmentTransform = true
-		-- 		if status.montageCheck == nil then
-		-- 			status.montageExtension = ""
-		-- 			status.montageCheck = true
-		-- 			local className = montage.getMontageClassName(animName)
-		-- 			if className ~= nil then
-		-- 				if uevrUtils.get_class(className) == nil then
-		-- 					status.montageExtension = "_DLC4"
-		-- 				end
-		-- 			end
-		-- 		end
-		-- 		animName = animName .. status.montageExtension
-		-- 	end
-
-		-- 	uevrUtils.print("Animating melee with animation: " .. animName)
-		-- 	montage.playMontage(animName, 5.0) -- set speed to 5.0 to make it more responsive
-		-- else
-		-- 	uevrUtils.print("No melee animation found for attachment ID: " .. id)
-		-- end
-		uevrUtils.updateDeferral("melee_attack")
 	end
 end
 
-gestures.registerSwipeRightCallback(function()
-	--print("Swipe Right detected")
-	animateMelee(1)
+gestures.registerSwingBeginCallback(function()
+	animateMelee()
 end)
 
-gestures.registerSwipeLeftCallback(function()
-	--print("Swipe Left detected")
-	animateMelee(0)
+gestures.registerSwingEndCallback(function()
+	melee.closeMeleeWindow()
 end)
 
 local function handleVehicle(montageName)
@@ -544,6 +531,7 @@ local function resetAttachment()
 end
 
 function on_montage_change(montageObject, montageName)
+	melee.observeMontage(montageObject)
 	handleVehicle(montageName)
 
 	--fixes a bug in the game
@@ -803,7 +791,7 @@ function on_post_engine_tick(engine, delta)
 end
 
 function on_pre_engine_tick(engine, delta)
-	if pawn ~= nil then
+	if pawn ~= nil and pawn.EnablePaniniProjection ~= nil then
 		--Fixes issue with a DLC PM pistol animating incorectly
 		pawn:EnablePaniniProjection(false)
 	end
@@ -854,7 +842,6 @@ hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEStop", true, nil,
 		end)
 	end
 , true)
-
 
 -- Initial left hand transforms used to reset Charles animations in IK module
 uccInitialBoneTransforms = {

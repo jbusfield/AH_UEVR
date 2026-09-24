@@ -78,6 +78,17 @@ Swipe / Snatch settings (fast hand motion — what each value means for your arm
 		Ignores hand motion when your view/yaw jumps this much (e.g. snap turn).
 		Higher = tolerate bigger yaw jumps without canceling; lower = treat smaller turns as "not a swipe".
 
+Swing settings (continuous fast hand motion — begin when above speed, end when below)
+	minThresholdSpeed
+		How fast your hand must move before a swing begins.
+		Higher = ignore slow waves; lower = easier to start a swing.
+
+	maxThresholdSpeed
+		Caps how hard a swing feels for strength (0-1). Does not block detection.
+
+	snapTurnYawThreshold
+		Cancels an active swing (and ignores motion) when view yaw jumps this much.
+
 Wrist flick settings (quick wand/controller orientation snap — not arm translation)
 	minThresholdAngleSpeed
 		How fast the controller tip must rotate (deg/s) before a flick counts.
@@ -129,6 +140,7 @@ M.Gesture =
 	PUSH_TWO_HANDED = 22,
 	FLICK = 23,
 	FLICK_UP = 24,
+	SWING = 25,
 }
 
 local parametersFileName = "gesture_parameters"
@@ -145,6 +157,12 @@ local parameters = {
 		directionThreshold = 0.001,    -- how strongly motion must favor one swipe axis
 		cooldownTime = 0.5,            -- seconds before another swipe can fire
 		snapTurnYawThreshold = 45.0,   -- ignore motion if view yaw jumps more than this (deg)
+	},
+	-- Continuous fast motion: begin above threshold, end when speed drops below.
+	swing = {
+		minThresholdSpeed = 180,
+		maxThresholdSpeed = 320,
+		snapTurnYawThreshold = 45.0,
 	},
 	-- Rapid tip-direction change (wrist snap). Strength from peak angular speed.
 	flick = {
@@ -346,6 +364,22 @@ local swipeDetectors = {
 	}
 }
 
+local function createSwingDetector()
+	return {
+		prevLocalPos = nil,
+		prevPawnYaw = nil,
+		active = false,
+		peakSpeed = 0,
+		minThresholdSpeed = parameters.swing.minThresholdSpeed,
+		maxThresholdSpeed = parameters.swing.maxThresholdSpeed,
+	}
+end
+
+local swingDetectors = {
+	[Handed.Left] = createSwingDetector(),
+	[Handed.Right] = createSwingDetector(),
+}
+
 local function createFlickDetector()
 	return {
 		prevForward = nil,
@@ -387,6 +421,13 @@ local function applyDetectorParameters()
 		detector.maxThresholdSpeed = swipeMax
 		detector.directionThreshold = swipeDir
 		detector.cooldownTime = swipeCooldown
+	end
+
+	local swingMin = getParam({"swing", "minThresholdSpeed"})
+	local swingMax = getParam({"swing", "maxThresholdSpeed"})
+	for _, detector in pairs(swingDetectors) do
+		detector.minThresholdSpeed = swingMin
+		detector.maxThresholdSpeed = swingMax
 	end
 
 	local flickMin = getParam({"flick", "minThresholdAngleSpeed"})
@@ -627,6 +668,58 @@ local function updateSwipeDetector(self, controllerPos, controllerRot, pawnPos, 
 	self.prevPawnYaw = pawnRot.Yaw
 
 	return isSwipeLeft, isSwipeRight, isSwipeUp, isSwipeDown, isPunch, isSnatch, swipeSpeedPercent
+end
+
+-- Continuous swing: begin when speed crosses min threshold, end when it drops below.
+local function updateSwingDetector(self, controllerPos, pawnPos, pawnRot, deltaTime)
+	local localPos = getLocalControllerPos(controllerPos, pawnPos, pawnRot)
+	local began, ended = false, false
+	local strengthPercent = 0
+
+	if not self.prevLocalPos or self.prevPawnYaw == nil then
+		self.prevLocalPos = localPos
+		self.prevPawnYaw = pawnRot.Yaw
+		return false, false, 0, self.active
+	end
+
+	local yawDeltaRaw = pawnRot.Yaw - self.prevPawnYaw
+	local yawDeltaWrapped = math.abs(((yawDeltaRaw + 180) % 360) - 180)
+	local snapTurnYawThreshold = getParam({"swing", "snapTurnYawThreshold"})
+	if yawDeltaWrapped > snapTurnYawThreshold then
+		self.prevLocalPos = localPos
+		self.prevPawnYaw = pawnRot.Yaw
+		if self.active then
+			self.active = false
+			strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+			self.peakSpeed = 0
+			return false, true, strengthPercent, false
+		end
+		self.peakSpeed = 0
+		return false, false, 0, false
+	end
+
+	local localDelta = subtract(localPos, self.prevLocalPos)
+	local speed = magnitude(localDelta) / deltaTime
+	self.prevLocalPos = localPos
+	self.prevPawnYaw = pawnRot.Yaw
+
+	if speed > self.minThresholdSpeed then
+		if not self.active then
+			self.active = true
+			self.peakSpeed = speed
+			began = true
+		elseif speed > self.peakSpeed then
+			self.peakSpeed = speed
+		end
+		strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+	elseif self.active then
+		self.active = false
+		ended = true
+		strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+		self.peakSpeed = 0
+	end
+
+	return began, ended, strengthPercent, self.active
 end
 
 -- Wrist flick: tip angular speed, peak-then-release. Up = tip · world-up at peak.
@@ -1197,6 +1290,9 @@ function M.detectGesture(id, deltaTime, hand, currentPos, currentRot, pawnPos, p
 				return hasFlick, flickStrengthPercent
 			end
 			return hasFlickUp, flickStrengthPercent
+		elseif id == M.Gesture.SWING then
+			local began, ended, strength, active = M.getSwingGestures(deltaTime, hand, currentPos, pawnPos, pawnRot)
+			return began or ended, strength, began, ended, active
 		end
 	end
 	return false
@@ -1282,6 +1378,23 @@ function M.getSwipeGestures(deltaTime, hand, currentPos, currentRot, pawnPos, pa
 	else
 		return updateSwipeDetector(swipeDetectors[hand], currentPos, currentRot, pawnPos, pawnRot, deltaTime)
 	end
+end
+
+function M.getSwingGestures(deltaTime, hand, currentPos, pawnPos, pawnRot)
+	if hand == nil then hand = Handed.Right end
+	if currentPos == nil then
+		currentPos = controllers.getControllerLocation(hand)
+	end
+	if pawnPos == nil then
+		pawnPos = controllers.getControllerLocation(2)
+	end
+	if pawnRot == nil then
+		pawnRot = controllers.getControllerRotation(2)
+	end
+	if currentPos == nil or pawnPos == nil or pawnRot == nil then
+		return false, false, 0, false
+	end
+	return updateSwingDetector(swingDetectors[hand], currentPos, pawnPos, pawnRot, deltaTime)
 end
 
 -- Lost tracking reports identity pose at (0,0,0). get_pose also needs a quat out-arg.
@@ -1558,6 +1671,16 @@ uevr.sdk.callbacks.on_pre_engine_tick(function(engine, delta)
 		if down then uevrUtils.executeUEVRCallbacks("on_gesture_swipe_down", strength, Handed.Left) end
 		if snatch then uevrUtils.executeUEVRCallbacks("on_gesture_snatch", strength, Handed.Left) end
 	end
+	if hasAutodetect(M.Gesture.SWING, Handed.Right) then
+		local began, ended, strength = M.getSwingGestures(delta, Handed.Right)
+		if began then uevrUtils.executeUEVRCallbacks("on_gesture_swing_begin", strength, Handed.Right) end
+		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", strength, Handed.Right) end
+	end
+	if hasAutodetect(M.Gesture.SWING, Handed.Left) then
+		local began, ended, strength = M.getSwingGestures(delta, Handed.Left)
+		if began then uevrUtils.executeUEVRCallbacks("on_gesture_swing_begin", strength, Handed.Left) end
+		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", strength, Handed.Left) end
+	end
 	if hasAutodetect(M.Gesture.FLICK, Handed.Right) or hasAutodetect(M.Gesture.FLICK_UP, Handed.Right) then
 		local flick, flickUp, strength = M.getFlickGestures(delta, Handed.Right)
 		if flick then uevrUtils.executeUEVRCallbacks("on_gesture_flick", strength, Handed.Right) end
@@ -1649,6 +1772,14 @@ end
 function M.registerSwipeDownCallback(callback, rightHand, leftHand)
 	registerGestureDetection(M.Gesture.SWIPE_DOWN, rightHand, leftHand)
 	uevrUtils.registerUEVRCallback("on_gesture_swipe_down", callback)
+end
+function M.registerSwingBeginCallback(callback, rightHand, leftHand)
+	registerGestureDetection(M.Gesture.SWING, rightHand, leftHand)
+	uevrUtils.registerUEVRCallback("on_gesture_swing_begin", callback)
+end
+function M.registerSwingEndCallback(callback, rightHand, leftHand)
+	registerGestureDetection(M.Gesture.SWING, rightHand, leftHand)
+	uevrUtils.registerUEVRCallback("on_gesture_swing_end", callback)
 end
 function M.registerFlickCallback(callback, rightHand, leftHand)
 	registerGestureDetection(M.Gesture.FLICK, rightHand, leftHand)

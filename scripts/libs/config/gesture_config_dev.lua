@@ -36,6 +36,11 @@ local parameterDefaults = {
 		cooldownTime = 0.5,
 		snapTurnYawThreshold = 45.0,
 	},
+	swing = {
+		minThresholdSpeed = 180,
+		maxThresholdSpeed = 320,
+		snapTurnYawThreshold = 45.0,
+	},
 	flick = {
 		minThresholdAngleSpeed = 400,
 		maxThresholdAngleSpeed = 900,
@@ -122,6 +127,12 @@ local swipeHelpLines = {
 	"Direction Threshold - How clearly the motion must favor one axis (left/right/up/down/pull-in) to pick that swipe type. Higher = stricter direction; lower = looser classification (more accidental directions).",
 	"Cooldown (sec) - How long after a swipe before another can fire. Higher = fewer rapid repeats; lower = can chain swipes sooner.",
 	"Snap Turn Yaw Threshold (deg) - Ignores hand motion when your view/yaw jumps this much (e.g. snap turn). Higher = tolerate bigger yaw jumps without canceling; lower = treat smaller turns as \"not a swipe\".",
+}
+
+local swingHelpLines = {
+	"Min Speed - How fast your hand must move before a swing begins. Higher = ignore slow waves; lower = easier to start.",
+	"Max Speed - Caps how hard a swing feels for strength (0-1). Does not block detection.",
+	"Snap Turn Yaw Threshold (deg) - Ends an active swing (and ignores motion) when view yaw jumps this much.",
 }
 
 local flickHelpLines = {
@@ -266,6 +277,19 @@ local function getConfigWidgets(m_paramManager)
 			floatWidget({"swipe", "cooldownTime"}, "Cooldown (sec)", 0.01, {0, 10}),
 			floatWidget({"swipe", "snapTurnYawThreshold"}, "Snap Turn Yaw Threshold (deg)", 0.5, {0, 180}),
 		expandArray(getGestureHelpWidgets, "swipe", swipeHelpLines),
+		{ widgetType = "tree_pop" },
+
+		{
+			widgetType = "tree_node",
+			id = widgetPrefix .. "swing_tree",
+			initialOpen = true,
+			label = "Swing"
+		},
+		expandArray(getGestureTestWidgets, "swing"),
+			floatWidget({"swing", "minThresholdSpeed"}, "Min Speed", 1, {0, 2000}),
+			floatWidget({"swing", "maxThresholdSpeed"}, "Max Speed", 1, {0, 2000}),
+			floatWidget({"swing", "snapTurnYawThreshold"}, "Snap Turn Yaw Threshold (deg)", 0.5, {0, 180}),
+		expandArray(getGestureHelpWidgets, "swing", swingHelpLines),
 		{ widgetType = "tree_pop" },
 
 		{
@@ -461,6 +485,7 @@ local GESTURE_STOP_TWO_HANDED = 20
 local GESTURE_PUSH = 21
 local GESTURE_PUSH_TWO_HANDED = 22
 local GESTURE_FLICK = 23
+local GESTURE_SWING = 25
 local MOMENTARY_ACTIVE_MS = 500
 
 local gestureTests = {}
@@ -612,6 +637,13 @@ registerGestureTest("swipe", GESTURE_SWIPE_LEFT, {
 		"on_gesture_swipe_up",
 		"on_gesture_swipe_down",
 		"on_gesture_snatch",
+	},
+})
+registerGestureTest("swing", GESTURE_SWING, {
+	momentary = true,
+	callbacks = {
+		"on_gesture_swing_begin",
+		"on_gesture_swing_end",
 	},
 })
 registerGestureTest("flick", GESTURE_FLICK, {

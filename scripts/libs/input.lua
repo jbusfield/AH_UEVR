@@ -283,6 +283,7 @@ local parameters = {
     aimMethod = M.AimMethod.UEVR,
     fixSpatialAudio = true,
 	useRootOffset = true,
+	useRootOffsetLocalZ = false,
     rootOffset = {X=0,Y=0,Z=0},
     useSnapTurn = false,
     snapAngle = 30,
@@ -1792,22 +1793,40 @@ end)
 local function getVRCameraOffsets()
 	--if bodyRotationOffset ~= nil and rootComponent ~= nil and uevrUtils.getValid(rootComponent) ~= nil and rootComponent.K2_GetComponentLocation ~= nil then
 	local rootOffset = getParameter("rootOffset")
+	local useRootOffsetLocalZ = getParameter("useRootOffsetLocalZ") or false
 	if rootOffset ~= nil then
 		if status.rootComponent ~= nil and uevrUtils.getValid(rootComponent) ~= nil and status.rootComponent.K2_GetComponentLocation ~= nil then
-			local pawnPos = uevrUtils.getComponentLocation(status.rootComponent)
-			local pawnRot = uevrUtils.getComponentRotation(status.rootComponent)
+			if not useRootOffsetLocalZ then
+				local pawnPos = uevrUtils.getComponentLocation(status.rootComponent)
+				local pawnRot = uevrUtils.getComponentRotation(status.rootComponent)
 
-			local capsuleHeight = status.rootComponent.CapsuleHalfHeight or 0
+				local capsuleHeight = status.rootComponent.CapsuleHalfHeight or 0
 
-			local forwardVector = {X=0,Y=0,Z=0}
-			if pawnRot ~= nil and (rootOffset.X ~= 0 or rootOffset.Y ~= 0  or rootOffset.Z ~= 0) then
-				temp_vec3f:set(rootOffset.X, rootOffset.Y, rootOffset.Z) -- the vector representing the offset adjustment
-				temp_vec3:set(0, 0, 1) --the axis to rotate around
-				forwardVector = kismet_math_library:RotateAngleAxis(temp_vec3f, pawnRot.Yaw - (bodyRotationOffset or 0), temp_vec3)
+				local forwardVector = {X=0,Y=0,Z=0}
+				if pawnRot ~= nil and (rootOffset.X ~= 0 or rootOffset.Y ~= 0  or rootOffset.Z ~= 0) then
+					temp_vec3f:set(rootOffset.X, rootOffset.Y, rootOffset.Z) -- the vector representing the offset adjustment
+					temp_vec3:set(0, 0, 1) --the axis to rotate around
+					forwardVector = kismet_math_library:RotateAngleAxis(temp_vec3f, pawnRot.Yaw - (bodyRotationOffset or 0), temp_vec3)
+				end
+				--print("Current",status["meshZOffset"])
+				if pawnPos == nil or pawnRot == nil then return nil, nil, nil, nil, nil, nil end
+				return  pawnPos.x + forwardVector.X, pawnPos.y + forwardVector.Y, pawnPos.z + rootOffset.Z + capsuleHeight + getParameter("headOffset").Z + (status["meshZOffset"] or 0), 0, pawnRot.Yaw - (bodyRotationOffset or 0), 0
+			else
+				-- the Z is relative to the pawn capsule orientation instead of the world Z orientation
+				local pawnPos = uevrUtils.getComponentLocation(status.rootComponent)
+				local pawnRot = uevrUtils.getComponentRotation(status.rootComponent)
+
+				local capsuleHeight = status.rootComponent.CapsuleHalfHeight or 0
+
+				local forwardVector = {X=0,Y=0,Z=0}
+				if pawnRot ~= nil and (rootOffset.X ~= 0 or rootOffset.Y ~= 0  or rootOffset.Z ~= 0) then
+					temp_vec3f:set(rootOffset.X, rootOffset.Y, rootOffset.Z)
+					forwardVector = uevrUtils.rotateVector(temp_vec3f, uevrUtils.rotator(pawnRot.Pitch, pawnRot.Yaw - (bodyRotationOffset or 0), pawnRot.Roll))
+				end
+				--print("Current",status["meshZOffset"])
+				if pawnPos == nil or pawnRot == nil then return nil, nil, nil, nil, nil, nil end
+				return  pawnPos.x + forwardVector.X, pawnPos.y + forwardVector.Y, pawnPos.z + forwardVector.Z + capsuleHeight + getParameter("headOffset").Z + (status["meshZOffset"] or 0), 0, pawnRot.Yaw - (bodyRotationOffset or 0), 0
 			end
-			--print("Current",status["meshZOffset"])
-			if pawnPos == nil or pawnRot == nil then return nil, nil, nil, nil, nil, nil end
-			return  pawnPos.x + forwardVector.X, pawnPos.y + forwardVector.Y, pawnPos.z + rootOffset.Z + capsuleHeight + getParameter("headOffset").Z + (status["meshZOffset"] or 0), 0, pawnRot.Yaw - (bodyRotationOffset or 0), 0
 		end
 	end
 	return nil, nil, nil, nil, nil, nil

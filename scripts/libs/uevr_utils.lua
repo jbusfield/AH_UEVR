@@ -4258,7 +4258,6 @@ function M.getLineTraceHitResult(originPosition, originDirection, collisionChann
 	return nil, nil
 end
 
-
 function M.getTargetLocation(originPosition, originDirection, collisionChannel, ignoreActors, traceComplex, minHitDistance, maxTraceDistance)
 	local hitResult = M.getLineTraceHitResult(originPosition, originDirection, collisionChannel, traceComplex, ignoreActors, minHitDistance, maxTraceDistance)
 	if hitResult ~= nil then

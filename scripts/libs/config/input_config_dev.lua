@@ -87,14 +87,20 @@ local function getConfigWidgets(m_paramManager)
 		initialValue = configDefaults["useRootOffset"] or true
 	},
 	{ widgetType = "indent", width = 20} ,
-	{
-		widgetType = "drag_float3",
-		id = widgetPrefix .. "rootOffset",
-		label = "HMD Offset",
-		speed = .1,
-		range = {-200, 200},
-		initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
-	},
+		{
+			widgetType = "drag_float3",
+			id = widgetPrefix .. "rootOffset",
+			label = "HMD Offset",
+			speed = .1,
+			range = {-200, 200},
+			initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
+		},
+		{
+			widgetType = "checkbox",
+			id = widgetPrefix .. "useRootOffsetLocalZ",
+			label = "Use Local Z",
+			initialValue = configDefaults["useRootOffsetLocalZ"] or false
+		},
 	{ widgetType = "unindent", width = 20} ,
 	{
 		widgetType = "checkbox",
@@ -576,6 +582,10 @@ configui.onUpdate(widgetPrefix .. "rootOffset", function(value)
     --updateSetting("rootOffset", {X=value[1],Y=value[2],Z=value[3]})
 	local arr = uevrUtils.getNativeValue(value)
     updateSetting("rootOffset", {X=arr[1],Y=arr[2],Z=arr[3]})
+end)
+
+configui.onUpdate(widgetPrefix .. "useRootOffsetLocalZ", function(value)
+    updateSetting("useRootOffsetLocalZ", value)
 end)
 
 configui.onUpdate(widgetPrefix .. "overridePlayerControllerPitch", function(value)
