@@ -19,8 +19,8 @@ local ik = require('libs/ik')
 ik.setInitialTransformOnAnimationCompleteEnabled(false)
 local melee = require('helpers/melee')
 
-uevrUtils.setLogLevel(LogLevel.Debug)
-melee.setLogLevel(LogLevel.Debug)
+--uevrUtils.setLogLevel(LogLevel.Debug)
+--melee.setLogLevel(LogLevel.Debug)
 -- reticule.setLogLevel(LogLevel.Debug)
 -- input.setLogLevel(LogLevel.Debug)
 -- attachments.setLogLevel(LogLevel.Debug)
@@ -32,7 +32,7 @@ melee.setLogLevel(LogLevel.Debug)
 -- ik.setLogLevel(LogLevel.Debug)
 
 -- uncomment the next line to see the full developer UI
-uevrUtils.setDeveloperMode(true)
+--uevrUtils.setDeveloperMode(true)
 --hands.enableConfigurationTool()
 
 ui.init()
@@ -69,7 +69,7 @@ local uccInitialBoneTransforms = {}
 hands.setAutoCreateHands(false)
 ik.setAutoCreateArms(false)
 
-local versionTxt = "v1.0.9"
+local versionTxt = "v1.1.0"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{

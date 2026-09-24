@@ -6,7 +6,7 @@ This document records how `scripts/helpers/melee.lua` arrived at its current app
 
 In VR, the player moves a weapon with a controller. Atomic Heart normally moves that weapon with an attack animation and enables melee contact during a short part of the animation. The original VR mod started the game's attack at 8× speed when a swipe was detected. That could open the game's hit window too early or too late relative to the physical swing.
 
-The current handler uses one normal attack on the **first swing with each equipped weapon**. This initializes game state and exposes that weapon's loaded `AnimNotify_MeleeHit`. On later swings, the handler calls the game's own melee-window functions at swing start and closes the window at swing end. Those later swings do not start an attack animation. The first swing remains animation based; this is a deliberate limitation of the current implementation, not a solved animation-free initialization path.
+The current handler uses one normal attack on the **first swing with each equipped weapon**. This initializes game state and exposes that weapon's loaded `AnimNotify_MeleeHit`. Once the notify is captured, the handler calls the game's own melee-window functions at swing start and closes the window at swing end. If initialization or a native-window call fails, it uses the old animated attack on later swings and logs each fallback. The first swing remains animation based; this is a deliberate limitation of the current implementation, not a solved animation-free initialization path.
 
 The user reported the Shved working with this approach. The code has since been generalized to equipped melee weapons, but this document does not claim that every weapon and contact type has been validated in play.
 
@@ -15,10 +15,11 @@ The user reported the Shved working with this approach. The code has since been 
 The active path is in `scripts/helpers/melee.lua`; `scripts/main.lua` supplies swing and montage events.
 
 1. `main.lua` enables swing detection while a right-hand attachment is marked as melee. Swing begin calls `melee.animateMelee()`. Swing end calls `melee.closeMeleeWindow()`. The game's montage callback calls `melee.observeMontage()`.
-2. On the first swing for a weapon, `animateMelee()` calls `EquippedItemPrimaryInputPressed`, temporarily sets the player mesh animation rate to 8×, then releases the input after 500 ms. It marks the weapon initialized when that delay expires.
+2. On the first swing for a weapon, `animateMelee()` calls `EquippedItemPrimaryInputPressed`, temporarily sets the player mesh animation rate to 8×, then releases the input after 500 ms. It marks the weapon ready only if a live `AnimNotify_MeleeHit` was captured. If no notify was captured, it marks initialization failed.
 3. While that attack plays, `observeMontage()` examines the montage's `Notifies` array through `libs/core/plugin.lua`. Lua's ordinary UEVR property access did not reliably enumerate this Unreal `TArray`. The handler finds a loaded `AnimNotify_MeleeHit` and caches it under the weapon's object address.
 4. On subsequent swing begins, `openMeleeWindow()` checks that the cached weapon and notify still exist and that the weapon is equipped. It finds the player's `GA_MeleeAttack_C`, reads the notify's `HitInfo`, calls `OnAnimNotifyActivateMeleeCollisions(hitInfo, true, true)`, and calls the weapon's `ApplyDefaultMeleeCollisions()`.
 5. On swing end, `closeMeleeWindow()` calls `ResetMeleeCollisions()` and `OnAnimNotifyActivateMeleeCollisions(hitInfo, false, true)`. `reset()` closes any open window and clears caches when scripts or levels reset.
+6. If initialization fails or a native window call errors, later swings use the original 8× animated attack. Each such swing prints a `[MeleeFallback]` warning. One call in `animateMelee()` controls this fallback and can be commented out.
 
 The intent is to let Atomic Heart's melee code process whatever the weapon contacts: a live enemy, corpse, wall, or other valid object. The handler does not select targets or assign damage to individual actor types.
 
@@ -51,15 +52,16 @@ The corpse test was especially useful: visible movement or a hit reaction did **
 3. **Inspect loaded montage notifies correctly.** If a property is a `TArray`, `TMap`, or `TSet`, use a known-good marshalling bridge instead of assuming native Lua indexing works. Identify the notify that actually opens contact; a montage may also contain audio, effects, and direct-hit notifies with different purposes.
 4. **Compare states before, during, and after a normal attack.** Observe what the game initializes: current weapon, active ability, attack asset, hit settings, cached references, and any collision or damage flags. Use read-only inspection first. A manual begin/end call is only promising if the game has enough state to process a contact.
 5. **Try the smallest game-owned window.** Open the game's contact window at VR swing begin and close it at swing end. Keep the normal weapon and hit data so the game decides how to handle each contacted object. Validate the result across target types and after a level reload.
-6. **Handle initialization explicitly.** If the game requires a legitimate first attack, document that requirement. A game may offer a clean reflected setup function; another may require an attack request or montage context. Avoid marking initialization complete merely because a timer expired: the current Atomic Heart code does that and will report a missing notify on later swings if the first attack failed to load one.
+6. **Handle initialization explicitly.** If the game requires a legitimate first attack, document that requirement. A game may offer a clean reflected setup function; another may require an attack request or montage context. Do not mark initialization complete merely because a timer expired; the Atomic Heart handler now requires a live hit notify before using its native window.
 7. **Keep game-specific operations behind an adapter.** A reusable UEVR controller can manage swing begin/end, object lifetime, caching, logging, and cleanup. A per-game adapter should provide weapon discovery, notify selection, attack initialization, and the native window begin/end calls. There is no single Unreal Engine melee-window function shared by all games.
 
 For live work, `uevr_lua_exec` through the UEVR MCP can run small Lua probes without editing game files. Keep probes narrow and log the object, action, result, and relevant state without printing every frame. In this Atomic Heart investigation, hooked functions and one pattern-scan attempt caused crashes; those methods should be treated as high risk here. Repeated experiments should preserve a known working route and verify behavior after both script reset and level reload.
 
 ## Current limitations and transfer boundary
 
-- The current code's first swing uses an animation. Subsequent swings open the collision window directly.
-- `status.isWeaponInitialized` is set after a fixed 500 ms, whether or not an attack/notify was actually captured. A reusable module should use an explicit success condition and a bounded failure state.
+- The current code's first swing uses an animation. Subsequent swings open the collision window directly when initialization succeeds and native calls keep working.
+- A cached notify proves that the first attack loaded the expected asset, but it does not prove that later native-window calls produced the full intended contact response. Gameplay still needs checking after a script reset and level reload.
+- A failed native-window call switches that equipped weapon to animation based attacks until the melee module resets or the equipped weapon changes. Every fallback swing prints a warning.
 - The cached notify is tied to one weapon object and the montage observed during its initial attack. Another game may have several attack directions or context-sensitive hit notifies that require different selection.
 - `M.animateMelee(id)` currently does not use `id`; the host script decides whether a gripped attachment is a melee weapon.
 - The method depends on Atomic Heart's ability and weapon functions. Other Unreal games may require a different native window, or may not have one that can be separated from animation at all.

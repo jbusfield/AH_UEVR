@@ -70,6 +70,7 @@ local meleeWindow = nil
 local hitNotifiesByWeapon = {}
 local pendingInitializationAddress = nil
 local abilityCache = nil
+local stopAnimatedAttack
 
 local function isLive(object)
 	if object == nil then return false end
@@ -96,8 +97,49 @@ local function findMeleeHitNotify(montage)
 	return nil
 end
 
+-- This should be able to find the notify without waiting for the montage to play
+-- in case we ever figure out how to initialize the game state for full melee behavior
+-- without needing to play an initial animation. Until then, we'll use the montage scan.
+local function findNotifyFromWeaponAssets(weapon)
+    local ok, attacks = pcall(plugin.getProperty, weapon, "AttackAssets")
+    if not ok or type(attacks) ~= "table" then return nil end
+
+    for _, attack in pairs(attacks) do
+        if isLive(attack) then
+            local animations = attack.Animations
+            if isLive(animations) then
+                local readOk, sequences =
+                    pcall(plugin.getProperty, animations, "Sequences")
+
+                if readOk and type(sequences) == "table" then
+                    for _, sequence in pairs(sequences) do
+                        for _, phase in pairs(sequence.Phases or {}) do
+                            local montage = phase.Montage
+                            if isLive(montage) then
+                                local notify = findMeleeHitNotify(montage)
+                                if notify then return notify end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
 function M.beginInitialization(weapon)
-	if isLive(weapon) then pendingInitializationAddress = weapon:get_address() end
+	if not isLive(weapon) then return false end
+	local address = weapon:get_address()
+
+    -- local notify = findNotifyFromWeaponAssets(weapon)
+    -- hitNotifiesByWeapon[address] = notify
+    -- pendingInitializationAddress = notify == nil and address or nil
+
+	hitNotifiesByWeapon[address] = nil
+	pendingInitializationAddress = address
+	return true
 end
 
 function M.observeMontage(montage)
@@ -129,17 +171,28 @@ local function closeMeleeWindow()
 	local window = meleeWindow
 	if window == nil then return end
 	meleeWindow = nil
+	local failure = nil
 	if isLive(window.weapon) then
 		local ok, err = pcall(function() window.weapon:ResetMeleeCollisions() end)
-		if not ok then M.print("weapon sweep reset failed: " .. tostring(err), LogLevel.Warning) end
+		if not ok then failure = "weapon sweep reset failed: " .. tostring(err) end
 	end
 	if isLive(window.ability) and isLive(window.notify) then
 		local ok, err = pcall(function()
 			window.ability:OnAnimNotifyActivateMeleeCollisions(window.hitInfo, false, true)
 		end)
-		if not ok then M.print("native end failed: " .. tostring(err), LogLevel.Warning) end
+		if not ok then failure = "native end failed: " .. tostring(err) end
+	elseif isLive(window.weapon) then
+		failure = "native end unavailable: melee ability or notify expired"
 	end
-	M.print("weapon sweep + native window ended")
+	if failure ~= nil then
+		if isLive(window.weapon) and status.weaponAddress == window.weapon:get_address() then
+			status.initState = "failed"
+			status.failureReason = failure
+		end
+		M.print(failure, LogLevel.Error)
+	else
+		M.print("weapon sweep + native window ended")
+	end
 end
 
 function M.closeMeleeWindow()
@@ -148,6 +201,7 @@ end
 
 function M.reset()
 	closeMeleeWindow()
+	if stopAnimatedAttack ~= nil then stopAnimatedAttack() end
 	hitNotifiesByWeapon = {}
 	pendingInitializationAddress = nil
 	abilityCache = nil
@@ -191,43 +245,127 @@ function M.openMeleeWindow(weapon)
 end
 
 local meleePlayRate = 8.0
-local function setMeleeAnimRate(rate)
-	local mesh = uevrUtils.getValid(pawn, {"Mesh"})
+local animatedController = nil
+local animatedPawn = nil
+local animatedAttackToken = 0
+
+local function setMeleeAnimRate(rate, attackPawn)
+	local mesh = uevrUtils.getValid(attackPawn, {"Mesh"})
 	if mesh ~= nil then
 		mesh.GlobalAnimRateScale = rate
 	end
 end
 
+stopAnimatedAttack = function()
+	animatedAttackToken = animatedAttackToken + 1
+	if animatedController ~= nil then
+		pcall(function() animatedController:EquippedItemPrimaryInputReleased(0.0) end)
+	end
+	if animatedPawn ~= nil then pcall(setMeleeAnimRate, 1.0, animatedPawn) end
+	animatedController = nil
+	animatedPawn = nil
+end
+
+local function playAnimatedAttack(onComplete)
+	stopAnimatedAttack()
+	local attackPawn = pawn
+	local ok, controllerOrError = pcall(function() return uevr.api:get_player_controller(0) end)
+	if not ok or controllerOrError == nil then
+		return false, "player controller unavailable: " .. tostring(controllerOrError)
+	end
+	local controller = controllerOrError
+	animatedController = controller
+	animatedPawn = attackPawn
+	local pressed, pressError = pcall(function()
+		setMeleeAnimRate(meleePlayRate, attackPawn)
+		controller:EquippedItemPrimaryInputPressed(1.0)
+	end)
+	if not pressed then
+		stopAnimatedAttack()
+		return false, "animated attack input failed: " .. tostring(pressError)
+	end
+	local token = animatedAttackToken
+	local scheduled, scheduleError = pcall(delay, 500, function()
+		if token ~= animatedAttackToken then return end
+		stopAnimatedAttack()
+		if onComplete ~= nil then onComplete() end
+	end)
+	if not scheduled then
+		stopAnimatedAttack()
+		return false, "animated attack release could not be scheduled: " .. tostring(scheduleError)
+	end
+	return true
+end
+
+local function playAnimatedMeleeFallback(reason)
+	-- This message is deliberately emitted for every fallback swing, regardless of the module log level.
+	uevrUtils.print("[MeleeFallback] Animated attack used on this swing: " .. tostring(reason), LogLevel.Warning)
+	local ok, err = playAnimatedAttack()
+	if not ok then M.print("animated fallback failed: " .. tostring(err), LogLevel.Error) end
+end
+
 function M.animateMelee(id)
 	local weapon = pawn and pawn.GetCurrentWeapon and pawn:GetCurrentWeapon()
-	if weapon == nil then return end
+	if not isLive(weapon) then return end
+	local weaponAddress = weapon:get_address()
 
-	if status.currentWeapon ~= weapon then
-		status.currentWeapon = weapon
-		status.isWeaponInitialized = false
+	if status.weaponAddress ~= weaponAddress then
+		closeMeleeWindow()
+		status = {weaponAddress = weaponAddress, initState = "new"}
 	end
 
-	if status.isWeaponInitialized == true then
-		local windowOk, windowError = M.openMeleeWindow(weapon)
-		if windowOk == false then
-			M.print(tostring(windowError), LogLevel.Error)
+	if status.initState == "ready" then
+		local called, windowOk, windowError = pcall(M.openMeleeWindow, weapon)
+		if called and windowOk then return end
+		if not called then closeMeleeWindow() end
+		status.initState = "failed"
+		status.failureReason = tostring(called and windowError or windowOk)
+		M.print("native melee window failed: " .. status.failureReason, LogLevel.Error)
+	end
+
+	if status.initState == "failed" then
+		-- Comment out this one call to disable the old animation based fallback.
+		playAnimatedMeleeFallback(status.failureReason)
+		return
+	end
+
+	if status.initState == "initializing" then return end
+
+	-- The first swing uses a normal attack to load the weapon's MeleeHit notify.
+	local previousMontage = pawn.GetCurrentMontage and pawn:GetCurrentMontage()
+	if not M.beginInitialization(weapon) then
+		status.initState = "failed"
+		status.failureReason = "weapon unavailable during initialization"
+		M.print(status.failureReason, LogLevel.Error)
+		return
+	end
+	status.initState = "initializing"
+	M.print("animated initialization swing for equipped weapon")
+	local initializationStatus = status
+	local started, startError = playAnimatedAttack(function()
+		if status ~= initializationStatus or status.initState ~= "initializing" then return end
+		local notify = hitNotifiesByWeapon[weaponAddress]
+		if isLive(notify) then
+			status.initState = "ready"
+			status.failureReason = nil
+			M.print("MeleeHit notify captured; native melee window ready")
+		else
+			pendingInitializationAddress = nil
+			status.initState = "failed"
+			status.failureReason = "initial attack did not load a MeleeHit notify"
+			M.print(status.failureReason, LogLevel.Error)
 		end
-	else
-        -- on the first swing use the game animation swing to get the intialization data
-        -- needed for autonomous melee swings for every subsequent melee attack
-		local previousMontage = pawn and pawn.GetCurrentMontage and pawn:GetCurrentMontage()
-		M.beginInitialization(weapon)
-		setMeleeAnimRate(meleePlayRate)
-		uevr.api:get_player_controller(0):EquippedItemPrimaryInputPressed(1.0) -- Trigger melee attack
-		local currentMontage = pawn and pawn.GetCurrentMontage and pawn:GetCurrentMontage()
-		if currentMontage ~= nil and (previousMontage == nil or currentMontage:get_address() ~= previousMontage:get_address()) then
-			M.observeMontage(currentMontage)
-		end
-		delay(500, function()
-			setMeleeAnimRate(1.0)
-			uevr.api:get_player_controller(0):EquippedItemPrimaryInputReleased(0.0)
-			status.isWeaponInitialized = true
-		end)
+	end)
+	if not started then
+		pendingInitializationAddress = nil
+		status.initState = "failed"
+		status.failureReason = tostring(startError)
+		M.print("melee initialization failed: " .. status.failureReason, LogLevel.Error)
+		return
+	end
+	local currentMontage = pawn.GetCurrentMontage and pawn:GetCurrentMontage()
+	if currentMontage ~= nil and (previousMontage == nil or currentMontage:get_address() ~= previousMontage:get_address()) then
+		M.observeMontage(currentMontage)
 	end
 end
 
