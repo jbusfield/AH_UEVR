@@ -1135,6 +1135,7 @@ end)
 local keyStruct
 local wasButtonPressed = false
 uevr.sdk.callbacks.on_xinput_get_state(function(retval, user_index, state)
+    if user_index ~= 0 then return end
     if uevrUtils.getValid(widgetInteractionComponent) == nil then return end
 
     local isButtonPressed = uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_A)

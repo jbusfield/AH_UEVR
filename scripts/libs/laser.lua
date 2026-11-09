@@ -195,8 +195,8 @@ function Laser:createVisual()
         return
     end
 
-    -- Engine BasicShapes/EngineResources often aren't in the AssetRegistry (getLoadedAsset fails);
-    -- resolve via find_instance_of / find_required_object like createStaticMeshComponent does.
+    -- Engine assets are resolved with getSafeInstanceOf (path lookup first, class scan as fallback),
+    -- as createStaticMeshComponent does; no find_uobject, so a missing asset cannot stall.
     self.visualComponent = uevrUtils.createStaticMeshComponent(cylinderMeshPath, {visible = true, collisionEnabled = false})
     local v = uevrUtils.getValid(self.visualComponent)
     if v == nil then
@@ -214,13 +214,12 @@ function Laser:createVisual()
     v:SetCustomDepthStencilWriteMask(ERendererStencilMask.ERSM_255)
     v:K2_AttachTo(c, uevrUtils.fname_from_string(""), 0, false)
 
-    local templateMaterial = uevrUtils.find_required_object(emissiveMaterialPath)
+    local templateMaterial = uevrUtils.getSafeInstanceOf("Class /Script/Engine.Material", emissiveMaterialPath)
     if templateMaterial ~= nil and v.CreateDynamicMaterialInstance ~= nil then
         self.visualMaterial = v:CreateDynamicMaterialInstance(0, templateMaterial, "laser_material")
         local mat = uevrUtils.getValid(self.visualMaterial)
         if mat ~= nil and mat.SetTextureParameterValue ~= nil then
-            local whiteTex = uevrUtils.find_required_object(whiteTexturePath)
-                or uevrUtils.find_instance_of("Class /Script/Engine.Texture2D", whiteTexturePath)
+            local whiteTex = uevrUtils.getSafeInstanceOf("Class /Script/Engine.Texture2D", whiteTexturePath)
             if whiteTex ~= nil then
                 mat:SetTextureParameterValue("LinearColor", whiteTex)
             end

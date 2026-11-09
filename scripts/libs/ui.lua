@@ -93,6 +93,16 @@ Usage
         example:
             ui.removeViewportWidget(myWidget)
 
+    ui.ignoreWidget(widget) - UI state skips this widget while it is in the viewport, so it never matches a
+        widget list entry, fires widget change callbacks or gets that entry's layout. Use for widgets a mod
+        creates from a borrowed game widget class
+        example:
+            ui.ignoreWidget(myWidget)
+
+    ui.unignoreWidget(widget) - stops ignoring a widget passed to ui.ignoreWidget
+        example:
+            ui.unignoreWidget(myWidget)
+
     ui.registerWidgetChangeCallback(widgetName, func) - registers a callback for when specific high level 
         viewport widgets become active/inactive. The widgetName can be found in the UI interface list.
         Callback receives (active, widget). widget is the live viewport instance when active, else nil.
@@ -103,8 +113,8 @@ Usage
 
     ui.onUpdate(stateKey, func) - registers a callback invoked when a UI state value changes.
         Callback receives (value, priority). value may be true, false, or nil (default/cleared).
-        Valid stateKey values: viewLocked, screen2D, decouplePitch, autoAdjustUI, inputEnabled,
-        handsEnabled, remapEnabled, fadeCamera, pawnArmBones
+        Valid stateKey values: viewLocked, screen2D, roomscaleEnabled, decouplePitch, autoAdjustUI, inputEnabled,
+        handsEnabled, remapEnabled, fadeCamera, pawnArmBones, controllerMouse, motionSicknessCompensation
         example:
             ui.onUpdate("remapEnabled", function(value)
                 print("remapEnabled changed:", value)
@@ -148,6 +158,14 @@ Usage
         example:
             local enabled, priority = ui.isFadeCameraEnabledWithPriority()
 
+    ui.isControllerMouseEnabled() - returns true if UI state currently enables the controller mouse
+        example:
+            if ui.isControllerMouseEnabled() then return end
+
+    ui.isControllerMouseEnabledWithPriority() - returns enabled state (or nil) and priority for controller-mouse callbacks
+        example:
+            local enabled, priority = ui.isControllerMouseEnabledWithPriority()
+
     ui.forceUpdate() - immediately recalculates UI state and applies view/UI settings
         example:
             ui.forceUpdate()
@@ -177,6 +195,8 @@ local isInMotionSicknessCausingScene = false
 
 local currentWidgetViewportState = {}
 local currentCustomViewportWidgets = {}
+-- Keyed by address: GetAllWidgetsOfClass can return a different Lua wrapper for the same widget each update
+local ignoredWidgets = {}
 
 --In some games widgets will act like they are active even though they are not actually open
 --Set this to true to require that the widget's GetOpenState() returns 0 (open) for it to be considered active
@@ -188,25 +208,31 @@ local uiState = {viewLocked = nil, screen2D = nil, decouplePitch = nil, inputEna
 local stateConfigWidget = {
     {stateKey = "viewLocked", valueKey = "lockedUIWhenActive"},
     {stateKey = "screen2D", valueKey = "screen2DWhenActive"},
+    {stateKey = "roomscaleEnabled", valueKey = "roomscaleWhenActive"},
     {stateKey = "decouplePitch", valueKey = "decouplePitchWhenActive"},
     {stateKey = "autoAdjustUI", valueKey = "autoAdjustUIWhenActive"},
     {stateKey = "inputEnabled", valueKey = "inputWhenActive"},
     {stateKey = "handsEnabled", valueKey = "handsWhenActive"},
     {stateKey = "remapEnabled", valueKey = "remapWhenActive"},
     {stateKey = "fadeCamera", valueKey = "fadeCameraWhenActive"},
-    {stateKey = "pawnArmBones", valueKey = "pawnArmBonesWhenActive"}
+    {stateKey = "pawnArmBones", valueKey = "pawnArmBonesWhenActive"},
+    {stateKey = "controllerMouse", valueKey = "controllerMouseWhenActive"},
+    {stateKey = "motionSicknessCompensation", valueKey = "motionSicknessCompensationWhenActive"}
 }
 
 local stateConfigGame = {
     {stateKey = "viewLocked", valueKey = "lockedUIWhenInGameState"},
     {stateKey = "screen2D", valueKey = "screen2DWhenInGameState"},
+    {stateKey = "roomscaleEnabled", valueKey = "roomscaleWhenInGameState"},
     {stateKey = "decouplePitch", valueKey = "decouplePitchWhenInGameState"},
     {stateKey = "autoAdjustUI", valueKey = "autoAdjustUIWhenInGameState"},
     {stateKey = "inputEnabled", valueKey = "inputWhenInGameState"},
     {stateKey = "handsEnabled", valueKey = "handsWhenInGameState"},
     {stateKey = "remapEnabled", valueKey = "remapWhenInGameState"},
     {stateKey = "fadeCamera", valueKey = "fadeCameraWhenInGameState"},
-    {stateKey = "pawnArmBones", valueKey = "pawnArmBonesWhenInGameState"}
+    {stateKey = "pawnArmBones", valueKey = "pawnArmBonesWhenInGameState"},
+    {stateKey = "controllerMouse", valueKey = "controllerMouseWhenInGameState"},
+    {stateKey = "motionSicknessCompensation", valueKey = "motionSicknessCompensationWhenInGameState"}
 }
 
 local gameStates = {"cutscene", "paused", "character_hidden"}
@@ -285,6 +311,18 @@ local function updateUI(force)
         --M.print("Setting 2D mode to " .. tostring(viewportWidgetState["screen2D"]))
     end
 
+    if uiState["roomscaleEnabled_last"] ~= uiState["roomscaleEnabled"] then
+        if uiState["roomscaleEnabled_last"] == nil then
+            uiState["roomscaleEnabled_cache"] = uevrUtils.get_roomscale_active()
+        end
+        if uiState["roomscaleEnabled"] == nil then
+            uevrUtils.set_roomscale_active(uiState["roomscaleEnabled_cache"])
+        else
+            uevrUtils.set_roomscale_active(uiState["roomscaleEnabled"])
+        end
+        uiState["roomscaleEnabled_last"] = uiState["roomscaleEnabled"]
+    end
+
     if uiState["fadeCamera_last"] ~= uiState["fadeCamera"] then
         if uiState["fadeCamera"] == true then
             uevrUtils.fadeCamera(0.1, true, false, true)
@@ -353,6 +391,13 @@ function M.isFadeCameraEnabled()
     return uiState["fadeCamera"] ~= nil and uiState["fadeCamera"] or false
 end
 
+function M.isControllerMouseEnabledWithPriority()
+    return uevrUtils.ternary(uiState["controllerMouse"] ~= nil, uiState["controllerMouse"], nil), uiState["controllerMousePriority"]
+end
+function M.isControllerMouseEnabled()
+    return uiState["controllerMouse"] ~= nil and uiState["controllerMouse"] or false
+end
+
 function M.isInputDisabledWithPriority()
     return uiState["inputEnabled"] ~= nil and (not uiState["inputEnabled"]) or nil, uiState["inputEnabledPriority"]
 end
@@ -381,6 +426,14 @@ end)
 
 uevrUtils.registerUEVRCallback("is_hands_hidden", function()
 	return uiState["handsEnabled"] ~= nil and (not uiState["handsEnabled"]) or nil, uiState["handsEnabledPriority"]
+end)
+
+uevrUtils.registerUEVRCallback("is_controller_mouse_enabled", function()
+    return M.isControllerMouseEnabledWithPriority()
+end)
+
+uevrUtils.registerUEVRCallback("is_in_motion_sickness_causing_scene", function()
+    return uiState["motionSicknessCompensation"], uiState["motionSicknessCompensationPriority"]
 end)
 
 local customUIState = {}
@@ -466,7 +519,7 @@ local function updateUIState()
 
         for index, widget in pairs(foundWidgets) do
             --if widget:IsInViewport() then --check not really needed since GetAllWidgetsOfClass with the last param true should only return viewport widgets.also currentCustomViewportWidgets might not be in viewport
-            if requireWidgetOpenState == false or (widget.GetOpenState ~= nil and widget:GetOpenState() == 0) then
+            if ignoredWidgets[widget:get_address()] == nil and (requireWidgetOpenState == false or (widget.GetOpenState ~= nil and widget:GetOpenState() == 0)) then
                 if requireWidgetVisibility == false or widget:GetVisibility() == 0 or widget:GetVisibility() == 3 or widget:GetVisibility() == 4 then -- (widget.IsVisible ~= nil and widget:IsVisible()) then
                     --get the widget data from the configurations
                     local id = widget:get_class():get_full_name()
@@ -649,6 +702,16 @@ function M.removeViewportWidget(widget)
     end
 end
 
+function M.ignoreWidget(widget)
+    if uevrUtils.getValid(widget) == nil then return end
+    ignoredWidgets[widget:get_address()] = true
+end
+
+function M.unignoreWidget(widget)
+    if widget == nil then return end
+    ignoredWidgets[widget:get_address()] = nil
+end
+
 function M.getConfigurationWidgets(options)
 	if uiConfig == nil then
 		uiConfig = require("libs/config/ui_config")
@@ -750,9 +813,9 @@ local isInMotionSicknessCausingSceneLast = false
 uevrUtils.setInterval(500, function()
     M.forceUpdate()
 
-    local m_isInMotionSicknessCausingScene, priority = executeIsInMotionSicknessCausingSceneCallback()
+    local m_isInMotionSicknessCausingScene = executeIsInMotionSicknessCausingSceneCallback() or false
 	if m_isInMotionSicknessCausingScene ~= isInMotionSicknessCausingSceneLast then
-		isInMotionSicknessCausingSceneLast = m_isInMotionSicknessCausingScene or false
+		isInMotionSicknessCausingSceneLast = m_isInMotionSicknessCausingScene
 		M.setIsInMotionSicknessCausingScene(m_isInMotionSicknessCausingScene)
 	end
 end)

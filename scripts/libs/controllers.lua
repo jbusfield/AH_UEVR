@@ -269,8 +269,13 @@ function M.getHMDController()
 end
 
 
-function M.getController(controllerID, useCached)
+-- fast (default false, only with useCached): return the cached component without re-validating it.
+function M.getController(controllerID, useCached, fast)
 	if useCached == true then
+		if fast == true then
+			local cachedComponent = cachedComponents[controllerID]
+			if cachedComponent ~= nil then return cachedComponent end
+		end
 		return getCachedController(controllerID)
 	else
 		if controllerID == 2 then
@@ -424,18 +429,20 @@ function M.attachComponentToController(controllerID, childComponent, socketName,
 end
 
 -- returns an FVector or nil
-function M.getControllerLocation(controllerID)
-	local controller = M.getController(controllerID, true)
+-- fast (default false): skip the validity checks; for per-tick callers that tolerate a stale cache.
+function M.getControllerLocation(controllerID, fast)
+	local controller = M.getController(controllerID, true, fast)
 	if controller ~= nil then
-		return uevrUtils.getComponentLocation(controller)
+		return uevrUtils.getComponentLocation(controller, fast)
 	end
 	return nil
 end
 
-function M.getControllerRotation(controllerID)
-	local controller = M.getController(controllerID, true)
+-- fast (default false): skip the validity checks; for per-tick callers that tolerate a stale cache.
+function M.getControllerRotation(controllerID, fast)
+	local controller = M.getController(controllerID, true, fast)
 	if controller ~= nil then
-		return uevrUtils.getComponentRotation(controller)
+		return uevrUtils.getComponentRotation(controller, fast)
 	end
 	return nil
 end

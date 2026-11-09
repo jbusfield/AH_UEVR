@@ -1,11 +1,15 @@
 local uevrUtils = require("libs/uevr_utils")
 local controllers = require("libs/controllers")
 local paramModule = require("libs/core/params")
+local plugin = require("libs/core/plugin")
 
 --[[
 Usage
 	local gestures = require("libs/gestures")
 	gestures.init()
+	gestures.setUseRawControllers(true) -- Optional: tracking-space flicks, unaffected by game teleports.
+	-- World-space flicks remain the default. Both methods use the same config UI parameters.
+	-- Raw mode detects directional strokes immediately; world mode retains peak-then-release detection.
 	In developer mode, gestures.init(true) also loads the in-game gesture configuration tool.
 	Parameters are stored in gesture_parameters.json (profiles supported).
 
@@ -78,7 +82,7 @@ Swipe / Snatch settings (fast hand motion — what each value means for your arm
 		Ignores hand motion when your view/yaw jumps this much (e.g. snap turn).
 		Higher = tolerate bigger yaw jumps without canceling; lower = treat smaller turns as "not a swipe".
 
-Swing settings (continuous fast hand motion — begin when above speed, end when below)
+Swing settings (one stroke — finish after rest or a deliberate reversal)
 	minThresholdSpeed
 		How fast your hand must move before a swing begins.
 		Higher = ignore slow waves; lower = easier to start a swing.
@@ -86,25 +90,38 @@ Swing settings (continuous fast hand motion — begin when above speed, end when
 	maxThresholdSpeed
 		Caps how hard a swing feels for strength (0-1). Does not block detection.
 
+	stopThresholdSpeed / stopHoldTime
+		Finish after staying below Stop Speed for Stop Hold Time seconds.
+		Brief speed dips during the same stroke do not open another swing.
+
+	reversalDotThreshold / reversalMinDistance
+		Finish when movement reverses far enough along the previous path.
+		Gradual changes along a curved stroke remain part of the same swing.
+
 	snapTurnYawThreshold
 		Cancels an active swing (and ignores motion) when view yaw jumps this much.
 
 Wrist flick settings (quick wand/controller orientation snap — not arm translation)
 	minThresholdAngleSpeed
-		How fast the controller tip must rotate (deg/s) before a flick counts.
+		How fast the controller must rotate (deg/s) before a flick counts.
 		Higher = ignore slow tip tilts; lower = easier to trigger with a light wrist snap.
+		Raw mode uses full quaternion rotation averaged over 50 ms; raw hand movement supplies direction.
 
 	maxThresholdAngleSpeed
 		Caps how hard a flick feels for strength (0-1). Does not block detection.
 		Higher = need a faster snap to reach full strength; lower = moderate snaps report as strong.
 
+	upMinThresholdAngleSpeed / upMaxThresholdAngleSpeed
+		Same as above, but used for flick-up.
+
 	minAngleDelta
-		Minimum tip-direction change (deg) across the motion.
+		Minimum orientation change (deg) across the motion. Raw uses the full quaternion change.
 		Higher = require a bigger wrist turn; lower = allow smaller snaps.
 
 	upDotThreshold
-		How closely the tip must finish pointing upward to count as a flick-up / yank.
-		Higher = must finish more straight up; lower = allow a wider "upward" cone.
+		World: how closely the tip must point upward. Raw: how closely hand movement must align with up.
+		Higher = a narrower upward cone; lower = allow more diagonal up-flicks.
+		Raw direction uses controller movement only; no headset pose or endpoint pointing cone is used.
 
 	cooldownTime
 		How long after a flick before another can fire.
@@ -158,16 +175,22 @@ local parameters = {
 		cooldownTime = 0.5,            -- seconds before another swipe can fire
 		snapTurnYawThreshold = 45.0,   -- ignore motion if view yaw jumps more than this (deg)
 	},
-	-- Continuous fast motion: begin above threshold, end when speed drops below.
+	-- A stroke ends at sustained rest or deliberate reversal, not at a start-speed dip.
 	swing = {
 		minThresholdSpeed = 180,
 		maxThresholdSpeed = 320,
+		stopThresholdSpeed = 50,
+		stopHoldTime = 0.08,
+		reversalDotThreshold = -0.5,
+		reversalMinDistance = 5,
 		snapTurnYawThreshold = 45.0,
 	},
 	-- Rapid tip-direction change (wrist snap). Strength from peak angular speed.
 	flick = {
 		minThresholdAngleSpeed = 400,
 		maxThresholdAngleSpeed = 900,
+		upMinThresholdAngleSpeed = 400,
+		upMaxThresholdAngleSpeed = 900,
 		minAngleDelta = 40.0,
 		upDotThreshold = 0.75,
 		cooldownTime = 0.5,
@@ -228,7 +251,7 @@ local parameters = {
 			forwardDotMinThreshold = 0.0,
 		},
 		eyes = {
-			triggerDistance = 15.0,
+			triggerDistance = 23.0,
 			forwardDotThreshold = 0.85,
 		},
 		ear = {
@@ -297,6 +320,7 @@ local swipeStrengthPercent = 0
 local hasFlick = false
 local hasFlickUp = false
 local flickStrengthPercent = 0
+local useRawControllers = false
 
 local function createPunchDetector()
 	return {
@@ -366,12 +390,19 @@ local swipeDetectors = {
 
 local function createSwingDetector()
 	return {
-		prevLocalPos = nil,
 		prevPawnYaw = nil,
 		active = false,
 		peakSpeed = 0,
+		stopElapsed = 0,
+		reverseDistance = 0,
+		reversePeakSpeed = 0,
 		minThresholdSpeed = parameters.swing.minThresholdSpeed,
 		maxThresholdSpeed = parameters.swing.maxThresholdSpeed,
+		stopThresholdSpeed = parameters.swing.stopThresholdSpeed,
+		stopHoldTime = parameters.swing.stopHoldTime,
+		reversalDotThreshold = parameters.swing.reversalDotThreshold,
+		reversalMinDistance = parameters.swing.reversalMinDistance,
+		snapTurnYawThreshold = parameters.swing.snapTurnYawThreshold,
 	}
 end
 
@@ -389,6 +420,8 @@ local function createFlickDetector()
 		endFZ = nil,
 		minThresholdAngleSpeed = parameters.flick.minThresholdAngleSpeed,
 		maxThresholdAngleSpeed = parameters.flick.maxThresholdAngleSpeed,
+		upMinThresholdAngleSpeed = parameters.flick.upMinThresholdAngleSpeed,
+		upMaxThresholdAngleSpeed = parameters.flick.upMaxThresholdAngleSpeed,
 		minAngleDelta = parameters.flick.minAngleDelta,
 		upDotThreshold = parameters.flick.upDotThreshold,
 		cooldownTime = parameters.flick.cooldownTime,
@@ -399,6 +432,47 @@ local flickDetectors = {
 	[Handed.Left] = createFlickDetector(),
 	[Handed.Right] = createFlickDetector(),
 }
+
+-- Raw detection has independent history and stroke state; parameters are shared.
+local rawFlickDetectors = {
+	[Handed.Left] = createFlickDetector(),
+	[Handed.Right] = createFlickDetector(),
+}
+
+local function resetRawFlickMotion(detector, requireRest)
+	detector.prevForward = nil
+	detector.stroke = nil
+	detector.prevRawQuat, detector.prevRawPos, detector.rawWindow = nil, nil, nil
+	detector.awaitRest = requireRest == true
+	detector.pendingUp = nil
+	detector.restAnchor = nil
+	detector.debugHistory, detector.debugPrevTime = nil, nil
+end
+
+local function resetFlickMotion(detector)
+	detector.prevForward = nil
+	detector.peakAngleSpeed = 0
+	detector.accumulatedAngle = 0
+	detector.endFZ = nil
+	detector.flickDebug = nil
+	detector.debugPrevRawForward = nil
+	detector.debugPrevTime = nil
+	detector.debugHistory = nil
+end
+
+-- Only flick detection changes source; all other gestures retain their world-space input.
+function M.setUseRawControllers(enabled)
+	enabled = enabled == true
+	if useRawControllers == enabled then return end
+	useRawControllers = enabled
+	for _, detector in pairs(flickDetectors) do
+		resetFlickMotion(detector)
+	end
+	for _, detector in pairs(rawFlickDetectors) do
+		resetRawFlickMotion(detector, false)
+	end
+	hasFlick, hasFlickUp, flickStrengthPercent = false, false, 0
+end
 
 local function applyDetectorParameters()
 	local punchMin = getParam({"punch", "minThresholdSpeed"})
@@ -428,19 +502,30 @@ local function applyDetectorParameters()
 	for _, detector in pairs(swingDetectors) do
 		detector.minThresholdSpeed = swingMin
 		detector.maxThresholdSpeed = swingMax
+		detector.stopThresholdSpeed = getParam({"swing", "stopThresholdSpeed"})
+		detector.stopHoldTime = getParam({"swing", "stopHoldTime"})
+		detector.reversalDotThreshold = getParam({"swing", "reversalDotThreshold"})
+		detector.reversalMinDistance = getParam({"swing", "reversalMinDistance"})
+		detector.snapTurnYawThreshold = getParam({"swing", "snapTurnYawThreshold"})
 	end
 
 	local flickMin = getParam({"flick", "minThresholdAngleSpeed"})
 	local flickMax = getParam({"flick", "maxThresholdAngleSpeed"})
+	local flickUpMin = getParam({"flick", "upMinThresholdAngleSpeed"})
+	local flickUpMax = getParam({"flick", "upMaxThresholdAngleSpeed"})
 	local flickAngle = getParam({"flick", "minAngleDelta"})
 	local flickUp = getParam({"flick", "upDotThreshold"})
 	local flickCooldown = getParam({"flick", "cooldownTime"})
-	for _, detector in pairs(flickDetectors) do
-		detector.minThresholdAngleSpeed = flickMin
-		detector.maxThresholdAngleSpeed = flickMax
-		detector.minAngleDelta = flickAngle
-		detector.upDotThreshold = flickUp
-		detector.cooldownTime = flickCooldown
+	for _, detectors in ipairs({flickDetectors, rawFlickDetectors}) do
+		for _, detector in pairs(detectors) do
+			detector.minThresholdAngleSpeed = flickMin
+			detector.maxThresholdAngleSpeed = flickMax
+			detector.upMinThresholdAngleSpeed = flickUpMin
+			detector.upMaxThresholdAngleSpeed = flickUpMax
+			detector.minAngleDelta = flickAngle
+			detector.upDotThreshold = flickUp
+			detector.cooldownTime = flickCooldown
+		end
 	end
 
 	local pushMin = getParam({"push", "minThresholdSpeed"})
@@ -670,71 +755,162 @@ local function updateSwipeDetector(self, controllerPos, controllerRot, pawnPos, 
 	return isSwipeLeft, isSwipeRight, isSwipeUp, isSwipeDown, isPunch, isSnatch, swipeSpeedPercent
 end
 
--- Continuous swing: begin when speed crosses min threshold, end when it drops below.
-local function updateSwingDetector(self, controllerPos, pawnPos, pawnRot, deltaTime)
-	local localPos = getLocalControllerPos(controllerPos, pawnPos, pawnRot)
-	local began, ended = false, false
-	local strengthPercent = 0
+local function clearSwingMotion(self)
+	self.active = false
+	self.peakSpeed = 0
+	self.directionX, self.directionY, self.directionZ = nil, nil, nil
+	self.stopElapsed = 0
+	self.reverseDistance = 0
+	self.reversePeakSpeed = 0
+end
 
-	if not self.prevLocalPos or self.prevPawnYaw == nil then
-		self.prevLocalPos = localPos
-		self.prevPawnYaw = pawnRot.Yaw
+-- Start speed arms a stroke. Only sustained rest or confirmed reverse travel
+-- ends it, so speed fluctuations cannot split one continuing stroke.
+local function updateSwingDetector(self, controllerPos, pawnPos, pawnRot, deltaTime)
+	-- Scalar pose history avoids allocating vectors/tables on every engine tick.
+	local offsetX, offsetY = controllerPos.X - pawnPos.X, controllerPos.Y - pawnPos.Y
+	local yaw = pawnRot.Yaw
+	local yawRad = -yaw * math.pi / 180
+	local cosYaw, sinYaw = math.cos(yawRad), math.sin(yawRad)
+	local x = offsetX * cosYaw - offsetY * sinYaw
+	local y = offsetX * sinYaw + offsetY * cosYaw
+	local z = controllerPos.Z - pawnPos.Z
+	local prevX, prevY, prevZ, prevYaw = self.prevLocalX, self.prevLocalY, self.prevLocalZ, self.prevPawnYaw
+	self.prevLocalX, self.prevLocalY, self.prevLocalZ, self.prevPawnYaw = x, y, z, yaw
+	local began, ended = false, false
+	local endedStrength
+	if deltaTime <= 0 or deltaTime > 0.1 then
+		ended = self.active
+		endedStrength = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+		clearSwingMotion(self)
+		return false, ended, endedStrength, false, endedStrength
+	end
+
+	if prevX == nil or prevYaw == nil then
 		return false, false, 0, self.active
 	end
 
-	local yawDeltaRaw = pawnRot.Yaw - self.prevPawnYaw
+	local yawDeltaRaw = yaw - prevYaw
 	local yawDeltaWrapped = math.abs(((yawDeltaRaw + 180) % 360) - 180)
-	local snapTurnYawThreshold = getParam({"swing", "snapTurnYawThreshold"})
-	if yawDeltaWrapped > snapTurnYawThreshold then
-		self.prevLocalPos = localPos
-		self.prevPawnYaw = pawnRot.Yaw
-		if self.active then
-			self.active = false
-			strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
-			self.peakSpeed = 0
-			return false, true, strengthPercent, false
-		end
-		self.peakSpeed = 0
+	if yawDeltaWrapped > self.snapTurnYawThreshold then
+		ended = self.active
+		endedStrength = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+		clearSwingMotion(self)
+		return false, ended, endedStrength, false, endedStrength
+	end
+
+	local dx, dy, dz = x - prevX, y - prevY, z - prevZ
+	local distanceSquared = dx * dx + dy * dy + dz * dz
+	local stopSpeed = math.min(self.stopThresholdSpeed, self.minThresholdSpeed)
+	-- Idle and rest frames need no square root or direction normalization.
+	if not self.active and distanceSquared <= (self.minThresholdSpeed * deltaTime) ^ 2 then
 		return false, false, 0, false
 	end
-
-	local localDelta = subtract(localPos, self.prevLocalPos)
-	local speed = magnitude(localDelta) / deltaTime
-	self.prevLocalPos = localPos
-	self.prevPawnYaw = pawnRot.Yaw
-
-	if speed > self.minThresholdSpeed then
-		if not self.active then
-			self.active = true
-			self.peakSpeed = speed
-			began = true
-		elseif speed > self.peakSpeed then
-			self.peakSpeed = speed
+	if self.active and distanceSquared <= (stopSpeed * deltaTime) ^ 2 then
+		self.stopElapsed = self.stopElapsed + deltaTime
+		if self.stopElapsed >= self.stopHoldTime then
+			ended = true
+			endedStrength = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+			clearSwingMotion(self)
 		end
-		strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
-	elseif self.active then
-		self.active = false
-		ended = true
-		strengthPercent = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
-		self.peakSpeed = 0
+		local strength = endedStrength or getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+		return false, ended, strength, self.active, endedStrength
 	end
 
-	return began, ended, strengthPercent, self.active
+	local distance = math.sqrt(distanceSquared)
+	local speed = distance / deltaTime
+	local directionX, directionY, directionZ = dx / distance, dy / distance, dz / distance
+	if not self.active then
+		self.active = true
+		self.peakSpeed = speed
+		self.directionX, self.directionY, self.directionZ = directionX, directionY, directionZ
+		self.strokeStartX, self.strokeStartY, self.strokeStartZ = prevX, prevY, prevZ
+		self.farthestDistanceSquared = distanceSquared
+		self.stopElapsed, self.reverseDistance, self.reversePeakSpeed = 0, 0, 0
+		began = true
+	else
+		self.stopElapsed = 0
+		local projection = dx * self.directionX + dy * self.directionY + dz * self.directionZ
+		if projection / distance <= self.reversalDotThreshold then
+			if self.reverseDistance == 0 then
+				self.reverseStartX, self.reverseStartY, self.reverseStartZ = prevX, prevY, prevZ
+			end
+			self.reverseDistance = self.reverseDistance + math.max(0, -projection)
+			self.reversePeakSpeed = math.max(self.reversePeakSpeed, speed)
+			if self.reverseDistance >= self.reversalMinDistance then
+				ended = true
+				endedStrength = getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+				local reversePeak = self.reversePeakSpeed
+				clearSwingMotion(self)
+				-- A fast backswing can open immediately after the old stroke closes.
+				if speed > self.minThresholdSpeed then
+					began = true
+					self.active = true
+					self.peakSpeed = reversePeak
+					self.strokeStartX, self.strokeStartY, self.strokeStartZ = self.reverseStartX, self.reverseStartY, self.reverseStartZ
+					local sx, sy, sz = x - self.strokeStartX, y - self.strokeStartY, z - self.strokeStartZ
+					self.farthestDistanceSquared = sx * sx + sy * sy + sz * sz
+					if self.farthestDistanceSquared > 0 then
+						local extent = math.sqrt(self.farthestDistanceSquared)
+						self.directionX, self.directionY, self.directionZ = sx / extent, sy / extent, sz / extent
+					else
+						self.directionX, self.directionY, self.directionZ = directionX, directionY, directionZ
+					end
+				end
+			end
+		else
+			-- Extend the stroke's outward direction as its reach grows. Following
+			-- frame-to-frame tangents would follow a turnaround and hide backswings.
+			local sx, sy, sz = x - self.strokeStartX, y - self.strokeStartY, z - self.strokeStartZ
+			local extentSquared = sx * sx + sy * sy + sz * sz
+			if extentSquared > self.farthestDistanceSquared then
+				local extent = math.sqrt(extentSquared)
+				self.directionX, self.directionY, self.directionZ = sx / extent, sy / extent, sz / extent
+				self.farthestDistanceSquared = extentSquared
+			end
+			self.reverseDistance = 0
+			self.reversePeakSpeed = 0
+			self.peakSpeed = math.max(self.peakSpeed, speed)
+		end
+	end
+
+	local strength = self.active and getSpeedPercent(self.peakSpeed, self.minThresholdSpeed, self.maxThresholdSpeed)
+		or endedStrength or 0
+	return began, ended, strength, self.active, endedStrength
 end
 
 -- Wrist flick: tip angular speed, peak-then-release. Up = tip · world-up at peak.
-local function updateFlickDetector(self, forward, deltaTime)
+local function angleBetweenDirections(a, b)
+	return math.deg(math.acos(math.max(-1, math.min(1, a.X * b.X + a.Y * b.Y + a.Z * b.Z))))
+end
+
+local function updateFlickDetector(self, forward, deltaTime, hand, rawForward)
+	local debugEnabled = gestureTestId == M.Gesture.FLICK or gestureTestId == M.Gesture.FLICK_UP
+	local rawAngle, clockDelta
+	if debugEnabled then
+		local now = os.clock()
+		clockDelta = self.debugPrevTime and now - self.debugPrevTime or nil
+		rawAngle = rawForward and self.debugPrevRawForward and angleBetweenDirections(rawForward, self.debugPrevRawForward) or nil
+		self.debugPrevTime, self.debugPrevRawForward = now, rawForward
+	else
+		self.flickDebug, self.debugPrevTime, self.debugPrevRawForward = nil, nil, nil
+		self.debugHistory = nil
+	end
 	if self.cooldown > 0 then
 		self.cooldown = self.cooldown - deltaTime
 		self.prevForward = forward
 		self.peakAngleSpeed = 0
 		self.accumulatedAngle = 0
 		self.endFZ = nil
+		self.flickDebug = nil
+		self.debugHistory = nil
 		return false, false, 0
 	end
 
 	if self.prevForward == nil then
 		self.prevForward = forward
+		self.flickDebug = nil
+		self.debugHistory = nil
 		return false, false, 0
 	end
 
@@ -746,29 +922,82 @@ local function updateFlickDetector(self, forward, deltaTime)
 		angleDelta = math.deg(math.acos(d))
 		angleSpeed = angleDelta / deltaTime
 	end
+	-- Keep every frame, including quiet gaps that currently split a hand movement
+	-- into several candidates. Only accepted flicks write this bounded history.
+	if debugEnabled then
+		local history = self.debugHistory
+		if history == nil then
+			history = {frames = {}, next = 1, count = 0}
+			self.debugHistory = history
+		end
+		history.frames[history.next] = {
+			delta = deltaTime, clockDelta = clockDelta, angle = angleDelta,
+			rawAngle = rawAngle, speed = angleSpeed, upDot = forward.Z,
+		}
+		history.next = history.next % 64 + 1
+		history.count = math.min(history.count + 1, 64)
+	end
 
 	local isFlick = false
 	local isFlickUp = false
 	local strengthPercent = 0
 
-	if angleSpeed > self.minThresholdAngleSpeed then
+	if angleSpeed > math.min(self.minThresholdAngleSpeed, self.upMinThresholdAngleSpeed) then
+		if debugEnabled then
+			if self.flickDebug == nil then
+				self.flickDebug = {startForward = self.prevForward, frames = 0, elapsed = 0}
+			end
+			local debug = self.flickDebug
+			debug.frames, debug.elapsed = debug.frames + 1, debug.elapsed + deltaTime
+			if angleSpeed > self.peakAngleSpeed then
+				debug.peakFrameAngle, debug.peakFrameDelta = angleDelta, deltaTime
+				debug.peakRawAngle, debug.peakClockDelta = rawAngle, clockDelta
+			end
+		end
 		if angleSpeed > self.peakAngleSpeed then
 			self.peakAngleSpeed = angleSpeed
 			self.endFZ = forward.Z
 		end
 		self.accumulatedAngle = self.accumulatedAngle + angleDelta
 	elseif self.peakAngleSpeed > 0 then
+		local up = self.endFZ >= self.upDotThreshold
+		local minSpeed = up and self.upMinThresholdAngleSpeed or self.minThresholdAngleSpeed
+		local maxSpeed = up and self.upMaxThresholdAngleSpeed or self.maxThresholdAngleSpeed
 		if self.accumulatedAngle >= self.minAngleDelta then
-			strengthPercent = getSpeedPercent(self.peakAngleSpeed, self.minThresholdAngleSpeed, self.maxThresholdAngleSpeed)
-			if self.endFZ >= self.upDotThreshold then
-				isFlickUp = true
-			else
-				isFlick = true
+			if self.peakAngleSpeed > minSpeed then
+				strengthPercent = getSpeedPercent(self.peakAngleSpeed, minSpeed, maxSpeed)
+				isFlickUp = up
+				isFlick = not up
 			end
+		end
+		-- One report per completed candidate, only while the dev flick test is enabled.
+		if debugEnabled then
+			local debug = self.flickDebug
+			if debug then debug.netAngle = angleBetweenDirections(debug.startForward, self.prevForward) end
+			local frames
+			if isFlick or isFlickUp then
+				frames = {}
+				local history = self.debugHistory
+				for i = 1, history.count do
+					frames[i] = history.frames[(history.next - history.count + i - 2) % 64 + 1]
+				end
+			end
+			uevrUtils.executeUEVRCallbacks("on_gesture_flick_sample", {
+				source = useRawControllers and "Raw" or "World",
+				up = up,
+				accepted = isFlick or isFlickUp,
+				peakSpeed = self.peakAngleSpeed,
+				minSpeed = minSpeed,
+				angle = self.accumulatedAngle,
+				minAngle = self.minAngleDelta,
+				details = debug,
+				frames = frames,
+			}, hand)
 		end
 		self.peakAngleSpeed = 0
 		self.accumulatedAngle = 0
 		self.endFZ = nil
+		self.flickDebug = nil
 	end
 
 	if isFlick or isFlickUp then
@@ -778,6 +1007,260 @@ local function updateFlickDetector(self, forward, deltaTime)
 	self.prevForward = forward
 	return isFlick, isFlickUp, strengthPercent
 end
+
+-- Raw wrist strokes: full quaternion rotation and tracking-space hand movement.
+-- Tracking Y is up. There is no headset, pawn, or world-component dependency.
+local RAW_FLICK_WINDOW = 0.05
+local RAW_FLICK_REARM_SPEED = 250 -- deg/s, independent of the sensitivity setting
+local RAW_FLICK_MAX_TIME = 0.4
+local RAW_FLICK_GAP = 0.04
+-- Up flicks are not time sensitive; they wait this long for a down flick that would
+-- show them to be the wind-up before it.
+local RAW_FLICK_UP_CONFIRM = 0.5
+-- A down stroke this much weaker than a pending up flick is that flick's recovery.
+local RAW_FLICK_RECOVERY_RATIO = 0.75
+-- Seconds between aim offset requests while the plugin cannot supply one.
+local RAW_FLICK_AIM_RETRY = 2.0
+
+local function rawRotationStep(previous, current)
+	-- current * inverse(previous), expressed in the fixed tracking frame.
+	local x, y, z, w = current.X, current.Y, current.Z, current.W
+	local px, py, pz, pw = previous.X, previous.Y, previous.Z, previous.W
+	local dx = -w*px + x*pw - y*pz + z*py
+	local dy = -w*py + x*pz + y*pw - z*px
+	local dz = -w*pz - x*py + y*px + z*pw
+	local dw = w*pw + x*px + y*py + z*pz
+	if dw < 0 then dx, dy, dz, dw = -dx, -dy, -dz, -dw end
+	local length = math.sqrt(dx*dx + dy*dy + dz*dz)
+	if length < 1e-10 then return 0, 0, 0, 0 end
+	local angle = math.deg(2 * math.atan(length, dw))
+	local scale = angle / length
+	return dx*scale, dy*scale, dz*scale, angle
+end
+
+local function getRawAimAxis(grip, offset)
+	-- The controller points along the aim pose's -Z; aim = grip * offset.
+	local x, y, z, w = grip.X, grip.Y, grip.Z, grip.W
+	local ox, oy, oz, ow = offset.X, offset.Y, offset.Z, offset.W
+	local ax = w*ox + x*ow + y*oz - z*oy
+	local ay = w*oy - x*oz + y*ow + z*ox
+	local az = w*oz + x*oy - y*ox + z*ow
+	local aw = w*ow - x*ox - y*oy - z*oz
+	return -2 * (ax*az + aw*ay), -2 * (ay*az - aw*ax), 2 * (ax*ax + ay*ay) - 1
+end
+
+local function removeRawRoll(kx, ky, kz, ax, ay, az)
+	-- Rotation about the pointing axis is a roll, not a flick.
+	local d = ax*kx + ay*ky + az*kz
+	ax, ay, az = ax - d*kx, ay - d*ky, az - d*kz
+	return ax, ay, az, math.sqrt(ax*ax + ay*ay + az*az)
+end
+
+local function rawSwingAngle(start, current, kx, ky, kz)
+	-- current * inverse(start) with its twist about the start pointing axis removed;
+	-- the remaining swing's scalar part is |(w, p)|.
+	local x, y, z, w = current.X, current.Y, current.Z, current.W
+	local px, py, pz, pw = start.X, start.Y, start.Z, start.W
+	local dx = -w*px + x*pw - y*pz + z*py
+	local dy = -w*py + x*pz + y*pw - z*px
+	local dz = -w*pz - x*py + y*px + z*pw
+	local dw = w*pw + x*px + y*py + z*pz
+	local p = dx*kx + dy*ky + dz*kz
+	return math.deg(2 * math.acos(math.min(1, math.sqrt(dw*dw + p*p))))
+end
+
+local function rawImpulseWindow(self, frame)
+	local window = self.rawWindow or {frames = {}, next = 1, count = 0}
+	self.rawWindow = window
+	window.frames[window.next] = frame
+	window.next, window.count = window.next % 64 + 1, math.min(window.count + 1, 64)
+	local remaining, elapsed, ax, ay, az, dx, dy, dz = RAW_FLICK_WINDOW, 0, 0, 0, 0, 0, 0, 0
+	for i = 1, window.count do
+		local f = window.frames[(window.next - i - 1) % 64 + 1]
+		local duration = math.min(f.delta, remaining)
+		local weight = duration / f.delta
+		ax, ay, az = ax + f.ax*weight, ay + f.ay*weight, az + f.az*weight
+		dx, dy, dz = dx + f.dx*weight, dy + f.dy*weight, dz + f.dz*weight
+		elapsed, remaining = elapsed + duration, remaining - duration
+		if remaining < 1e-6 then break end
+	end
+	local distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+	return math.sqrt(ax*ax + ay*ay + az*az) / elapsed, dy / elapsed, elapsed,
+		distance > 1e-8 and dy / distance or 0
+end
+
+local function reportRawFlick(self, stroke, speed, minSpeed, windowTime, alignment, hand)
+	if gestureTestId ~= M.Gesture.FLICK and gestureTestId ~= M.Gesture.FLICK_UP then return end
+	local frames, history = {}, self.debugHistory
+	if history then
+		for i = 1, history.count do
+			frames[i] = history.frames[(history.next - history.count + i - 2) % 64 + 1]
+		end
+	end
+	uevrUtils.executeUEVRCallbacks("on_gesture_flick_sample", {
+		source = "Raw", speedLabel = "rotation window peak", up = stroke.direction > 0, accepted = true,
+		peakSpeed = speed, minSpeed = minSpeed, angle = stroke.netAngle, minAngle = self.minAngleDelta,
+		details = {
+			peakFrameAngle = stroke.peakFrameAngle, peakFrameDelta = stroke.peakFrameDelta,
+			peakRawAngle = stroke.peakFrameAngle, peakClockDelta = stroke.peakClockDelta,
+			frames = stroke.frames, elapsed = stroke.elapsed, netAngle = stroke.netAngle,
+			pathAngle = stroke.pathAngle, qualifiedAngle = stroke.netAngle,
+			windowSpeed = speed, windowTime = windowTime, alignment = alignment,
+			verticalTravelCm = stroke.dy * 100, verticalSpeedCm = stroke.verticalSpeed * 100,
+			motionUpDot = stroke.motionUpDot,
+		}, frames = frames,
+	}, hand)
+end
+
+local function confirmRawFlickUp(self, hand)
+	local pending = self.pendingUp
+	self.pendingUp, self.stroke, self.awaitRest = nil, nil, true
+	self.cooldown = self.cooldownTime
+	reportRawFlick(self, pending.stroke, pending.stroke.peakSpeed, pending.minSpeed, pending.windowTime, pending.alignment, hand)
+	return false, true, pending.strength
+end
+
+local function updateRawFlickDetector(self, position, quat, deltaTime, hand)
+	if type(deltaTime) ~= "number" or not (deltaTime > 0 and deltaTime <= 0.1) then
+		resetRawFlickMotion(self, true)
+		return false, false, 0
+	end
+	self.cooldown = math.max(0, self.cooldown - deltaTime)
+	local qnorm = math.sqrt(quat.X*quat.X + quat.Y*quat.Y + quat.Z*quat.Z + quat.W*quat.W)
+	if not (qnorm > 1e-8 and qnorm < math.huge)
+		or not (math.abs(position.X) < math.huge and math.abs(position.Y) < math.huge and math.abs(position.Z) < math.huge) then
+		resetRawFlickMotion(self, true)
+		return false, false, 0
+	end
+	local current = {X = quat.X/qnorm, Y = quat.Y/qnorm, Z = quat.Z/qnorm, W = quat.W/qnorm}
+	local previous, previousPos = self.prevRawQuat, self.prevRawPos
+	-- Copy the get_pose out-arguments: they are reused for both hands on the next call.
+	self.prevRawQuat = current
+	self.prevRawPos = {X = position.X, Y = position.Y, Z = position.Z}
+	if previous == nil or previousPos == nil then return false, false, 0 end
+	local ax, ay, az, angle = rawRotationStep(previous, current)
+	local dx, dy, dz = position.X-previousPos.X, position.Y-previousPos.Y, position.Z-previousPos.Z
+	if angle > 120 or dx*dx + dy*dy + dz*dz > 0.25 then
+		-- Tracking discontinuities cannot finish an existing stroke.
+		resetRawFlickMotion(self, true)
+		return false, false, 0
+	end
+	local offset = self.aimOffset
+	if offset then
+		local kx, ky, kz = getRawAimAxis(current, offset)
+		ax, ay, az, angle = removeRawRoll(kx, ky, kz, ax, ay, az)
+	end
+	if self.rawMin ~= self.minThresholdAngleSpeed or self.rawUpMin ~= self.upMinThresholdAngleSpeed
+		or self.rawAngle ~= self.minAngleDelta or self.rawUpDot ~= self.upDotThreshold then
+		self.stroke, self.rawWindow = nil, nil
+		self.rawMin, self.rawUpMin = self.minThresholdAngleSpeed, self.upMinThresholdAngleSpeed
+		self.rawAngle, self.rawUpDot = self.minAngleDelta, self.upDotThreshold
+	end
+	local speed, verticalSpeed, windowTime, motionUpDot = rawImpulseWindow(self, {
+		ax = ax, ay = ay, az = az, dx = dx, dy = dy, dz = dz, delta = deltaTime,
+	})
+	local clockDelta
+	if gestureTestId == M.Gesture.FLICK or gestureTestId == M.Gesture.FLICK_UP then
+		local now = os.clock()
+		clockDelta, self.debugPrevTime = self.debugPrevTime and now - self.debugPrevTime or nil, now
+		local history = self.debugHistory or {frames = {}, next = 1, count = 0}
+		self.debugHistory = history
+		history.frames[history.next] = {
+			delta = deltaTime, clockDelta = clockDelta, angle = angle, rawAngle = angle,
+			speed = speed, upDot = motionUpDot, verticalSpeedCm = verticalSpeed * 100,
+		}
+		history.next, history.count = history.next % 64 + 1, math.min(history.count + 1, 64)
+	else
+		self.debugHistory, self.debugPrevTime = nil, nil
+	end
+	-- Suppress the whole recovery after recognition. Sensitivity must not define rearming.
+	-- Rapid flicks rarely come to a full rest, so rearm once the hand slows or rises;
+	-- a rising wind-up can only start a pending up flick, which a down flick overrides.
+	if self.awaitRest then
+		if self.cooldown <= 0 and (speed < RAW_FLICK_REARM_SPEED or verticalSpeed > 0) then
+			self.awaitRest, self.stroke, self.rawWindow = false, nil, nil
+		end
+		return false, false, 0
+	end
+	local pending = self.pendingUp
+	if pending then
+		pending.age = pending.age + deltaTime
+		if pending.age > RAW_FLICK_UP_CONFIRM then
+			return confirmRawFlickUp(self, hand)
+		end
+	end
+	local direction = verticalSpeed > 0 and 1 or -1
+	local minSpeed = direction > 0 and self.upMinThresholdAngleSpeed or self.minThresholdAngleSpeed
+	local stroke = self.stroke
+	if speed <= minSpeed then
+		if stroke then
+			stroke.gap = stroke.gap + deltaTime
+			if stroke.gap > RAW_FLICK_GAP then self.stroke = nil end
+		end
+		return false, false, 0
+	end
+	if stroke == nil or stroke.direction ~= direction then
+		stroke = {direction = direction, elapsed = 0, gap = 0, frames = 0, startQuat = previous,
+			ax = 0, ay = 0, az = 0, dx = 0, dy = 0, dz = 0, pathAngle = 0, peakSpeed = 0}
+		if offset then
+			stroke.rollX, stroke.rollY, stroke.rollZ = getRawAimAxis(previous, offset)
+		end
+		self.stroke = stroke
+	end
+	stroke.gap, stroke.elapsed = 0, stroke.elapsed + deltaTime
+	if stroke.elapsed > RAW_FLICK_MAX_TIME then
+		self.stroke = nil
+		return false, false, 0
+	end
+	stroke.ax, stroke.ay, stroke.az = stroke.ax+ax, stroke.ay+ay, stroke.az+az
+	stroke.dx, stroke.dy, stroke.dz = stroke.dx+dx, stroke.dy+dy, stroke.dz+dz
+	stroke.pathAngle = stroke.pathAngle + angle
+	if angle > 0.25 then stroke.frames = stroke.frames + 1 end
+	if stroke.rollX then
+		stroke.netAngle = rawSwingAngle(stroke.startQuat, current, stroke.rollX, stroke.rollY, stroke.rollZ)
+	else
+		local _, _, _, netAngle = rawRotationStep(stroke.startQuat, current)
+		stroke.netAngle = netAngle
+	end
+	local directedAngle = math.sqrt(stroke.ax*stroke.ax + stroke.ay*stroke.ay + stroke.az*stroke.az)
+	local alignment = stroke.pathAngle > 0 and directedAngle / stroke.pathAngle or 0
+	local distance = math.sqrt(stroke.dx*stroke.dx + stroke.dy*stroke.dy + stroke.dz*stroke.dz)
+	stroke.motionUpDot = distance > 1e-8 and stroke.dy / distance or 0
+	stroke.verticalSpeed = verticalSpeed
+	if windowTime >= RAW_FLICK_WINDOW - 1e-6 and speed > stroke.peakSpeed then
+		stroke.peakSpeed, stroke.peakFrameAngle = speed, angle
+		stroke.peakFrameDelta, stroke.peakClockDelta = deltaTime, clockDelta
+	end
+	-- Translation supplies direction, not flick strength. A small displacement
+	-- floor excludes stationary-controller rotation and submillimetre pose jitter.
+	local motionAllowed = stroke.dy * direction >= 0.005
+	local upAllowed = direction < 0 or stroke.motionUpDot >= self.upDotThreshold
+	if windowTime >= RAW_FLICK_WINDOW - 1e-6
+		and stroke.frames >= 2 and stroke.netAngle >= self.minAngleDelta and alignment >= 0.65
+		and motionAllowed and upAllowed and self.cooldown <= 0 then
+		local maxSpeed = direction > 0 and self.upMaxThresholdAngleSpeed or self.maxThresholdAngleSpeed
+		local strength = maxSpeed <= minSpeed and 1 or getSpeedPercent(stroke.peakSpeed, minSpeed, maxSpeed)
+		if direction > 0 then
+			if pending == nil or stroke.peakSpeed > pending.stroke.peakSpeed then
+				self.pendingUp = {stroke = stroke, strength = strength, minSpeed = minSpeed,
+					windowTime = windowTime, alignment = alignment, age = pending and pending.age or 0}
+			end
+			self.stroke = nil
+			return false, false, 0
+		end
+		if pending and stroke.peakSpeed < pending.stroke.peakSpeed * RAW_FLICK_RECOVERY_RATIO then
+			return confirmRawFlickUp(self, hand)
+		end
+		-- Down flicks are time sensitive and report immediately, discarding a pending wind-up.
+		self.pendingUp = nil
+		reportRawFlick(self, stroke, stroke.peakSpeed, minSpeed, windowTime, alignment, hand)
+		self.stroke, self.awaitRest = nil, true
+		self.cooldown = self.cooldownTime
+		return true, false, strength
+	end
+	return false, false, 0
+end
+
 
 local holsterGripOn = false
 local function detectHolster(state, hand, continuous)
@@ -1160,7 +1643,8 @@ local function detectBody(state, hand, continuous)
 	return gripChest
 end
 
-local headGripOn = false
+-- Per hand (was one flag for both), so one hand's held grip doesn't block the other hand's "grip started at the head" check.
+local headGripOn = {}
 local function detectFace(state, hand, continuous)
 	local gripMouth, gripEyes, gripHead, gripEar = false, false, false, false
 	local triggerMouth, triggerEyes, triggerHead, triggerEar = false, false, false, false
@@ -1168,8 +1652,8 @@ local function detectFace(state, hand, continuous)
 	local triggerThreshold = getParam({"face", "triggerThreshold"})
 	local isGripped, isTriggerred = getHandGripTrigger(state, hand, triggerThreshold)
 
-	if (continuous == true or not headGripOn) and (isGripped or isTriggerred)  then
-		headGripOn = true
+	if (continuous == true or not headGripOn[hand]) and (isGripped or isTriggerred)  then
+		headGripOn[hand] = true
 		local headLocation = controllers.getControllerLocation(2)
 		local handLocation = controllers.getControllerLocation(hand)
 		if headLocation ~= nil and handLocation ~= nil then
@@ -1208,8 +1692,8 @@ local function detectFace(state, hand, continuous)
 			end
 
 		end
-	elseif headGripOn and not (isGripped or isTriggerred) then
-		headGripOn = false
+	elseif headGripOn[hand] and not (isGripped or isTriggerred) then
+		headGripOn[hand] = false
 	end
 	return gripMouth, gripEyes, gripHead, gripEar, triggerMouth, triggerEyes, triggerHead, triggerEar
 end
@@ -1416,17 +1900,31 @@ local function isVrControllerIdentityPose(hand)
 	end
 	vr.get_pose(index, flickPosePos, flickPoseQuat)
 	local x, y, z = flickPosePos.X, flickPosePos.Y, flickPosePos.Z
-	return (x * x + y * y + z * z) < 1e-8
+	return (x * x + y * y + z * z) < 1e-8, flickPoseQuat
 end
 
-function M.getFlickGestures(deltaTime, hand)
-	if hand == nil then hand = Handed.Right end
+local function rawPoseToForward(quat)
+	if quat == nil then return nil end
+	local x, y, z, w = quat.X, quat.Y, quat.Z, quat.W
+	local normSquared = x * x + y * y + z * z + w * w
+	if not (normSquared > 1e-8 and normSquared < math.huge) then
+		return nil
+	end
+	-- Rotate tracking-space forward (0,0,-1) by the raw pose quaternion.
+	-- Express it as (-Z,X,Y) so the shared detector's forward.Z is physical up.
+	-- No pawn transform, recenter offset, or world controller component is involved.
+	return {
+		X = 1 - 2 * (x * x + y * y) / normSquared,
+		Y = -2 * (x * z + w * y) / normSquared,
+		Z = 2 * (w * x - y * z) / normSquared,
+	}
+end
+
+local function getWorldFlickGestures(deltaTime, hand)
 	local detector = flickDetectors[hand]
-	if isVrControllerIdentityPose(hand) then
-		detector.prevForward = nil
-		detector.peakAngleSpeed = 0
-		detector.accumulatedAngle = 0
-		detector.endFZ = nil
+	local identityPose, quat = isVrControllerIdentityPose(hand)
+	if identityPose then
+		resetFlickMotion(detector)
 		return false, false, 0
 	end
 	local controller = controllers.getController(hand, true)
@@ -1437,7 +1935,51 @@ function M.getFlickGestures(deltaTime, hand)
 	if rot == nil then
 		return false, false, 0
 	end
-	return updateFlickDetector(detector, rotationToForwardVector(rot), deltaTime)
+	local rawForward
+	if gestureTestId == M.Gesture.FLICK or gestureTestId == M.Gesture.FLICK_UP then
+		rawForward = rawPoseToForward(quat)
+	end
+	return updateFlickDetector(detector, rotationToForwardVector(rot), deltaTime, hand, rawForward)
+end
+
+local function isValidAimOffset(offset)
+	if type(offset) ~= "table" then return false end
+	local x, y, z, w = offset.X, offset.Y, offset.Z, offset.W
+	if type(x) ~= "number" or type(y) ~= "number" or type(z) ~= "number" or type(w) ~= "number" then
+		return false
+	end
+	local norm = x*x + y*y + z*z + w*w
+	return norm > 0.98 and norm < 1.02
+end
+
+local function getRawFlickGestures(deltaTime, hand)
+	local detector = rawFlickDetectors[hand]
+	local identityPose, quat = isVrControllerIdentityPose(hand)
+	if identityPose or quat == nil then
+		resetRawFlickMotion(detector, true)
+		-- A controller can change while untracked; fetch its offset again once it returns.
+		detector.aimOffset, detector.aimRetry = nil, 0
+		return false, false, 0
+	end
+	if detector.aimOffset == nil and type(deltaTime) == "number" then
+		detector.aimRetry = (detector.aimRetry or 0) - deltaTime
+		if detector.aimRetry <= 0 then
+			detector.aimRetry = RAW_FLICK_AIM_RETRY
+			local offset = plugin.getControllerAimOffset(hand == Handed.Left and "left" or "right")
+			if isValidAimOffset(offset) then
+				detector.aimOffset = offset
+			end
+		end
+	end
+	return updateRawFlickDetector(detector, flickPosePos, quat, deltaTime, hand)
+end
+
+function M.getFlickGestures(deltaTime, hand)
+	if hand == nil then hand = Handed.Right end
+	if useRawControllers then
+		return getRawFlickGestures(deltaTime, hand)
+	end
+	return getWorldFlickGestures(deltaTime, hand)
 end
 
 function M.autoDetectGesture(id, val, hand)
@@ -1672,14 +2214,14 @@ uevr.sdk.callbacks.on_pre_engine_tick(function(engine, delta)
 		if snatch then uevrUtils.executeUEVRCallbacks("on_gesture_snatch", strength, Handed.Left) end
 	end
 	if hasAutodetect(M.Gesture.SWING, Handed.Right) then
-		local began, ended, strength = M.getSwingGestures(delta, Handed.Right)
+		local began, ended, strength, active, endedStrength = M.getSwingGestures(delta, Handed.Right)
+		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", endedStrength or strength, Handed.Right) end
 		if began then uevrUtils.executeUEVRCallbacks("on_gesture_swing_begin", strength, Handed.Right) end
-		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", strength, Handed.Right) end
 	end
 	if hasAutodetect(M.Gesture.SWING, Handed.Left) then
-		local began, ended, strength = M.getSwingGestures(delta, Handed.Left)
+		local began, ended, strength, active, endedStrength = M.getSwingGestures(delta, Handed.Left)
+		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", endedStrength or strength, Handed.Left) end
 		if began then uevrUtils.executeUEVRCallbacks("on_gesture_swing_begin", strength, Handed.Left) end
-		if ended then uevrUtils.executeUEVRCallbacks("on_gesture_swing_end", strength, Handed.Left) end
 	end
 	if hasAutodetect(M.Gesture.FLICK, Handed.Right) or hasAutodetect(M.Gesture.FLICK_UP, Handed.Right) then
 		local flick, flickUp, strength = M.getFlickGestures(delta, Handed.Right)

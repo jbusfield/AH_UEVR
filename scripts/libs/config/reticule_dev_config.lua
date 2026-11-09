@@ -362,7 +362,7 @@ local developerWidgets = spliceableInlineArray{
                 {
                     widgetType = "combo",
                     id = widgetPrefix .. "material_finder_list",
-                    label = "Meshes",
+                    label = "Materials",
                     selections = searchMaterialList,
                     initialValue = 1,
                 },
@@ -831,8 +831,7 @@ end
 local function getSelectedPossibleReticuleWidget()
     local currentReticuleSelectionIndex = configui.getValue(widgetPrefix .. "widget_finder_list")
 	if possibleReticuleNames ~= nil and currentReticuleSelectionIndex <= #possibleReticuleNames and currentReticuleSelectionIndex > 1 then
-		--local widget = uevrUtils.getLoadedAsset(reticuleNames[currentReticuleSelectionIndex])	
-		return uevrUtils.find_instance_of("Class /Script/UMG.Widget", possibleReticuleNames[currentReticuleSelectionIndex])
+		return uevrUtils.getSafeInstanceOf("Class /Script/UMG.Widget", possibleReticuleNames[currentReticuleSelectionIndex])
 	end
 	return nil
 end

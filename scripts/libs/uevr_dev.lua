@@ -4,6 +4,8 @@ local configui = require("libs/configui")
 local controllers = require("libs/controllers")
 local reticule = require("libs/reticule")
 local plugin = require("libs/core/plugin")
+-- Loaded on first use; not every project sharing this file ships libs/particles.lua
+local particles = nil
 
 local M = {}
 
@@ -32,6 +34,14 @@ local currentWidgetSelectionIndex = 1
 
 local reticuleNames = {}
 local currentReticuleSelectionIndex = 1
+
+local particleNames = {}
+local currentParticleSelectionIndex = 1
+local currentParticle = nil
+local particleEmitterAsset = nil
+local particleEmitterNames = {}
+local particleEmitterDefaults = {}
+local particleEmitterOverrides = {}
 
 local configDefinition = {
 	{
@@ -382,6 +392,176 @@ local configDefinition = {
 			{
 				widgetType = "tree_pop"
 			},
+			{
+				widgetType = "tree_node",
+				id = "uevr_dev_particle_viewer",
+				label = "Particle Viewer"
+			},
+				{
+					widgetType = "combo",
+					id = "uevr_dev_particle_type",
+					label = "Particle Type",
+					selections = {"NiagaraSystem","ParticleSystem"},
+					initialValue = 1
+				},
+				{
+					widgetType = "input_text",
+					id = "uevr_dev_particle_filter",
+					label = "Filter",
+					initialValue = ""
+				},
+				{
+					widgetType = "same_line",
+				},
+				{
+					widgetType = "button",
+					id = "uevr_dev_particle_refresh_button",
+					label = "Refresh",
+					size = {80,22}
+				},
+				{
+					widgetType = "button",
+					id = "uevr_dev_particle_prev",
+					label = "<",
+					size = {40,22}
+				},
+				{
+					widgetType = "same_line",
+				},
+				{
+					widgetType = "combo",
+					id = "uevr_dev_particle_list",
+					label = "",
+					selections = {"None"},
+					initialValue = 1
+				},
+				{
+					widgetType = "same_line",
+				},
+				{
+					widgetType = "button",
+					id = "uevr_dev_particle_next",
+					label = ">",
+					size = {40,22}
+				},
+				{
+					widgetType = "input_text",
+					id = "uevr_dev_particle_selected_name",
+					label = "Current Selection",
+					initialValue = ""
+				},
+				{
+					widgetType = "begin_group"
+				},
+					{
+						widgetType = "text",
+						id = "uevr_dev_particle_total_count",
+						label = "Total particle systems"
+					},
+					{
+						widgetType = "text",
+						id = "uevr_dev_particle_filtered_count",
+						label = "Filtered particle systems"
+					},
+				{
+					widgetType = "end_group"
+				},
+				{
+					widgetType = "drag_float",
+					id = "uevr_dev_particle_scale",
+					label = "Scale",
+					speed = 0.001,
+					range = {0.001, 10},
+					initialValue = 0.04
+				},
+				{
+					widgetType = "checkbox",
+					id = "uevr_dev_particle_loop",
+					label = "Looping",
+					initialValue = true
+				},
+				{
+					widgetType = "begin_group",
+					id = "uevr_dev_particle_loop_settings",
+					isHidden = false
+				},
+					{
+						widgetType = "indent",
+						width = 20
+					},
+					{
+						widgetType = "drag_float",
+						id = "uevr_dev_particle_loop_start",
+						label = "Start (s)",
+						speed = 0.05,
+						range = {0, 30},
+						initialValue = 1.0,
+						width = 100
+					},
+					{
+						widgetType = "same_line",
+					},
+					{
+						widgetType = "space_horizontal",
+						space = 30
+					},
+					{
+						widgetType = "drag_float",
+						id = "uevr_dev_particle_loop_end",
+						label = "Loop End (s)",
+						speed = 0.05,
+						range = {0.05, 60},
+						initialValue = 3.0,
+						width = 100
+					},
+					{
+						widgetType = "unindent",
+						width = 20
+					},
+				{
+					widgetType = "end_group"
+				},
+				{
+					widgetType = "combo",
+					id = "uevr_dev_particle_emitter_list",
+					label = "Emitter",
+					selections = {"None"},
+					initialValue = 1
+				},
+				{
+					widgetType = "same_line",
+				},
+				{
+					widgetType = "checkbox",
+					id = "uevr_dev_particle_emitter_enabled",
+					label = "Enabled",
+					initialValue = true
+				},
+				{
+					widgetType = "button",
+					id = "uevr_dev_particle_replay",
+					label = "Replay",
+					size = {80,22}
+				},
+				{
+					widgetType = "same_line",
+				},
+				{
+					widgetType = "button",
+					id = "uevr_dev_particle_stop",
+					label = "Stop",
+					size = {80,22}
+				},
+				{
+					widgetType = "text_colored",
+					id = "uevr_dev_particle_error",
+					color = "#FF0000FF",
+					isHidden = true,
+					label = "Selected particle system could not be spawned. Press Refresh and try again."
+				},
+			{
+				widgetType = "tree_pop"
+			},
 		}
 	}
 }
@@ -392,6 +572,8 @@ function M.init()
 	M.displayMaterials(configui.getValue("uevr_dev_material_filter"))
 	M.displayWidgets(configui.getValue("uevr_dev_widget_filter"))
 	M.displayReticules(configui.getValue("uevr_dev_reticule_filter"))
+	M.displayParticles(configui.getValue("uevr_dev_particle_filter"))
+	configui.hideWidget("uevr_dev_particle_loop_settings", configui.getValue("uevr_dev_particle_loop") == false)
 	configui.hideWidget("uevr_dev_mesh_relativescale", configui.getValue("uevr_dev_mesh_nativescale"))
 end
 
@@ -453,7 +635,7 @@ local function updateMaterial()
 	if uevrUtils.getValid(currentComponent) ~= nil then
 		setCurrentComponentScale(1.0)
 		local leftConnected = controllers.attachComponentToController(Handed.Left, currentComponent, nil, nil, nil, true)
-		local material = uevrUtils.find_instance_of("Class /Script/Engine.Material", materialNames[currentMaterialSelectionIndex])
+		local material = uevrUtils.getSafeInstanceOf("Class /Script/Engine.Material", materialNames[currentMaterialSelectionIndex])
 		if uevrUtils.getValid(material) ~= nil then
 ---@diagnostic disable-next-line: need-check-nil
 			currentComponent:SetMaterial(0, material)
@@ -472,7 +654,7 @@ local function updateWidget()
 	if widgetNames ~= nil and currentWidgetSelectionIndex <= #widgetNames and currentWidgetSelectionIndex > 0 then
 		local className = "Class /Script/UMG.Widget"
 		if configui.getValue("uevr_dev_widget_user_only") == true then className = "Class /Script/UMG.UserWidget" end
-		local widget = uevrUtils.find_instance_of(className, widgetNames[currentWidgetSelectionIndex])
+		local widget = uevrUtils.getSafeInstanceOf(className, widgetNames[currentWidgetSelectionIndex])
 		if widget == nil then
 			configui.hideWidget("uevr_dev_widget_error" ,false)
 		else
@@ -496,8 +678,7 @@ local function updateReticule()
 	end
 
 	if reticuleNames ~= nil and currentReticuleSelectionIndex <= #reticuleNames and currentReticuleSelectionIndex > 0 then
-		--local widget = uevrUtils.getLoadedAsset(reticuleNames[currentReticuleSelectionIndex])	
-		local widget = uevrUtils.find_instance_of("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
+		local widget = uevrUtils.getSafeInstanceOf("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
 		if widget == nil then
 			configui.hideWidget("uevr_dev_reticule_error" ,false)
 		else
@@ -521,12 +702,110 @@ local function updateReticule()
 
 end
 
+local function stopParticle()
+	-- particles.lua already destroys all instances before a level change
+	if currentParticle ~= nil and currentParticle:isValid() then
+		currentParticle:destroy()
+	end
+	if currentParticle ~= nil then
+		currentParticle = nil
+	end
+end
+
+local function isParticleEmitterEnabled(name)
+	if name == nil then return true end
+	if particleEmitterOverrides[name] ~= nil then return particleEmitterOverrides[name] end
+	if particleEmitterDefaults[name] ~= nil then return particleEmitterDefaults[name] end
+	return true
+end
+
+-- Lists the asset's emitters; overrides reset when a different asset is selected
+local function refreshParticleEmitters(assetName)
+	if assetName ~= particleEmitterAsset then
+		particleEmitterAsset = assetName
+		particleEmitterOverrides = {}
+	end
+	local names, defaults = particles.listEmittersFromAsset(assetName)
+	particleEmitterNames = names or {}
+	particleEmitterDefaults = defaults or {}
+	if #particleEmitterNames < 1 then
+		configui.setSelections("uevr_dev_particle_emitter_list", {"None"})
+		configui.setValue("uevr_dev_particle_emitter_list", 1, true)
+		configui.setValue("uevr_dev_particle_emitter_enabled", true, true)
+		return
+	end
+	configui.setSelections("uevr_dev_particle_emitter_list", particleEmitterNames)
+	local index = configui.getValue("uevr_dev_particle_emitter_list") or 1
+	if index < 1 or index > #particleEmitterNames then index = 1 end
+	configui.setValue("uevr_dev_particle_emitter_list", index, true)
+	configui.setValue("uevr_dev_particle_emitter_enabled", isParticleEmitterEnabled(particleEmitterNames[index]), true)
+end
+
+local function printParticleEmitterOverrides()
+	local entries = {}
+	for _, name in ipairs(particleEmitterNames) do
+		local enabled = isParticleEmitterEnabled(name)
+		local default = particleEmitterDefaults[name] ~= false
+		if enabled ~= default then
+			local key = string.match(name, "^[%a_][%w_]*$") and name or ("[\"" .. name .. "\"]")
+			table.insert(entries, key .. " = " .. tostring(enabled))
+		end
+	end
+	print("\n--lua option for particles.new\nemitterOverrides = {" .. table.concat(entries, ", ") .. "},\n")
+end
+
+local function updateParticle()
+	if currentComponent ~= nil then
+		uevrUtils.detachAndDestroyComponent(currentComponent, false)
+		currentComponent = nil
+	end
+	stopParticle()
+	configui.hideWidget("uevr_dev_particle_error", true)
+
+	local assetName = particleNames[currentParticleSelectionIndex]
+	if assetName == nil then
+		M.print("Failed to update particle at index " .. currentParticleSelectionIndex)
+		return
+	end
+
+	if particles == nil then
+		local ok, result = pcall(require, "libs/particles")
+		if not ok then
+			M.print("Particle viewer requires libs/particles: " .. tostring(result), LogLevel.Error)
+			configui.hideWidget("uevr_dev_particle_error", false)
+			return
+		end
+		particles = result
+	end
+
+	refreshParticleEmitters(assetName)
+
+	local scale = configui.getValue("uevr_dev_particle_scale") or 0.04
+	local options = {particleSystemAsset = assetName, scale = {scale, scale, scale}, autoActivate = true, emitterOverrides = particleEmitterOverrides}
+	if configui.getValue("uevr_dev_particle_loop") == true then
+		options.loopStart = configui.getValue("uevr_dev_particle_loop_start")
+		options.loopEnd = configui.getValue("uevr_dev_particle_loop_end")
+	end
+	currentParticle = particles.new(options)
+	if currentParticle == nil or not currentParticle:isValid() then
+		if currentParticle ~= nil then currentParticle:destroy() end
+		currentParticle = nil
+		configui.hideWidget("uevr_dev_particle_error", false)
+		return
+	end
+	currentParticle:attachTo(controllers.getController(Handed.Left))
+	currentParticle:setRelativeLocation({X = 50, Y = 0, Z = 0})
+	currentParticle:start()
+	M.print("Created particle " .. assetName, LogLevel.Critical)
+end
+
 function M.onLevelChange()
 	M.print("Level changed")
 	M.displayStaticMeshes(configui.getValue("uevr_dev_mesh_filter"))
 	M.displayMaterials(configui.getValue("uevr_dev_material_filter"))
 	M.displayWidgets(configui.getValue("uevr_dev_widget_filter"))
 	M.displayReticules(configui.getValue("uevr_dev_reticule_filter"))
+	M.displayParticles(configui.getValue("uevr_dev_particle_filter"))
 end
 
 function M.displayStaticMeshes(searchText)
@@ -651,9 +930,39 @@ function M.displayReticules(searchText)
 	configui.setSelections("uevr_dev_reticule_list", reticuleNames)
 end
 
+function M.displayParticles(searchText)
+	if searchText == nil then searchText = "" end
+	local systems = nil
+	local typeName = ""
+	if configui.getValue("uevr_dev_particle_type") == 1 then
+		systems = uevrUtils.find_all_instances("Class /Script/Niagara.NiagaraSystem", false)
+		typeName = " niagara"
+	else
+		systems = uevrUtils.find_all_instances("Class /Script/Engine.ParticleSystem", false)
+		typeName = " cascade"
+	end
+	particleNames = {}
+	local totalCount = 0
+	if systems ~= nil then
+		for name, system in pairs(systems) do
+			totalCount = totalCount + 1
+			local systemName = system:get_full_name()
+			if searchText == "" or string.find(string.lower(systemName), string.lower(searchText), 1, true) then
+				table.insert(particleNames, systemName)
+			end
+		end
+	end
+
+	configui.setLabel("uevr_dev_particle_total_count", "Total" .. typeName .. " systems:" .. totalCount)
+	configui.setLabel("uevr_dev_particle_filtered_count", "Filtered" .. typeName .. " systems:" .. #particleNames)
+	configui.setSelections("uevr_dev_particle_list", particleNames)
+	local selectedIndex = configui.getValue("uevr_dev_particle_list")
+	configui.setValue("uevr_dev_particle_selected_name", (selectedIndex and particleNames[selectedIndex]) or "")
+end
+
 function M.useCurrentReticule()
 	if #reticuleNames > 0 and currentReticuleSelectionIndex > 0 and currentReticuleSelectionIndex <= #reticuleNames then
-		local widget = uevrUtils.find_instance_of("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
+		local widget = uevrUtils.getSafeInstanceOf("Class /Script/UMG.Widget", reticuleNames[currentReticuleSelectionIndex])
 		if uevrUtils.getValid(widget) ~= nil then
 ---@diagnostic disable-next-line: need-check-nil
 			local widgetClassName = widget:get_class():get_full_name()
@@ -830,6 +1139,94 @@ end)
 configui.onUpdate("uevr_dev_reticule_active", function(value)
 	M.displayReticules(configui.getValue("uevr_dev_reticule_filter"))
 	configui.hideWidget("uevr_dev_reticule_error" ,true)
+end)
+
+
+configui.onUpdate("uevr_dev_particle_filter", function(value)
+	M.displayParticles(value)
+end)
+
+configui.onUpdate("uevr_dev_particle_type", function(value)
+	M.displayParticles(configui.getValue("uevr_dev_particle_filter"))
+end)
+
+configui.onUpdate("uevr_dev_particle_refresh_button", function(value)
+	M.displayParticles(configui.getValue("uevr_dev_particle_filter"))
+	configui.hideWidget("uevr_dev_particle_error" ,true)
+end)
+
+configui.onUpdate("uevr_dev_particle_prev", function(value)
+	currentParticleSelectionIndex = currentParticleSelectionIndex - 1
+	if currentParticleSelectionIndex < 1 then currentParticleSelectionIndex = 1 end
+	if currentParticleSelectionIndex <= #particleNames then
+		configui.setValue("uevr_dev_particle_list", currentParticleSelectionIndex)
+	end
+end)
+
+configui.onUpdate("uevr_dev_particle_next", function(value)
+	currentParticleSelectionIndex = currentParticleSelectionIndex + 1
+	if currentParticleSelectionIndex > #particleNames then currentParticleSelectionIndex = #particleNames end
+	if currentParticleSelectionIndex > 0 and currentParticleSelectionIndex <= #particleNames then
+		configui.setValue("uevr_dev_particle_list", currentParticleSelectionIndex)
+	end
+end)
+
+configui.onUpdate("uevr_dev_particle_list", function(value)
+	if value ~= nil and particleNames[value] ~= nil then
+		M.print("Using particle at index " .. value .. " - " .. particleNames[value], LogLevel.Critical)
+	end
+	currentParticleSelectionIndex = value
+	configui.setValue("uevr_dev_particle_selected_name", particleNames[value] or "")
+	updateParticle()
+end)
+
+configui.onUpdate("uevr_dev_particle_scale", function(value)
+	if currentParticle ~= nil then
+		currentParticle:setScale({value, value, value})
+	end
+end)
+
+configui.onUpdate("uevr_dev_particle_loop", function(value)
+	configui.hideWidget("uevr_dev_particle_loop_settings", value == false)
+	if currentParticle ~= nil then
+		updateParticle()
+	end
+end)
+
+local function updateParticleLoopRange()
+	if currentParticle ~= nil and currentParticle.looping then
+		currentParticle:setLoopRange(configui.getValue("uevr_dev_particle_loop_start"), configui.getValue("uevr_dev_particle_loop_end"))
+	end
+end
+
+configui.onUpdate("uevr_dev_particle_loop_start", function(value)
+	updateParticleLoopRange()
+end)
+
+configui.onUpdate("uevr_dev_particle_loop_end", function(value)
+	updateParticleLoopRange()
+end)
+
+configui.onUpdate("uevr_dev_particle_emitter_list", function(value)
+	configui.setValue("uevr_dev_particle_emitter_enabled", isParticleEmitterEnabled(particleEmitterNames[value]), true)
+end)
+
+configui.onUpdate("uevr_dev_particle_emitter_enabled", function(value)
+	local name = particleEmitterNames[configui.getValue("uevr_dev_particle_emitter_list")]
+	if name == nil then return end
+	particleEmitterOverrides[name] = value == true
+	if currentParticle ~= nil then
+		currentParticle:setEmitterEnabled(name, value == true)
+	end
+	printParticleEmitterOverrides()
+end)
+
+configui.onUpdate("uevr_dev_particle_replay", function(value)
+	updateParticle()
+end)
+
+configui.onUpdate("uevr_dev_particle_stop", function(value)
+	stopParticle()
 end)
 
 

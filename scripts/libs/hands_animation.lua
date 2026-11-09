@@ -9,6 +9,17 @@ local inputHandlerAnimID = {}
 local activeComponents = {}
 local autoHandleInput = true
 local disableAnimations = false --used during hand configuration to prevent loaded animation from interfering
+-- A/B flag: when a hand's pose changes (attachment gripped or released), stop that hand's in-flight blends.
+-- Otherwise a blend started just before the change finishes over the new pose and leaves the previous pose.
+local cancelLerpsOnPoseChange = true
+-- Only this XInput user index drives the automatic input handler (default 0). Games that also poll an empty controller slot
+-- would otherwise read each grip/trigger as pressed then released every frame, so its blend restarts every frame and the
+-- fingers never move. Opt out with setInputUserIndex(nil) to read every index, or pass another index.
+local inputUserIndex = 0
+-- When a hand is re-posed open (montage end, attachment released, hands created), any grip/trigger/thumb still held is put
+-- straight back in its pressed pose in the same frame, so the hand never shows open. Otherwise a held input stays open until
+-- it is released and pressed again. Opt out with setRestoreHeldInputsOnOpenPose(false).
+local restoreHeldInputsOnOpenPose = true
 
 
 local currentLogLevel = LogLevel.Error
@@ -78,6 +89,7 @@ local createInputHandler = doOnce(function()
 	end)
 
 	uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+		if inputUserIndex ~= nil and user_index ~= inputUserIndex then return end
 		if autoHandleInput and M.exists() then
 			local rightAttachment = holdingAttachment[Handed.Right] or attachments.getCurrentGripAnimation(Handed.Right)
 			local leftAttachment = holdingAttachment[Handed.Left] or attachments.getCurrentGripAnimation(Handed.Left)
@@ -106,8 +118,20 @@ function M.setAutoHandleInput(val)
 	autoHandleInput = val
 end
 
+function M.setInputUserIndex(val)
+	inputUserIndex = val
+end
+
 function M.disableAnimations(value)
 	disableAnimations = value
+end
+
+function M.setCancelLerpsOnPoseChange(value)
+	cancelLerpsOnPoseChange = value
+end
+
+function M.setRestoreHeldInputsOnOpenPose(value)
+	restoreHeldInputsOnOpenPose = value
 end
 
 function M.setHoldingAttachment(hand, val)
@@ -128,6 +152,7 @@ function M.updateAnimationState(hand)
 		if isHoldingAttachment then
 			forEachUniqueTarget(function(target)
 				local handStr = hand == Handed.Left and "left" or "right"
+				if cancelLerpsOnPoseChange then animation.cancelLerps(handStr .. "_" .. target) end
 				animation.resetAnimation(handStr.."_"..target, handStr.."_grip_weapon" .. attachmentExtension, true) --forces an update regardless of current state
 				animation.resetAnimation(handStr.."_"..target, handStr.."_trigger_weapon" .. attachmentExtension, true) --forces an update regardless of current state
 				animation.pose(handStr .. "_" .. target, "grip_" .. handStr .. "_weapon" .. attachmentExtension)
@@ -135,7 +160,16 @@ function M.updateAnimationState(hand)
 		else
 			forEachUniqueTarget(function(target)
 				local handStr = hand == Handed.Left and "left" or "right"
+				if cancelLerpsOnPoseChange then animation.cancelLerps(handStr .. "_" .. target) end
 				animation.pose(handStr .. "_" .. target, "open_" .. handStr)
+				if restoreHeldInputsOnOpenPose then
+					local animID = handStr .. "_" .. target
+					for _, input in ipairs({"_grip", "_trigger", "_thumb"}) do
+						if animation.isAnimationOn(animID, handStr .. input) then
+							animation.animate(animID, handStr .. input, "on")
+						end
+					end
+				end
 			end)
 		end
 	end

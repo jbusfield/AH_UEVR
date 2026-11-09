@@ -1286,6 +1286,14 @@ function M.setValue(widgetID, value, noCallbacks)
 	-- end
 	if type(value) == "table" and next(value) == nil then return end --check if the table is empty
 	doUpdate(M.getPanelID(widgetID), widgetID, getCleanValue(value), nil, noCallbacks)
+	
+	-- mirror the change to any other panels using the exact same widgetID
+	for otherPanelID, elementMap in pairs(layoutElementMap) do
+		if otherPanelID ~= M.getPanelID(widgetID) and elementMap[widgetID] ~= nil and configValues[otherPanelID] ~= nil then
+			configValues[otherPanelID][widgetID] = getCleanValue(value)
+			if panelList[otherPanelID] ~= nil then panelList[otherPanelID].isDirty = true end
+		end
+	end
 end
 
 function M.setSelections(widgetID, selections)

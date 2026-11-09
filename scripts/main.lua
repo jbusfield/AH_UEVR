@@ -16,8 +16,16 @@ local gunstock = require('libs/gunstock')
 local collision = require('libs/collision')
 local plugin = require('libs/core/plugin')
 local ik = require('libs/ik')
+local accessories = require('libs/accessories')
 ik.setInitialTransformOnAnimationCompleteEnabled(false)
 local melee = require('helpers/melee')
+local car = require('helpers/car')
+local prompts = require('libs/prompts')
+
+local tutorial = require('libs/tutorial')
+local t = tutorial.new({ imageSize = 1536})   -- defaults to data/tutorial/ and data/tutorial/buttons/
+t:forceInteractionAtStartup(true)
+t:showOnce()               -- or t:show()
 
 --uevrUtils.setLogLevel(LogLevel.Debug)
 --melee.setLogLevel(LogLevel.Debug)
@@ -35,6 +43,11 @@ local melee = require('helpers/melee')
 --uevrUtils.setDeveloperMode(true)
 --hands.enableConfigurationTool()
 
+-- uevrUtils.profiler:toggle(true)
+-- register_key_bind("F1", function()
+--     uevrUtils.profiler:report("alpha")
+-- end)
+
 ui.init()
 montage.init()
 interaction.init()
@@ -45,9 +58,11 @@ pawnModule.init()
 remap.init()
 input.init()
 gunstock.showConfiguration()
+--gunstock.setMode(gunstock.Mode.VIRTUAL) --two-handed aiming via accessories marked "Off Hand Aim"
 collision.init()
 ik.init()
 gestures.init()
+car.init()
 
 --since weapons are attached to the hand sockets for this game
 --only let the hands be affected by gunstock offsets
@@ -57,7 +72,6 @@ ik.setGunstockOffsetsEnabled(true)
 
 local wasArmsAnimating = false
 local isInAnimationCutscene = false
-local isInCar = false
 local materialUtils = nil
 local leftHandDirectionOffset = {X=0,Y=0,Z=0}
 local activateCassetteMenu = false
@@ -69,7 +83,12 @@ local uccInitialBoneTransforms = {}
 hands.setAutoCreateHands(false)
 ik.setAutoCreateArms(false)
 
-local versionTxt = "v1.1.0"
+local isDeveloperMode = false
+if uevrUtils.getDeveloperMode() ~= nil then
+	isDeveloperMode = uevrUtils.getDeveloperMode() or false
+end
+
+local versionTxt = "v1.1.1"
 local title = "Atomic Heart First Person Mod " .. versionTxt
 local configDefinition = {
 	{
@@ -78,7 +97,7 @@ local configDefinition = {
 		layout = spliceableInlineArray
 		{
 			{ widgetType = "text", id = "title", label = title },
-			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "Control" }, { widgetType = "begin_rect", },
+			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "General" }, { widgetType = "begin_rect", },
                 {
                     widgetType = "combo",
                     id = "hands_type",
@@ -86,6 +105,64 @@ local configDefinition = {
                     selections = {"Forearms", "IK Arms"},
                     initialValue = 1,
                 },
+				{ widgetType = "checkbox", id = "physical_driving", label = "Physical Driving", initialValue = false },
+				{ widgetType = "indent", width = 20 },
+					{ widgetType = "text", wrapped = true, id = "physical_driving_help", label = "Grip the wheel with either or both hands to steer. Right trigger drives forward and left trigger reverses." },
+				{ widgetType = "unindent", width = 20 },
+				{ widgetType = "begin_group", id = "physical_driving_group", isHidden = not isDeveloperMode, },
+					{
+						widgetType = "tree_node",
+						id = "physical_driving_setup",
+						initialOpen = false,
+						label = "Physical Driving Setup",
+					
+					},
+						{ widgetType = "text", wrapped = true, id = "physical_driving_setup_help", label = "Add a left and a right accessory below, socket steering_wheel. Choose Left/Right Grip as the activation, then tune each hand position while sitting in the car." },
+						expandArray(car.getAccessoryWidgets),
+						{
+							widgetType = "drag_int",
+							id = "car_steering_lock_angle",
+							label = "Steering Lock Angle (Stopped)",
+							speed = 1,
+							range = {10, 360},
+							initialValue = 30
+						},
+						{
+							widgetType = "drag_int",
+							id = "car_steering_lock_angle_fast",
+							label = "Steering Lock Angle (High Speed)",
+							speed = 1,
+							range = {10, 360},
+							initialValue = 90
+						},
+						{
+							widgetType = "drag_float3",
+							id = "car_ik_location",
+							label = "IK Arms Location (In Car)",
+							speed = 0.1,
+							range = {-500, 500},
+							initialValue = car.getDefaultIKLocation()
+						},
+						{
+							widgetType = "drag_float",
+							id = "car_driver_height_offset",
+							label = "Camera Height Offset (In Car)",
+							speed = 0.1,
+							range = {-50, 50},
+							initialValue = 0
+						},
+					{ widgetType = "tree_pop" },
+				{ widgetType = "end_group" },
+				expandArray(gunstock.getConfigurationWidgets),
+				{ widgetType = "indent", width = 20},
+                {
+                    widgetType = "combo",
+                    id = "offhand_grip_activation",
+                    label = "Offhand Grip Activation",
+                    selections = { "Continuous Grip", "Toggle Grip"},
+                    initialValue = 1,
+                },
+				{ widgetType = "unindent", width = 20 },
 			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
 			{ widgetType = "new_line" },
 			{ widgetType = "indent", width = 20 }, { widgetType = "text", label = "UI" }, { widgetType = "begin_rect", },
@@ -170,11 +247,6 @@ ik.registerOnMeshCreatedCallback(function(meshComponentList, ikInstance)
     end
 end)
 
-local function setInCar(value)
-	isInCar = value
-	pawnModule.hideArmsBones(not isInCar)
-	hands.hideHands(isInCar)
-end
 local function setIsClimbing(value) --0 not climbing, 1 climbing, 2 hanging by left hand
 	if value == 0 then
 		pawnModule.hideArmsBones(true)
@@ -268,14 +340,6 @@ attachments.registerAttachmentChangeCallback(function(id, gripHand, attachment)
 	-- Shved shaft is a child mesh the game clears on VR attach; restore it and unhide the weapon.
 	if currentWeapon ~= nil and currentWeapon.RootComponent ~= nil then
 		currentWeapon.RootComponent:SetVisibility(true, true)
-		-- if currentWeapon.SK_Shved_Handle ~= nil and currentWeapon.SK_Shved_Handle.SkeletalMesh == nil and status.shvedHasHandleMesh ~= false then
-		-- 	local handleMesh = uevrUtils.find_required_object("SkeletalMesh /Game/Development/Weapons/Shved/SK_Shved_Handle.SK_Shved_Handle")
-		-- 	if handleMesh ~= nil then 
-		-- 		currentWeapon.SK_Shved_Handle:SetSkeletalMesh(handleMesh)
-		-- 	else
-		-- 		status.shvedHasHandleMesh = false
-		-- 	end
-		-- end
 	end
 	--fixes plasma gun beam FX not hiding properly on activation
 	if currentWeapon.BaseWeaponAttack ~= nil and currentWeapon.BaseWeaponAttack.BeamCenter ~= nil then
@@ -284,16 +348,6 @@ attachments.registerAttachmentChangeCallback(function(id, gripHand, attachment)
 		currentWeapon.BaseWeaponAttack.Beam_Right:SetVisibility(false, false)
 		currentWeapon.BaseWeaponAttack.ChargingProjectileFX:SetVisibility(false, false)
 	end
-
-	-- local isMeleeWeapon = (attachment ~= nil and attachments.isActiveAttachmentMelee(gripHand))
-	-- if isMeleeWeapon then
-	-- 	attachment:SetCollisionEnabled(ECollisionEnabled.QueryAndPhysics)
-	-- 	attachment:SetCollisionResponseToAllChannels(ECollisionResponse.Ignore)
-	-- 	attachment:SetCollisionResponseToChannel(0, ECollisionResponse.Block)
-	-- 	attachment:SetCollisionResponseToChannel(1, ECollisionResponse.Block)
-	-- 	attachment:SetCollisionResponseToChannel(5, ECollisionResponse.Block)
-	-- 	attachment:SetCollisionResponseToChannel(6, ECollisionResponse.Block)
-	-- end
 
 	-- Reduces processing when no melee weapon is equipped
 	gestures.autoDetectGesture(gestures.Gesture.SWING, attachments.isActiveAttachmentMelee(Handed.Right))
@@ -308,11 +362,11 @@ end
 
 --return true if input should be disabled, second param is priority
 input.registerIsDisabledCallback(function()
-	return not isPlayerPlaying() or isInCar, 0
+	return (not isPlayerPlaying()) or nil, 0
 end)
 --return true if hands should be hidden, second param is priority
 hands.registerIsHiddenCallback(function()
-	return not isPlayerPlaying(), 0
+	return (not isPlayerPlaying()) or nil, 0
 end)
 hands.onCreatedCallback(function(hand, component)
 	--Fix FOV distortion on hands
@@ -350,28 +404,48 @@ function on_uevr_ui_change(uiDrawn)
 	uevrUtils.print("UEVR UI drawn " .. tostring(uiDrawn))
 end
 
--- Show LB when game tries to show RB
-setInterval(1000, function()
-	if uevrUtils.getValid(status.lbResource) == nil then
-		status.lbResource = uevrUtils.find_required_object("PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_LB_02_png.XBOX_LB_02_png")
-	end
-	if status.lbResource == nil then
-		print("LB not found")
-		return
-	end
+------------------- Interaction prompt icon -------------------
+-- The remap sends the game's interact button (RB) from physical LB, so an interaction prompt showing RB shows LB instead while the
+-- remap is active. libs/prompts puts the game's own icon back when the remap is disabled (QTEs, menus such as the map screen), on
+-- level change and on script reset.
+local PROMPT_INTERVAL_MS = 500
+local PROMPT_WIDGET_CLASS = "WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C"
+local PROMPT_RB_ICON = "PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png"
+local PROMPT_LB_ICON = "PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_LB_02_png.XBOX_LB_02_png"
 
-	local allWidgets = uevrUtils.find_all_instances("WidgetBlueprintGeneratedClass /Game/Core/UI/Interaction/WBP_IteractionIndicatorWidget.WBP_IteractionIndicatorWidget_C", false)
-	if allWidgets ~= nil then
-		--print("Checking widgets")
-		--it should be RB in the map screen
-		for index, widget in pairs(allWidgets) do
-			if widget.ActionButton.ButtonImage ~= nil and widget.ActionButton.ButtonImage.Brush.ResourceObject:get_full_name() == "PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png" then
-				widget.ActionButton.ButtonImage:SetBrushResourceObject(status.lbResource)
-			end
-		end
+-- The button images of the live interaction indicators.
+local function getInteractionPromptImages()
+	local widgets = uevrUtils.find_all_instances(PROMPT_WIDGET_CLASS, false)
+	if widgets == nil then return nil end
+	local images = {}
+	for _, widget in pairs(widgets) do
+		local image = uevrUtils.getValid(widget, {"ActionButton", "ButtonImage"})
+		if image ~= nil then images[#images + 1] = image end
 	end
---PaperSprite /Game/Development/UI/Textures/HUD/Frames/XBox/XBOX_RB_02_png.XBOX_RB_02_png
-end)
+	return images
+end
+
+local function getInteractionPromptReplacement(_, original)
+	if remap.isDisabled() then return nil end
+	local rbIcon = prompts.loadAsset(PROMPT_RB_ICON)
+	if rbIcon == nil or original == nil or original:get_address() ~= rbIcon:get_address() then return nil end
+	return prompts.loadAsset(PROMPT_LB_ICON)
+end
+
+-- Profiling (uevrUtils.profiler; does nothing until profiling is toggled on): the instance scan and the per-prompt replacement check.
+getInteractionPromptImages = uevrUtils.profiler:wrap("Prompts: interaction indicator scan", getInteractionPromptImages)
+getInteractionPromptReplacement = uevrUtils.profiler:wrap("Prompts: interaction replacement", getInteractionPromptReplacement)
+
+local getPromptIcon, setPromptIcon = prompts.brushResource()
+prompts.new({
+	interval = PROMPT_INTERVAL_MS,
+	getPrompts = getInteractionPromptImages,
+	get = getPromptIcon,
+	set = setPromptIcon,
+	getReplacement = getInteractionPromptReplacement,
+	enabled = true,
+})
+------------------- End interaction prompt icon -------------------
 
 local function cleanup()
 	melee.reset()
@@ -382,7 +456,6 @@ end
 function on_level_change(level, levelName)
 	uevrUtils.print("Level changed to " .. levelName)
     cleanup()
-	isInCar = false
 
 	--Get the Atomic Heart Specific MaterialUtils in order to fix panini projection
 	materialUtils = uevrUtils.find_default_instance("Class /Script/AtomicHeart.MaterialUtils")
@@ -414,16 +487,6 @@ function on_character_hidden(isHidden)
 	uevrUtils.print("Character hidden changed to " .. tostring(isHidden))
 end
 
---BlueprintGeneratedClass hooks generally need to be registered whenever the level changes
-uevrUtils.registerLevelChangeCallback(function()
-	hook_function("BlueprintGeneratedClass /Game/Core/Player/BP_PlayerCharacter.BP_PlayerCharacter_C", "K2_OnDrivingVehicle", false, nil,
-		function(fn, obj, locals, result)
-			--print("K2_OnDrivingVehicle called", locals, result, locals.IsDriving)
-			setInCar(locals.IsDriving)
-		end
-	, true)
-end)
-
 local function setDefaultTargeting(handed)
 	if handed == Handed.Left then
 		input.setAimMethod(input.AimMethod.LEFT_CONTROLLER)
@@ -441,30 +504,6 @@ local function setDefaultTargeting(handed)
 	status["currentTargetingHand"] = handed
 end
 
-local meleePlayRate = 8.0
-local function setMeleeAnimRate(rate)
-	local pawn = uevrUtils.get_local_pawn()
-	local mesh = uevrUtils.getValid(pawn, {"Mesh"})
-	if mesh ~= nil then
-		mesh.GlobalAnimRateScale = rate
-	end
-	-- if pawn ~= nil and pawn.GetCurrentWeapon ~= nil then
-	-- 	local weaponMesh = uevrUtils.getValid(pawn:GetCurrentWeapon(), {"Mesh"})
-	-- 	if weaponMesh ~= nil then
-	-- 		weaponMesh.GlobalAnimRateScale = rate
-	-- 	end
-	-- end
-end
-
---won't callback unless an updateDeferral hasnt been called in the last 1000ms
-uevrUtils.createDeferral("melee_attack", 1000, function()
-	setDefaultTargeting(Handed.Right)
-	--reticule.setHidden(false)
-	setMeleeAnimRate(1.0)
-
-	uevr.api:get_player_controller(0):EquippedItemPrimaryInputReleased(0.0)
-	uevrUtils.print("Melee attack ended")
-end)
 
 -- local weaponMontages = {
 -- 	BP_Shved_C_SK_Shved_Base = {"AM_Shved_PlayerHands_Right_Attack", "AM_Shved_Hands_Release_Left_Attack"}, --reversed anims look better for some reason
@@ -500,22 +539,6 @@ gestures.registerSwingEndCallback(function()
 	melee.closeMeleeWindow()
 end)
 
-local function handleVehicle(montageName)
-	-- --getting in and out of car
-	if montageName == "AM_PlayerHandsGetInMoskvichFL" or montageName == "AM_PlayerHandsGetInMoskvichFR" then
-		--catching it early with animation rather than the hook function so we can disable input 
-		--during the animation and get a better player orientation in the car
-		--print("Getting in car")
-		setInCar(true)
-	end
- 	if montageName == "AM_PlayerHandsGetOutMoskvichFL" or montageName == "AM_PlayerHandsGetOutMoskvichFR" or montageName == "AM_PlayerCharacterHands_Moskvich_JumpOutSlow" or  montageName == "AM_PlayerCharacterHands_Moskvich_JumpOutFast" then
-		setTimeout(3000, function()
-			--print("Getting out of car")
-			setInCar(false)
-		end) --delay to make animation look better
-	end
-end
-
 --The Klusha in DLC4 does some kind of root reset when animation ends so this corrects it
 local function resetAttachment()
 	local attachmentData = attachments.getCurrentGrippedAttachmentData(uevrUtils.getHandedness())
@@ -532,7 +555,6 @@ end
 
 function on_montage_change(montageObject, montageName)
 	melee.observeMontage(montageObject)
-	handleVehicle(montageName)
 
 	--fixes a bug in the game
 	if montageName == "AM_PlayerCharacterHands_ClimbingMantle" then
@@ -648,6 +670,14 @@ gestures.registerFlickCallback(function(strength, hand)
 end, false, true)
 
 uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
+	local gripMouthLeft, gripEyesLeft, gripHeadLeft, gripEarLeft, triggerMouthLeft, triggerEyesLeft, triggerHeadLeft, triggerEarLeft = gestures.getHeadGestures(state, Handed.Left, true)
+	if gripMouthLeft then uevrUtils.pressButton(state, XINPUT_GAMEPAD_DPAD_DOWN) end
+	if triggerEarLeft then 
+		uevrUtils.pressButton(state, XINPUT_GAMEPAD_START)
+		state.Gamepad.bLeftTrigger = 0
+	end
+	if gripEarLeft then uevrUtils.pressButton(state, XINPUT_GAMEPAD_BACK) end
+
 	local lt = state.Gamepad.bLeftTrigger > 0
 	local tk = isMassTkActive()
 	if not tk then
@@ -677,9 +707,16 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 	if ui.isRemapDisabled() ~= true then
 		local isHolstering = gestures.detectGestureWithState(gestures.Gesture.HOLSTER, state, Handed.Right, false)
 		if isHolstering then
-			if pawn ~= nil then
+			if pawn ~= nil and pawn.SetHolsteredMode ~= nil then
 				pawn:SetHolsteredMode(true)
 			end
+		end
+
+		-- A left hand gripping an accessory keeps aiming with the weapon (right hand). Only evaluated when it can matter.
+		local leftGripsAccessory = false
+		if leftTriggerHeld or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER)
+			or status["currentTargetingHand"] == Handed.Left then
+			leftGripsAccessory = accessories.isGripHandEngaged(Handed.Left)
 		end
 
 		-- switch hands when using the hand's trigger or shoulder button
@@ -695,6 +732,10 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 			if status.handChangedCount ~= nil and status.handChangedCount > 0 then
 				status.handChangedCount = status.handChangedCount - 1
 				state.Gamepad.bRightTrigger = 0
+			end
+		elseif leftGripsAccessory then
+			if status["currentTargetingHand"] ~= Handed.Right then
+				setDefaultTargeting(Handed.Right)
 			end
 		elseif leftTriggerHeld or uevrUtils.isButtonPressed(state, XINPUT_GAMEPAD_LEFT_SHOULDER) then
 			local currentHand = status["currentTargetingHand"]
@@ -714,7 +755,9 @@ uevrUtils.registerOnPreInputGetStateCallback(function(retval, user_index, state)
 		if uevrUtils.getValid(pawn) ~= nil and pawn.GetCurrentWeapon ~= nil then
 			local currentWeapon = pawn:GetCurrentWeapon()
 			if currentWeapon ~= nil and currentWeapon:HasCassetteSlot() then
+				-- gripping an accessory takes priority over the cassette
 				isGrabbingCassette = gestures.detectComponentGrab(state, Handed.Left, uevrUtils.getValid(currentWeapon,{"AHWeaponCassetteSlot"}), 15)
+					and not accessories.isGripHandEngaged(Handed.Left)
 				if isGrabbingCassette then
 					uevrUtils.unpressButton(state, XINPUT_GAMEPAD_RIGHT_SHOULDER)
 					uevrUtils.pressButton(state, XINPUT_GAMEPAD_X)
@@ -805,13 +848,80 @@ function on_character_hidden(isCharacterHidden)
 	uevrUtils.setUEVRParam("VR_RoomscaleMovement", tostring(not isCharacterHidden))
 end
 
+local ActivationHand = accessories.ActivationHand
+local offhandGripLabels = {
+	[ActivationHand.LeftProximity] = "Proximity",
+	[ActivationHand.LeftGrip] = "Continuous Grip",
+	[ActivationHand.LeftGripToggle] = "Toggle Grip",
+}
+-- The Offhand Grip activation choices depend on the gunstock mode:
+--   Disabled: all three choices   Virtual: grip and grip toggle only
+--   Physical: no choices, the Offhand Grip accessories use Left Hand Proximity
+local function getOffhandGripChoices(mode)
+	if mode == gunstock.Mode.DISABLED then
+		return { ActivationHand.LeftProximity, ActivationHand.LeftGrip, ActivationHand.LeftGripToggle }
+	elseif mode == gunstock.Mode.VIRTUAL then
+		return { ActivationHand.LeftGrip, ActivationHand.LeftGripToggle }
+	end
+	return nil
+end
+local offhandGripSelected = ActivationHand.LeftProximity
+local offhandGripWidgetReady = false --the combo only exists once the main panel has been created
+
+-- comboIndex (from the combo, when loaded or changed by the user) indexes the choices offered for the
+-- current gunstock mode. Called without it when the gunstock mode changes.
+local function updateOffhandGripActivation(comboIndex)
+	local choices = getOffhandGripChoices(gunstock.getMode())
+	local activation = ActivationHand.LeftProximity
+	if choices ~= nil then
+		if type(comboIndex) == "number" and choices[comboIndex] ~= nil then
+			offhandGripSelected = choices[comboIndex]
+		end
+		-- keep the previous choice when the new mode still offers it, otherwise fall back to the first one
+		local position = 1
+		for i, choice in ipairs(choices) do
+			if choice == offhandGripSelected then position = i end
+		end
+		offhandGripSelected = choices[position]
+		activation = offhandGripSelected
+
+		if offhandGripWidgetReady then
+			local labels = {}
+			for i, choice in ipairs(choices) do labels[i] = offhandGripLabels[choice] end
+			configui.setSelections("offhand_grip_activation", labels)
+			configui.setValue("offhand_grip_activation", position, true)
+		end
+	end
+	accessories.setOverride("offhand_grip_activation", {
+		match = { label = "Offhand Grip" },
+		set = { activation_hand = activation },
+	})
+	if offhandGripWidgetReady then
+		configui.setHidden("offhand_grip_activation", choices == nil)
+	end
+end
+configui.onCreateOrUpdate("offhand_grip_activation", function(index)
+	offhandGripWidgetReady = true
+	updateOffhandGripActivation(index)
+end)
+uevrUtils.registerUEVRCallback("gunstock_mode_change", function() updateOffhandGripActivation() end)
 configui.onCreateOrUpdate("leftHandDirectionOffset", function(value)
 	leftHandDirectionOffset = value
 	setDefaultTargeting(status["currentTargetingHand"] or Handed.Right)
 end)
 configui.onCreateOrUpdate("jumpTurnDeadzone", function(value)
-	print("Configured deadzone")
+	--print("Configured deadzone")
 	jumpTurnDeadzone = 32000 - (value / 100 * 32000)
+end)
+configui.onCreateOrUpdate("physical_driving", function(value) 
+	car.setPhysicalDriving(value == true) 
+	configui.setHidden("physical_driving_help", not value)
+end)
+configui.onCreateOrUpdate("car_ik_location", function(value)
+	car.setIKLocation(value)
+end)
+configui.onCreateOrUpdate("car_driver_height_offset", function(value)
+	car.setCameraHeightOffset(value)
 end)
 
 configui.create(configDefinition)
@@ -820,6 +930,7 @@ register_key_bind("F2", function()
 	print("F2 pressed")
 	pawn:K2_AddActorLocalOffset(uevrUtils.vector(50,50,50), false, reusable_hit_result, true)
 end)
+
 
 -- register_key_bind("F3", function()
 -- 	print("F3 pressed")
@@ -842,6 +953,7 @@ hook_function("Class /Script/AtomicHeart.QTESubsystem", "OnQTEStop", true, nil,
 		end)
 	end
 , true)
+
 
 -- Initial left hand transforms used to reset Charles animations in IK module
 uccInitialBoneTransforms = {

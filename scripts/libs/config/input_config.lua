@@ -11,6 +11,7 @@ local widgetPrefix = "uevr_input_config_"
 local configDefaults = {
     useSnapTurn = true,
     snapAngle = 45,
+    fixStickDrift = false,
     smoothTurnSpeed = 50,
     pawnRotationMode = 4,
     --movementMethod = 2,
@@ -40,6 +41,12 @@ local function getConfigWidgets()
             initialValue = configDefaults["snapAngle"]
         },
         {
+            widgetType = "checkbox",
+            id = widgetPrefix .. "fixStickDrift",
+            label = "Fix Stick Drift",
+            initialValue = configDefaults["fixStickDrift"]
+        },
+        {
             widgetType = "slider_int",
             id = widgetPrefix .. "smoothTurnSpeed",
             label = "Smooth Turn Speed",
@@ -65,6 +72,7 @@ local function updateUIState(key)
     local exKey = widgetPrefix .. key
     if key == "useSnapTurn" then
         configui.hideWidget(widgetPrefix .. "snapAngle", not configui.getValue(exKey))
+        configui.hideWidget(widgetPrefix .. "fixStickDrift", not configui.getValue(exKey))
         configui.hideWidget(widgetPrefix .. "smoothTurnSpeed", configui.getValue(exKey))
     end
 end
@@ -76,6 +84,10 @@ end)
 
 configui.onUpdate(widgetPrefix .. "snapAngle", function(value)
     updateSetting("snapAngle", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "fixStickDrift", function(value)
+    updateSetting("fixStickDrift", value)
 end)
 
 configui.onUpdate(widgetPrefix .. "smoothTurnSpeed", function(value)
@@ -98,6 +110,12 @@ end)
 
 configui.onCreate(widgetPrefix .. "snapAngle", function(value)
     configui.setValue(widgetPrefix .. "snapAngle", configDefaults["snapAngle"], true)
+end)
+
+configui.onCreate(widgetPrefix .. "fixStickDrift", function(value)
+    if value == nil then value = configDefaults["fixStickDrift"] or false end
+    configui.setValue(widgetPrefix .. "fixStickDrift", value, true)
+    updateSetting("fixStickDrift", value)
 end)
 
 configui.onCreate(widgetPrefix .. "smoothTurnSpeed", function(value)

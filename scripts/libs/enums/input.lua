@@ -1,4 +1,11 @@
 local M = {}
+M.HeightSource =
+{
+    ROOT_COMPONENT = 1,
+    PAWN_BONE = 2,
+    CUSTOM = 3,
+}
+
 M.AimMethod =
 {
     UEVR = 1,

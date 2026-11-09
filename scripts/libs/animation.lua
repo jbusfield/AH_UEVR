@@ -179,7 +179,7 @@ function M.transformBoneToRoot(poseableComponent, targetBoneName, location, rota
 				local pName = poseableComponent:GetParentBone(uevrUtils.fname_from_string(rootBoneForPath))
 				rootBoneForPath = pName:to_string()
 			end
-			while boneName:to_string() ~= rootBoneForPath do
+			while boneName:to_string() ~= rootBoneForPath and boneName:to_string() ~= "None" do
 				M.setBoneSpaceLocalTransform(poseableComponent, boneName, localTransform, boneSpace, rootTransform)
 				boneName = poseableComponent:GetParentBone(boneName)
 			end
@@ -500,16 +500,24 @@ function M.initialize(animID, skeletalMeshComponent)
 	end
 end
 
+-- Chain posing (the block at the end of the file) caches each component's bone offsets; a hand that is set up again reads them fresh.
+local chainCache = {} -- component address -> {mesh = mesh address, bones = {bone name -> bone info, or false to use the fallback}}
+local function forgetChainBones(component)
+	if component ~= nil and component.get_address ~= nil then chainCache[component:get_address()] = nil end
+end
+
 function M.add(animID, skeletalMeshComponent, animationDefinitions)
 	--print("Adding animation definitions for " .. animID, "\n")
 	animations[animID] = {}
 	animations[animID]["component"] = skeletalMeshComponent
 	animations[animID]["definitions"] = animationDefinitions
+	forgetChainBones(skeletalMeshComponent)
 end
 
 function M.setComponent(animID, skeletalMeshComponent)
 	if animations and animations[animID] ~= nil then
 		animations[animID]["component"] = skeletalMeshComponent
+		forgetChainBones(skeletalMeshComponent)
 	else
 		M.print("Animation ID " .. animID .. " not found in setComponent", LogLevel.Warning)
 	end
@@ -520,12 +528,36 @@ end
 	-- lerpAnimation(animID, animName, alpha)
 -- end
 
+-- Set by the chain posing block at the end of the file when USE_CHAIN_POSING is on.
+local lerpAnimationChained = nil
+
 local function lerpCallback(alpha, progress, userdata)
 	--print(alpha, progress, userdata.animID, userdata.animName,"\n")
-	lerpAnimation(userdata.animID, userdata.animName, alpha)
+	if lerpAnimationChained ~= nil then
+		lerpAnimationChained(userdata.animID, userdata.animName, alpha)
+	else
+		lerpAnimation(userdata.animID, userdata.animName, alpha)
+	end
 end
 
 local animStates = {}
+-- Blends started per animID, so a newly applied pose can stop them before they finish over it
+local animLerps = {}
+
+local function startLerp(animID, animName, startAlpha, endAlpha, duration)
+	local lerpID = animID .. "-" .. animName
+	if animLerps[animID] == nil then animLerps[animID] = {} end
+	animLerps[animID][lerpID] = true
+	uevrUtils.lerp(lerpID, startAlpha, endAlpha, duration, {animID = animID, animName = animName}, lerpCallback)
+end
+
+function M.cancelLerps(animID)
+	local lerps = animLerps[animID]
+	if lerps == nil then return end
+	for lerpID in pairs(lerps) do uevrUtils.cancelLerp(lerpID) end
+	animLerps[animID] = nil
+end
+
 function M.updateAnimation(animID, animName, isPressed, lerpParam)
 	if animStates[animID] == nil then
 		animStates[animID] = {}
@@ -536,7 +568,7 @@ function M.updateAnimation(animID, animName, isPressed, lerpParam)
 	if isPressed then
 		if not animStates[animID][animName] == true then
 			if lerpParam ~= nil then
-				uevrUtils.lerp(animID.."-"..animName, lerpParam.startAlpha == nil and 0.0 or lerpParam.startAlpha, lerpParam.endAlpha == nil and 1.0 or lerpParam.endAlpha, lerpParam.duration == nil and 0.3 or lerpParam.duration, {animID = animID, animName = animName}, lerpCallback)
+				startLerp(animID, animName, lerpParam.startAlpha == nil and 0.0 or lerpParam.startAlpha, lerpParam.endAlpha == nil and 1.0 or lerpParam.endAlpha, lerpParam.duration == nil and 0.3 or lerpParam.duration)
 			else
 				M.animate(animID, animName, "on")
 			end
@@ -545,7 +577,7 @@ function M.updateAnimation(animID, animName, isPressed, lerpParam)
 	else
 		if animStates[animID][animName] == true then
 			if lerpParam ~= nil then
-				uevrUtils.lerp(animID.."-"..animName, lerpParam.startAlpha == nil and 1.0 or lerpParam.startAlpha, lerpParam.endAlpha == nil and 0.0 or lerpParam.endAlpha, lerpParam.duration == nil and 0.3 or lerpParam.duration, {animID = animID, animName = animName}, lerpCallback)
+				startLerp(animID, animName, lerpParam.startAlpha == nil and 1.0 or lerpParam.startAlpha, lerpParam.endAlpha == nil and 0.0 or lerpParam.endAlpha, lerpParam.duration == nil and 0.3 or lerpParam.duration)
 			else
 				M.animate(animID, animName, "off")
 			end
@@ -560,6 +592,11 @@ function M.resetAnimation(animID, animName, isPressed)
 		animStates[animID] = {}
 	end
 	animStates[animID][animName] = isPressed
+end
+
+-- Whether updateAnimation last recorded this animation as pressed
+function M.isAnimationOn(animID, animName)
+	return animStates[animID] ~= nil and animStates[animID][animName] == true
 end
 
 -- creates a set of spheres that are positioned at each bone joint in order to visualize the bone hierarchy
@@ -1053,5 +1090,189 @@ function M.logBoneNames(component)
 		M.print("Can't log bone name because component was nil", LogLevel.Warning)
 	end
 end
+
+-- Profiling (uevrUtils.profiler; does nothing until profiling is toggled on): applying poses, per finger group and per bone.
+M.pose = uevrUtils.profiler:wrap("Animation: pose", M.pose)
+M.animate = uevrUtils.profiler:wrap("Animation: animate", M.animate)
+M.doAnimate = uevrUtils.profiler:wrap("Animation: doAnimate", M.doAnimate)
+M.setBoneSpaceLocalRotator = uevrUtils.profiler:wrap("Animation: setBoneSpaceLocalRotator", M.setBoneSpaceLocalRotator)
+
+------------------- Chain posing (A/B test) -------------------
+-- Separate versions of doAnimate and of the blend between poses that work out each posed bone's transform in Lua instead of
+-- asking the engine for its parent's.
+-- A bone's component-space transform is its local transform composed with its parent's: rotation = parent rotation * local rotation,
+-- location = parent location + parent rotation applied to (parent scale * local offset), scale = parent scale * local scale.
+-- The engine is read once per call for each parent that isn't itself being posed (the hand bone, shared by every finger), and each
+-- bone's local offset and scale are read once per component and cached, since posing only changes rotations.
+-- Each posed bone then costs one SetBoneTransformByName instead of the five engine calls setBoneSpaceLocalRotator makes.
+-- A bone falls back to setBoneSpaceLocalRotator when it has no parent, a transform can't be read, or a scale is negative or zero
+-- (the engine composes negative scales through matrices, which this math doesn't reproduce).
+-- USE_CHAIN_POSING below swaps both in: M.doAnimate, and the blend through lerpAnimationChained.
+local CHAIN_COMPONENT_SPACE = 1 -- EBoneSpaces::ComponentSpace, so the component's own (possibly mirrored) transform is not involved
+local originalDoAnimate = M.doAnimate
+local CHAIN_MIN_OFFSET = 0.0001 -- below this an offset is treated as not read yet (bones not placed)
+---@type any
+local chainTransform = nil -- one FTransform struct, refilled for every SetBoneTransformByName
+local chainMath = require("libs/core/math_lib") -- quaternion and transform math on plain numbers, matching the engine's formulas
+
+
+-- The bone's FNames and its cached local offset and scale, or false when the bone has to use the fallback.
+local function chainGetBoneInfo(bones, component, boneName)
+	local info = bones[boneName]
+	if info ~= nil then return info end
+	info = false
+	local fname = uevrUtils.fname_from_string(boneName)
+	local parentFName = component:GetParentBone(fname)
+	local parentName = parentFName ~= nil and parentFName:to_string() or "None"
+	if parentName ~= "None" then
+		local bone = chainMath.transformFromStruct(component:GetBoneTransformByName(fname, CHAIN_COMPONENT_SPACE))
+		local parent = chainMath.transformFromStruct(component:GetBoneTransformByName(parentFName, CHAIN_COMPONENT_SPACE))
+		if bone ~= nil and parent ~= nil and chainMath.transformHasPositiveScale(bone) and chainMath.transformHasPositiveScale(parent) then
+			-- Only the local offset and scale are kept; the rotation is replaced by the pose each time.
+			local relative = chainMath.transformRelative(bone, parent)
+			if math.abs(relative.tx) + math.abs(relative.ty) + math.abs(relative.tz) < CHAIN_MIN_OFFSET then
+				-- A zero offset usually means the bones aren't placed yet: use the fallback this time and read again next time.
+				-- (A bone that really sits on its parent keeps using the fallback, which is still correct.)
+				return false
+			end
+			info = {fname = fname, parentFName = parentFName, parentName = parentName,
+				tx = relative.tx, ty = relative.ty, tz = relative.tz, sx = relative.sx, sy = relative.sy, sz = relative.sz}
+		end
+	end
+	bones[boneName] = info
+	return info
+end
+
+-- The component's bone cache, or nil when the chain can't be used for it (the caller then uses the original code).
+local function chainGetCache(component)
+	if uevrUtils.validate_object(component) == nil or component.GetParentBone == nil then return nil end
+	if chainTransform == nil then chainTransform = uevrUtils.get_transform(nil, nil, nil, false) end
+	if chainTransform == nil then return nil end
+	local address = component:get_address()
+	local mesh = component.SkeletalMesh
+	local meshAddress = mesh ~= nil and mesh:get_address() or 0
+	local entry = chainCache[address]
+	if entry == nil or entry.mesh ~= meshAddress then
+		entry = {mesh = meshAddress, bones = {}}
+		chainCache[address] = entry
+	end
+	return entry.bones
+end
+
+-- Poses every bone keyed in boneNames. getLocalQuat(boneName) returns the bone's local rotation as a quaternion (x, y, z, w);
+-- getFallbackRotator(boneName) returns the same rotation as an FRotator, used only when the bone falls back.
+local function chainPoseBones(component, bones, boneNames, getLocalQuat, getFallbackRotator)
+	local posed = {} -- bone name -> component-space transform computed this call, or false when the engine posed it
+	local readParents = {} -- parent bone name -> component-space transform read from the engine this call, or false
+
+	local function poseBone(boneName)
+		local done = posed[boneName]
+		if done ~= nil then return done or nil end
+		posed[boneName] = false
+		local info = chainGetBoneInfo(bones, component, boneName)
+		local parent = nil
+		if info then
+			-- A parent posed in this call is posed first, so its transform is the one just computed (or, if the engine posed it, is read after).
+			if boneNames[info.parentName] ~= nil then parent = poseBone(info.parentName) end
+			if parent == nil then
+				parent = readParents[info.parentName]
+				if parent == nil then
+					parent = chainMath.transformFromStruct(component:GetBoneTransformByName(info.parentFName, CHAIN_COMPONENT_SPACE)) or false
+					readParents[info.parentName] = parent
+				end
+				if parent == false or not chainMath.transformHasPositiveScale(parent) then parent = nil end
+			end
+		end
+		if not info or not parent then
+			M.setBoneSpaceLocalRotator(component, info and info.fname or uevrUtils.fname_from_string(boneName), getFallbackRotator(boneName), 0)
+			return nil
+		end
+
+		local lx, ly, lz, lw = getLocalQuat(boneName)
+		local result = chainMath.transformCompose({qx = lx, qy = ly, qz = lz, qw = lw, tx = info.tx, ty = info.ty, tz = info.tz, sx = info.sx, sy = info.sy, sz = info.sz}, parent)
+
+		chainTransform.Rotation.X = result.qx
+		chainTransform.Rotation.Y = result.qy
+		chainTransform.Rotation.Z = result.qz
+		chainTransform.Rotation.W = result.qw
+		chainTransform.Translation = vector_3f(result.tx, result.ty, result.tz)
+		chainTransform.Scale3D = vector_3f(result.sx, result.sy, result.sz)
+		component:SetBoneTransformByName(info.fname, chainTransform, CHAIN_COMPONENT_SPACE)
+		posed[boneName] = result
+		return result
+	end
+
+	for boneName in pairs(boneNames) do
+		poseBone(boneName)
+	end
+end
+
+local function doAnimateChained(anim, component, mirrorPitch, mirrorYaw, mirrorRoll)
+	if anim == nil or component == nil then return end
+	local bones = chainGetCache(component)
+	if bones == nil then
+		return originalDoAnimate(anim, component, mirrorPitch, mirrorYaw, mirrorRoll)
+	end
+	local pitchSign, yawSign, rollSign = mirrorPitch == true and -1 or 1, mirrorYaw == true and -1 or 1, mirrorRoll == true and -1 or 1
+	chainPoseBones(component, bones, anim,
+		function(boneName)
+			local angles = anim[boneName]
+			return chainMath.quatFromRotator_Components(angles[1] * pitchSign, angles[2] * yawSign, angles[3] * rollSign)
+		end,
+		function(boneName)
+			local angles = anim[boneName]
+			return uevrUtils.rotator(angles[1] * pitchSign, angles[2] * yawSign, angles[3] * rollSign)
+		end)
+end
+doAnimateChained = uevrUtils.profiler:wrap("Animation: doAnimate (chain)", doAnimateChained)
+
+-- Same lookups as lerpAnimation; the rotation is blended as RLerp's shortest path does (a quaternion slerp).
+local function chainLerpAnimation(animID, animName, alpha)
+	local animation = animations[animID]
+	if animation == nil then return end
+	local component = animation["component"]
+	if component == nil or animation["definitions"] == nil or animation["definitions"]["positions"] == nil then
+		M.print("Component was nil in lerpAnimation", LogLevel.Warning)
+		return
+	end
+	local subAnim = animation["definitions"]["positions"][animName]
+	if subAnim == nil then return end
+	local startPose, endPose = subAnim["off"], subAnim["on"]
+	if startPose == nil and endPose ~= nil then
+		startPose = endPose
+	elseif endPose == nil and startPose ~= nil then
+		endPose = startPose
+	end
+	if startPose == nil or endPose == nil then return end
+	local bones = chainGetCache(component)
+	if bones == nil then
+		return lerpAnimation(animID, animName, alpha)
+	end
+
+	local blended = {}
+	for boneName in pairs(startPose) do
+		if endPose[boneName] ~= nil then blended[boneName] = true end
+	end
+	chainPoseBones(component, bones, blended,
+		function(boneName)
+			local a, b = startPose[boneName], endPose[boneName]
+			local ax, ay, az, aw = chainMath.quatFromRotator_Components(a[1], a[2], a[3])
+			local bx, by, bz, bw = chainMath.quatFromRotator_Components(b[1], b[2], b[3])
+			return chainMath.quatSlerp_Components(ax, ay, az, aw, bx, by, bz, bw, alpha)
+		end,
+		function(boneName)
+			local a, b = startPose[boneName], endPose[boneName]
+			return kismet_math_library:RLerp(uevrUtils.rotator(a[1], a[2], a[3]), uevrUtils.rotator(b[1], b[2], b[3]), alpha, true)
+		end)
+end
+chainLerpAnimation = uevrUtils.profiler:wrap("Animation: lerp (chain)", chainLerpAnimation)
+lerpAnimation = uevrUtils.profiler:wrap("Animation: lerp", lerpAnimation)
+
+local USE_CHAIN_POSING = true -- A/B switch: true poses and blends with the chain versions, false keeps the original code
+if USE_CHAIN_POSING then
+	M.doAnimate = doAnimateChained
+	lerpAnimationChained = chainLerpAnimation
+end
+------------------- End chain posing -------------------
 
 return M

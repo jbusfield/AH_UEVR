@@ -237,6 +237,8 @@ local customTargetMethodCallback = nil
 
 local reticuleAutoCreationType = M.ReticuleType.NONE
 local autoHandleInput = true -- unless an external call is made to update(), in which case disable auto handling of input
+-- Set false to use the original update() for the auto-handled reticule, for A/B comparison; then Reset Scripts.
+local useFastUpdate = true
 
 local reticuleComponent = nil
 local restoreWidgetPosition = nil
@@ -258,6 +260,7 @@ local reticuleCollisionOffset = 10 --distance to offset reticule from hit locati
 
 --These three are runtime adjustments used by update() and get applied on top of currentReticuleOptions as further user controlled adjustments
 local isHidden = false
+local isConfigHidden = false
 local reticuleUpdateDistance = 200
 local reticuleUpdateScale = 1.0
 local reticuleUpdateRotation = {0.0, 0.0, 0.0}
@@ -301,7 +304,7 @@ end
 
 local function setReticuleAutoCreationTypeFromParameters()
     reticuleAutoCreationType = M.ReticuleType.NONE
-    if parameters["currentReticuleID"] ~= nil then
+    if not isConfigHidden and parameters["currentReticuleID"] ~= nil then
         if parameters["currentReticuleID"] == "_default" then
             reticuleAutoCreationType = M.ReticuleType.DEFAULT
         elseif parameters["currentReticuleID"] == "_custom" then
@@ -366,6 +369,7 @@ local function lineTracerCallback(hitResult, targetLocation)
 		lastTargetLocation = targetLocation
 	end
 end
+lineTracerCallback = uevrUtils.profiler:wrap("RETICULE: lineTracerCallback", lineTracerCallback)
 
 local lineTracerSubscribed = false
 local weaponLineTracerSubscribed = false
@@ -396,7 +400,7 @@ local function updateLineTracerSubscription()
 				traceComplex = currentReticuleOptions.traceComplex,
 				minHitDistance = currentReticuleOptions.minHitDistance,
 				ignoreActors = currentReticuleOptions.ignoreActors,
-				customCallback = function()
+				customCallback = uevrUtils.profiler:wrap("RETICULE: weapon trace origin", function()
 					-- Return (location, rotation) for trace origin
 					if reticuleTargetMethod == M.ReticuleTargetMethod.CUSTOM then
 						if customTargetMethodCallback == nil then 
@@ -410,7 +414,7 @@ local function updateLineTracerSubscription()
 					--local location, rotation = attachments.getActiveAttachmentTransforms(reticuleTargetMethod == M.ReticuleTargetMethod.LEFT_ATTACHMENT and Handed.Left or Handed.Right)
 					--rotation = getAimOffsetAdjustedRotation(rotation)
 					--return location, rotation
-				end
+				end)
 		}
 
 		if reticuleTargetRotationOffset.Pitch == 0 and reticuleTargetRotationOffset.Yaw == 0 and reticuleTargetRotationOffset.Roll == 0 then
@@ -427,6 +431,7 @@ local function updateLineTracerSubscription()
 		end
 	end
 end
+updateLineTracerSubscription = uevrUtils.profiler:wrap("RETICULE: updateLineTracerSubscription", updateLineTracerSubscription)
 
 local function unsubscribeFromLineTracer()
 	if lineTracerSubscribed then
@@ -438,6 +443,7 @@ local function unsubscribeFromLineTracer()
 		weaponLineTracerSubscribed = false
 	end
 end
+unsubscribeFromLineTracer = uevrUtils.profiler:wrap("RETICULE: unsubscribeFromLineTracer", unsubscribeFromLineTracer)
 
 function M.setParametersFileName(fileName)
     parametersFileName = fileName
@@ -467,7 +473,11 @@ local createConfigMonitor = doOnce(function()
 	if reticuleConfig ~= nil then
 		reticuleConfig.registerParametersChangedCallback(function(paramName, paramValue)
 			if paramName == "hide" then
-				isHidden = paramValue
+				if isConfigHidden ~= paramValue then
+					isConfigHidden = paramValue
+					M.destroy()
+					setReticuleAutoCreationTypeFromParameters()
+				end
 			elseif paramName == "update_distance" then
 				reticuleUpdateDistance = paramValue
 			elseif paramName == "update_scale" then
@@ -563,7 +573,6 @@ end
 
 function M.setHidden(value)
 	isHidden = value
-	if reticuleConfig ~= nil then reticuleConfig.setValue("hide", value, true) end
 end
 
 function M.setDistance(value)
@@ -680,10 +689,7 @@ function M.createFromMesh(mesh, options)
 		---@cast reticuleComponent -nil
 		if currentReticuleOptions.materialName ~= nil and currentReticuleOptions.materialName ~= "" then
 			M.print("Adding material to reticule component")
-			local material = uevrUtils.find_instance_of("Class /Script/Engine.Material", currentReticuleOptions.materialName)
-			if material == nil then
-				material = uevrUtils.getLoadedAsset(currentReticuleOptions.materialName)
-			end
+			local material = uevrUtils.getSafeInstanceOf("Class /Script/Engine.Material", currentReticuleOptions.materialName)
 			if uevrUtils.getValid(material) ~= nil then
 				reticuleComponent:SetMaterial(0, material)
 			else
@@ -704,6 +710,7 @@ function M.createFromMesh(mesh, options)
 
 	return reticuleComponent
 end
+M.createFromMesh = uevrUtils.profiler:wrap("RETICULE: createFromMesh", M.createFromMesh)
 
 function M.create()
 	return M.createFromMesh()
@@ -718,10 +725,12 @@ function M.getOriginPositionFromController()
 	end
 	return controllers.getControllerLocation(2)
 end
+M.getOriginPositionFromController = uevrUtils.profiler:wrap("RETICULE: getOriginPositionFromController", M.getOriginPositionFromController)
 
 function M.getTargetLocation(originPosition, originDirection, collisionChannel, ignoreActors, traceComplex, minHitDistance)
 	return uevrUtils.getTargetLocation(originPosition, originDirection, collisionChannel, ignoreActors, traceComplex, minHitDistance)
 end
+M.getTargetLocation = uevrUtils.profiler:wrap("RETICULE: getTargetLocation", M.getTargetLocation)
 
 function M.getTargetLocationFromController(handed, collisionChannel, ignoreActors, traceComplex, minHitDistance)
 	--return controllers.getControllerTargetLocation(handed, collisionChannel, ignoreActors, traceComplex, minHitDistance)
@@ -749,6 +758,7 @@ function M.getTargetLocationFromController(handed, collisionChannel, ignoreActor
 	end
 
 end
+M.getTargetLocationFromController = uevrUtils.profiler:wrap("RETICULE: getTargetLocationFromController", M.getTargetLocationFromController)
 
 local function getOffsetWorldPosition(targetPos, targetRot, offsetX, offsetY)
     local result = targetPos
@@ -802,7 +812,7 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 		-- end
 
 		if targetLocation == nil then
-			--updateLineTracerSubscription() -- targetLocation will be correct on the next tick
+			if not lineTracerSubscribed and not weaponLineTracerSubscribed then updateLineTracerSubscription() end -- targetLocation will be correct on the next tick
 			targetLocation = lastTargetLocation
 		else
 			unsubscribeFromLineTracer()
@@ -875,6 +885,7 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 
 			local vector = uevrUtils.rotateVector(uevrUtils.vector(0, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y), rot)
 			local adjustedPosition = kismet_math_library:Add_VectorVector(temp_vec3f, vector)
+			if adjustedPosition.X ~= adjustedPosition.X then return end -- NaN permanently breaks the component since UE moves by delta
 
 			--local adjustedPosition = getOffsetWorldPosition(temp_vec3f, rot, currentReticuleOptions.position_2d.X, currentReticuleOptions.position_2d.Y)
 			reticuleComponent:K2_SetWorldLocationAndRotation(adjustedPosition, rot, false, reusable_hit_result, false)
@@ -891,6 +902,152 @@ function M.update(originLocation, targetLocation, drawDistance, scale, rotation,
 		unsubscribeFromLineTracer()
 	end
 end
+M.update = uevrUtils.profiler:wrap("RETICULE: update", M.update)
+
+-- Reads a vector the way uevrUtils.vector does (X, then x, then [1]).
+local function readVectorFields(v)
+	local x, y, z = v.X, v.Y, v.Z
+	if x == nil then x = v.x or v[1] or 0.0 end
+	if y == nil then y = v.y or v[2] or 0.0 end
+	if z == nil then z = v.z or v[3] or 0.0 end
+	return x, y, z
+end
+
+-- Reads a rotator the way uevrUtils.rotator followed by sumRotators does: engine rotators by field,
+-- tables by Pitch, then X, then x, then [1] (and likewise for yaw and roll).
+local function readRotatorFields(r)
+	if type(r) == "userdata" then
+		return r.Pitch or r.pitch or 0.0, r.Yaw or r.yaw or 0.0, r.Roll or r.roll or 0.0
+	elseif type(r) == "table" then
+		local pitch = (r.Pitch ~= nil) and r.Pitch or ((r.X ~= nil) and r.X or ((r.x ~= nil) and r.x or ((#r > 0) and r[1] or 0.0)))
+		local yaw = (r.Yaw ~= nil) and r.Yaw or ((r.Y ~= nil) and r.Y or ((r.y ~= nil) and r.y or ((#r > 1) and r[2] or 0.0)))
+		local roll = (r.Roll ~= nil) and r.Roll or ((r.Z ~= nil) and r.Z or ((r.z ~= nil) and r.z or ((#r > 2) and r[3] or 0.0)))
+		return pitch, yaw, roll
+	end
+	return 0.0, 0.0, 0.0
+end
+
+-- Last scale and visibility applied by updateFast, so they are only set when they change.
+local fastAppliedComponent = nil
+local fastAppliedVisible = nil
+local fastAppliedScaleX, fastAppliedScaleY, fastAppliedScaleZ = nil, nil, nil
+
+-- Forget what was applied when the reticule component changes (recreated, reset or destroyed).
+local function syncFastAppliedComponent(component)
+	if fastAppliedComponent ~= component then
+		fastAppliedComponent = component
+		fastAppliedVisible = nil
+		fastAppliedScaleX, fastAppliedScaleY, fastAppliedScaleZ = nil, nil, nil
+	end
+end
+
+local function setVisibilityIfChanged(component, visible)
+	if fastAppliedVisible ~= visible then
+		component:SetVisibility(visible)
+		fastAppliedVisible = visible
+	end
+end
+
+-- Rewrite of update for A/B testing (see useFastUpdate). Same placement as update, but the distance,
+-- direction, facing rotation and 2D offset are computed on plain numbers (one MakeVector and one
+-- MakeRotator for the final transform), and scale and visibility are only set when they change.
+-- Assumes nothing outside this module changes the reticule's visibility or scale.
+function M.updateFast(originLocation, targetLocation, drawDistance, scale, rotation, allowAutoHandle)
+	if allowAutoHandle ~= true then
+		autoHandleInput = false --if something else is calling this function then dont auto handle input
+	end
+
+	if uevrUtils.getValid(reticuleComponent) == nil then
+		unsubscribeFromLineTracer()
+		return
+	end
+	---@cast reticuleComponent -nil
+	syncFastAppliedComponent(reticuleComponent)
+	if isHidden or scopeHidden then
+		setVisibilityIfChanged(reticuleComponent, false)
+		unsubscribeFromLineTracer()
+		return
+	end
+
+	if reticuleComponent.K2_SetWorldLocationAndRotation == nil then return end --reticule is in an invalid state
+	if drawDistance == nil then drawDistance = reticuleUpdateDistance end
+	if rotation == nil then rotation = reticuleUpdateRotation end
+
+	if targetLocation == nil then
+		if not lineTracerSubscribed and not weaponLineTracerSubscribed then updateLineTracerSubscription() end -- targetLocation will be correct on the next tick
+		targetLocation = lastTargetLocation
+	else
+		unsubscribeFromLineTracer()
+	end
+
+	if originLocation == nil then
+		originLocation = M.getOriginPositionFromController()
+	end
+
+	if originLocation ~= nil and targetLocation ~= nil then
+		local ox, oy, oz = readVectorFields(originLocation)
+		if reticuleUpdateEyeDominance ~= M.ReticuleEyeDominance.NONE then
+			local originRotation = controllers.getControllerRotation(2)
+			if originRotation ~= nil then
+				--reticuleUpdateEyeDominanceOffset is interpupillary distance in mm, divide by 2 and convert to cm
+				local distance = reticuleUpdateEyeDominanceOffset / 20
+				local side = (reticuleUpdateEyeDominance == M.ReticuleEyeDominance.LEFT and -1 or 1) * distance
+				local qx, qy, qz, qw = mathLib.quatFromRotator_Components(originRotation.Pitch, originRotation.Yaw, originRotation.Roll)
+				local rx, ry, rz = mathLib.quatAxisVector_Components(qx, qy, qz, qw, "Y")
+				ox, oy, oz = ox + (rx * side), oy + (ry * side), oz + (rz * side)
+			end
+		end
+
+		-- Distance and unit direction from the origin to the target (Vector_Distance, GetDirectionUnitVector).
+		local tx, ty, tz = readVectorFields(targetLocation)
+		local dx, dy, dz = tx - ox, ty - oy, tz - oz
+		local distanceToTarget = math.sqrt((dx * dx) + (dy * dy) + (dz * dz))
+		if (distanceToTarget * distanceToTarget) < 1e-8 then
+			dx, dy, dz = 0.0, 0.0, 0.0
+		else
+			dx, dy, dz = dx / distanceToTarget, dy / distanceToTarget, dz / distanceToTarget
+		end
+		if drawDistance > distanceToTarget - reticuleCollisionOffset then drawDistance = distanceToTarget - reticuleCollisionOffset end --move target distance back slightly so reticule doesnt go through the target
+
+		-- Facing rotation (Conv_VectorToRotator: pitch and yaw, no roll) plus the configured rotations.
+		local optionsPitch, optionsYaw, optionsRoll = readRotatorFields(currentReticuleOptions.rotation)
+		local extraPitch, extraYaw, extraRoll = readRotatorFields(rotation)
+		local pitch = math.deg(math.atan(dz, math.sqrt((dx * dx) + (dy * dy)))) + optionsPitch + extraPitch
+		local yaw = math.deg(math.atan(dy, dx)) + optionsYaw + extraYaw
+		local roll = 0.0 + optionsRoll + extraRoll
+
+		-- Position along the direction, plus position_2d rotated into the facing rotation.
+		local position2d = currentReticuleOptions.position_2d
+		local qx, qy, qz, qw = mathLib.quatFromRotator_Components(pitch, yaw, roll)
+		local offX, offY, offZ = mathLib.vectorRotate_Components(qx, qy, qz, qw, 0.0, position2d.X, position2d.Y)
+		local px = ox + (dx * drawDistance) + offX
+		local py = oy + (dy * drawDistance) + offY
+		local pz = oz + (dz * drawDistance) + offZ
+		if px ~= px then return end -- NaN permanently breaks the component since UE moves by delta
+
+		reticuleComponent:K2_SetWorldLocationAndRotation(kismet_math_library:MakeVector(px, py, pz), kismet_math_library:MakeRotator(roll, pitch, yaw), false, reusable_hit_result, false)
+
+		local sx, sy, sz
+		if scale == nil then
+			sx, sy, sz = reticuleUpdateScale, reticuleUpdateScale, reticuleUpdateScale
+		else
+			sx, sy, sz = readVectorFields(scale)
+		end
+		local optionsScale = currentReticuleOptions.scale
+		local scale2d = currentReticuleOptions.scale_2d
+		sx = sx * optionsScale.X
+		sy = sy * optionsScale.Y * scale2d.X
+		sz = sz * optionsScale.Z * scale2d.Y
+		if sx ~= fastAppliedScaleX or sy ~= fastAppliedScaleY or sz ~= fastAppliedScaleZ then
+			reticuleComponent:SetWorldScale3D(kismet_math_library:MakeVector(sx, sy, sz))
+			fastAppliedScaleX, fastAppliedScaleY, fastAppliedScaleZ = sx, sy, sz
+		end
+		setVisibilityIfChanged(reticuleComponent, true)
+	else
+		setVisibilityIfChanged(reticuleComponent, false)
+	end
+end
+M.updateFast = uevrUtils.profiler:wrap("RETICULE: updateFast", M.updateFast)
 ----------------------------------- End Reticule Rendering ---------------------------
 
 -- local function autoCreateReticule()
@@ -1007,7 +1164,7 @@ function M.registerCustomTargetCallback(callback)
 	customTargetMethodCallback = callback
 end
 
-uevrUtils.setInterval(1000, function()
+uevrUtils.setInterval(1000, uevrUtils.profiler:wrap("RETICULE: auto-create check", function()
 	if reticuleAutoCreationType ~= M.ReticuleType.NONE and not M.exists() then
 		if parameters ~= nil then
 			M.setTargetMethod(parameters["reticuleTargetMethod"] or M.ReticuleTargetMethod.CAMERA)
@@ -1018,7 +1175,7 @@ uevrUtils.setInterval(1000, function()
 			createReticuleFromProfile()
 		end
 	end
-end)
+end))
 
 uevrUtils.registerUEVRCallback("scope_active_change", function(isActive)
 	if hideWhenScopeActive then
@@ -1041,11 +1198,15 @@ uevrUtils.registerPreLevelChangeCallback(function(level)
 	M.reset()
 end)
 
-uevrUtils.registerPreEngineTickCallback(function(engine, delta)
+uevrUtils.registerPreEngineTickCallback(uevrUtils.profiler:wrap("RETICULE: tick", function(engine, delta)
 	if autoHandleInput == true then
-		M.update(nil, nil, nil, nil, nil, true)
+		if useFastUpdate then
+			M.updateFast(nil, nil, nil, nil, nil, true)
+		else
+			M.update(nil, nil, nil, nil, nil, true)
+		end
 	end
-end)
+end))
 
 uevr.params.sdk.callbacks.on_script_reset(function()
 	destroyReticuleComponent()

@@ -14,9 +14,12 @@ local widgetPrefix = "uevr_input_"
 M.AimMethod = inputEnums.AimMethod
 M.PawnPositionMode = inputEnums.PawnPositionMode
 M.PawnRotationMode = inputEnums.PawnRotationMode
+M.HeightSource = inputEnums.HeightSource
 --M.MovementMethod = inputEnums.MovementMethod
 
 local boneList = {}
+local heightBoneList = {"None"}
+local heightBoneMesh = nil
 local pawnCameraList = {}
 
 local paramManager = nil
@@ -48,7 +51,61 @@ local paramManager = nil
 -- }
 local configDefaults = {}
 
+local function getFirstEyeIndexSelection(params)
+	if params.autoDetectEyeIndices == true then return 1 end
+	return params.firstStereoViewIndex == 0 and 2 or 3
+end
+
 local helpText = "This module provides advanced input configuration options for developers. Adjust settings such as aim method, turning behavior, body orientation, and roomscale movement to fine-tune the VR experience."
+local heightDefaults = {
+	heightSource = M.HeightSource.ROOT_COMPONENT, heightBoneName = "",
+	heightBoneUseThreshold = true, heightBoneEnterThreshold = 30,
+	heightBoneExitThreshold = 15, heightBoneConfirmTime = 0.15,
+	heightBoneSmoothTime = 0.12, heightBoneFollow = false,
+}
+
+local function getHeightConfigValue(key, params)
+	local value = (params or configDefaults)[key]
+	if value == nil then return heightDefaults[key] end
+	return value
+end
+
+local function getHeightSourceWidgets()
+	return {
+		{widgetType = "combo", id = widgetPrefix .. "heightSource", label = "Height Source",
+			selections = {"RootComponent", "Pawn Bone", "Custom"}, initialValue = getHeightConfigValue("heightSource")},
+		{widgetType = "begin_group", id = widgetPrefix .. "height_bone_group", isHidden = true},
+			{widgetType = "indent", width = 20 }, { widgetType = "text", label = "Pawn Bone Settings" }, { widgetType = "begin_rect" },
+			{widgetType = "combo", id = widgetPrefix .. "heightBoneName", label = "Height Bone",
+				selections = {"None"}, initialValue = 1},
+			{ widgetType = "indent", width = 100 },{widgetType = "button", id = widgetPrefix .. "height_recalibrate", label = "Recalibrate Standing Height"}, { widgetType = "unindent", width = 100 },
+			--{widgetType = "text", label = "Select a bone and recalibrate while standing. HMD offsets still apply.", wrapped = true},
+			{widgetType = "checkbox", id = widgetPrefix .. "heightBoneUseThreshold", label = "Use Height Threshold Hysteresis",
+				initialValue = getHeightConfigValue("heightBoneUseThreshold")},
+			{widgetType = "begin_group", id = widgetPrefix .. "height_threshold_group", isHidden = false},
+				{ widgetType = "indent", width = 20 },
+				--{widgetType = "text", label = "Ignore small bone movements. Enter after a sustained change from standing; exit when back near standing. Exit is limited to the enter threshold.", wrapped = true},
+				{widgetType = "drag_float", id = widgetPrefix .. "heightBoneEnterThreshold", label = "Enter Threshold (cm)",
+					speed = 0.5, range = {0, 200}, initialValue = getHeightConfigValue("heightBoneEnterThreshold")},
+				{widgetType = "drag_float", id = widgetPrefix .. "heightBoneExitThreshold", label = "Exit Threshold (cm)",
+					speed = 0.5, range = {0, 200}, initialValue = getHeightConfigValue("heightBoneExitThreshold")},
+				{widgetType = "drag_float", id = widgetPrefix .. "heightBoneConfirmTime", label = "Confirmation Time (s)",
+					speed = 0.01, range = {0, 3}, initialValue = getHeightConfigValue("heightBoneConfirmTime")},
+				{widgetType = "checkbox", id = widgetPrefix .. "heightBoneFollow", label = "Follow Bone While Active",
+					initialValue = getHeightConfigValue("heightBoneFollow")},
+				{ widgetType = "unindent", width = 20 },
+			{widgetType = "end_group"},
+			{widgetType = "drag_float", id = widgetPrefix .. "heightBoneSmoothTime", label = "Height Smoothing Time (s)",
+				speed = 0.01, range = {0, 3}, initialValue = getHeightConfigValue("heightBoneSmoothTime")},
+			{ widgetType = "end_rect", additionalSize = 12, rounding = 5 }, { widgetType = "unindent", width = 20 },
+			{ widgetType = "new_line" },
+		{widgetType = "end_group"},
+		{widgetType = "begin_group", id = widgetPrefix .. "height_custom_group", isHidden = true},
+--			{widgetType = "text", label = "Uses input.registerCustomHeightCallback(). Without a valid result, uses RootComponent height.", wrapped = true},
+		{widgetType = "end_group"},
+	}
+end
+
 local function getConfigWidgets(m_paramManager)
     return spliceableInlineArray {
 	{
@@ -75,75 +132,96 @@ local function getConfigWidgets(m_paramManager)
 	-- },
 	expandArray(m_paramManager.getProfilePreConfigurationWidgets, widgetPrefix),
 	{
-		widgetType = "checkbox",
-		id = widgetPrefix .. "fixSpatialAudio",
-		label = "Fix Spatial Audio",
-		initialValue = configDefaults["fixSpatialAudio"]
+		widgetType = "tree_node",
+		id = widgetPrefix .. "general_tree",
+		initialOpen = true,
+		label = "General"
 	},
-	{
-		widgetType = "checkbox",
-		id = widgetPrefix .. "useRootOffset",
-		label = "Use HMD Offset",
-		initialValue = configDefaults["useRootOffset"] or true
-	},
-	{ widgetType = "indent", width = 20} ,
 		{
-			widgetType = "drag_float3",
-			id = widgetPrefix .. "rootOffset",
-			label = "HMD Offset",
-			speed = .1,
-			range = {-200, 200},
-			initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
+			widgetType = "checkbox",
+			id = widgetPrefix .. "fixSpatialAudio",
+			label = "Fix Spatial Audio",
+			initialValue = configDefaults["fixSpatialAudio"]
 		},
 		{
 			widgetType = "checkbox",
-			id = widgetPrefix .. "useRootOffsetLocalZ",
-			label = "Use Local Z",
-			initialValue = configDefaults["useRootOffsetLocalZ"] or false
+			id = widgetPrefix .. "useRootOffset",
+			label = "Use HMD Offset",
+			initialValue = configDefaults["useRootOffset"] or true
 		},
-	{ widgetType = "unindent", width = 20} ,
+		{ widgetType = "begin_group", id = widgetPrefix .. "useRootOffset_group", isHidden = true},
+			{ widgetType = "indent", width = 20} ,
+				expandArray(getHeightSourceWidgets),
+				{
+					widgetType = "drag_float3",
+					id = widgetPrefix .. "rootOffset",
+					label = "HMD Offset",
+					speed = .1,
+					range = {-200, 200},
+					initialValue = {configDefaults["rootOffset"].X, configDefaults["rootOffset"].Y, configDefaults["rootOffset"].Z}
+				},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "useRootOffsetLocalZ",
+					label = "Use Local Z",
+					initialValue = configDefaults["useRootOffsetLocalZ"] or false
+				},
+			{ widgetType = "unindent", width = 20} ,
+		{ widgetType = "end_group"},
+		{
+			widgetType = "checkbox",
+			id = widgetPrefix .. "overridePlayerControllerPitch",
+			label = "Override Player Controller Pitch",
+			initialValue = configDefaults["overridePlayerControllerPitch"] or false
+		},
+		{ widgetType = "same_line" },
+		{
+			widgetType = "input_text",
+			id = widgetPrefix .. "overridePlayerControllerPitchValue",
+			label = "##overridePlayerControllerPitchValue",
+			initialValue = tostring(configDefaults["overridePlayerControllerPitchValue"] or 0),
+			width = 50
+		},
+		{
+			widgetType = "checkbox",
+			id = widgetPrefix .. "overridePlayerControllerYaw",
+			label = "Override Player Controller Yaw  ",
+			initialValue = configDefaults["overridePlayerControllerYaw"] or false
+		},
+		{ widgetType = "same_line" },
+		{
+			widgetType = "input_text",
+			id = widgetPrefix .. "overridePlayerControllerYawValue",
+			label = "##overridePlayerControllerYawValue",
+			initialValue = tostring(configDefaults["overridePlayerControllerYawValue"] or 0),
+			width = 50
+		},
+		{
+			widgetType = "checkbox",
+			id = widgetPrefix .. "overridePlayerControllerRoll",
+			label = "Override Player Controller Roll   ",
+			initialValue = configDefaults["overridePlayerControllerRoll"] or false
+		},
+		{ widgetType = "same_line" },
+		{
+			widgetType = "input_text",
+			id = widgetPrefix .. "overridePlayerControllerRollValue",
+			label = "##overridePlayerControllerRollValue",
+			initialValue = tostring(configDefaults["overridePlayerControllerRollValue"] or 0),
+			width = 50
+		},
+		{
+			widgetType = "combo",
+			id = widgetPrefix .. "firstEyeIndex",
+			label = "First Eye Index",
+			selections = {"Auto", "0", "1"},
+			initialValue = getFirstEyeIndexSelection(configDefaults),
+			width = 100
+		},
 	{
-		widgetType = "checkbox",
-		id = widgetPrefix .. "overridePlayerControllerPitch",
-		label = "Override Player Controller Pitch",
-		initialValue = configDefaults["overridePlayerControllerPitch"] or false
+		widgetType = "tree_pop"
 	},
-	{ widgetType = "same_line" },
-	{
-		widgetType = "input_text",
-		id = widgetPrefix .. "overridePlayerControllerPitchValue",
-		label = "##overridePlayerControllerPitchValue",
-		initialValue = tostring(configDefaults["overridePlayerControllerPitchValue"] or 0),
-		width = 50
-	},
-	{
-		widgetType = "checkbox",
-		id = widgetPrefix .. "overridePlayerControllerYaw",
-		label = "Override Player Controller Yaw  ",
-		initialValue = configDefaults["overridePlayerControllerYaw"] or false
-	},
-	{ widgetType = "same_line" },
-	{
-		widgetType = "input_text",
-		id = widgetPrefix .. "overridePlayerControllerYawValue",
-		label = "##overridePlayerControllerYawValue",
-		initialValue = tostring(configDefaults["overridePlayerControllerYawValue"] or 0),
-		width = 50
-	},
-	{
-		widgetType = "checkbox",
-		id = widgetPrefix .. "overridePlayerControllerRoll",
-		label = "Override Player Controller Roll   ",
-		initialValue = configDefaults["overridePlayerControllerRoll"] or false
-	},
-	{ widgetType = "same_line" },
-	{
-		widgetType = "input_text",
-		id = widgetPrefix .. "overridePlayerControllerRollValue",
-		label = "##overridePlayerControllerRollValue",
-		initialValue = tostring(configDefaults["overridePlayerControllerRollValue"] or 0),
-		width = 50
-	},
+
 	{
 		widgetType = "tree_node",
 		id = widgetPrefix .. "aim_method_tree",
@@ -182,7 +260,7 @@ local function getConfigWidgets(m_paramManager)
 				widgetType = "combo",
 				id = widgetPrefix .. "cameraResetAction",
 				label = "On Camera Deactivation",
-				selections = {"Do not reset location and rotation", "Set to parent's location and rotation"}, --  "Zero location and rotation"},
+				selections = {"Do not reset location and rotation", "Set to parent's location and rotation", "Restore original relative location and rotation"}, --  "Zero location and rotation"},
 				initialValue = 1,
 			},
 			{ widgetType = "unindent", width = 10} ,
@@ -292,6 +370,13 @@ local function getConfigWidgets(m_paramManager)
 					id = widgetPrefix .. "pawnRotationModeDisableInEarlyUpdate",
 					label = "Disable In Early Update",
 					initialValue = configDefaults["pawnRotationModeDisableInEarlyUpdate"]
+				},
+				{ widgetType = "same_line"},
+				{
+					widgetType = "checkbox",
+					id = widgetPrefix .. "pawnRotationModeUseRootPitchRoll",
+					label = "Use Root Pitch/Roll",
+					initialValue = configDefaults["pawnRotationModeUseRootPitchRoll"]
 				},
 				{
 					widgetType = "slider_float",
@@ -466,6 +551,69 @@ local function updateSetting(key, value)
     uevrUtils.executeUEVRCallbacks("on_input_config_param_change", key, value, true)
 end
 
+-- The height selector is independent of the animation-correction bone selector.
+-- Store names in profiles and only translate to indices for display.
+local function setHeightBoneSelection(name)
+	configui.setValue(widgetPrefix .. "heightBoneName", uevrUtils.indexOf(heightBoneList, name) or 1, true)
+end
+
+local function setHeightBoneNames(force)
+	local source = configui.getValue(widgetPrefix .. "heightSource") or M.HeightSource.ROOT_COMPONENT
+	if source ~= M.HeightSource.PAWN_BONE then return end
+	local mesh = uevrUtils.getValid(pawnModule.getBodyMesh())
+	if not force and mesh == heightBoneMesh then return end
+	heightBoneMesh = mesh
+	heightBoneList = {"None"}
+	if mesh ~= nil then
+		for _, name in ipairs(uevrUtils.getBoneNames(mesh) or {}) do table.insert(heightBoneList, name) end
+	end
+	configui.setSelections(widgetPrefix .. "heightBoneName", heightBoneList)
+	local params = paramManager and paramManager:getAllActiveProfileParams() or configDefaults
+	setHeightBoneSelection(getHeightConfigValue("heightBoneName", params))
+end
+
+local function updateHeightUIState()
+	local source = configui.getValue(widgetPrefix .. "heightSource") or M.HeightSource.ROOT_COMPONENT
+	configui.hideWidget(widgetPrefix .. "height_bone_group", source ~= M.HeightSource.PAWN_BONE)
+	configui.hideWidget(widgetPrefix .. "height_custom_group", source ~= M.HeightSource.CUSTOM)
+	configui.hideWidget(widgetPrefix .. "height_threshold_group", configui.getValue(widgetPrefix .. "heightBoneUseThreshold") == false)
+end
+
+configui.onUpdate(widgetPrefix .. "heightSource", function(value)
+	updateSetting("heightSource", value)
+	setHeightBoneNames(true)
+	updateHeightUIState()
+end)
+configui.onCreate(widgetPrefix .. "heightSource", function() updateHeightUIState() end)
+configui.onUpdate(widgetPrefix .. "heightBoneName", function(value)
+	if heightBoneList[value] ~= nil then updateSetting("heightBoneName", value == 1 and "" or heightBoneList[value]) end
+end)
+configui.onUpdate(widgetPrefix .. "height_recalibrate", function()
+	uevrUtils.executeUEVRCallbacks("reset_input_height_source")
+end)
+for _, key in ipairs({"heightBoneUseThreshold", "heightBoneEnterThreshold", "heightBoneExitThreshold",
+	"heightBoneConfirmTime", "heightBoneSmoothTime", "heightBoneFollow"}) do
+	configui.onUpdate(widgetPrefix .. key, function(value)
+		updateSetting(key, value)
+		updateHeightUIState()
+	end)
+end
+configui.onCreate(widgetPrefix .. "heightBoneUseThreshold", function() updateHeightUIState() end)
+
+local function syncHeightUI(params)
+	for key in pairs(heightDefaults) do
+		if key ~= "heightBoneName" then configui.setValue(widgetPrefix .. key, getHeightConfigValue(key, params), true) end
+	end
+	setHeightBoneNames(true)
+	setHeightBoneSelection(getHeightConfigValue("heightBoneName", params))
+	updateHeightUIState()
+end
+
+setInterval(1000, function() setHeightBoneNames(false) end)
+uevrUtils.registerUEVRCallback("on_pawn_param_change", function(name)
+	if name == "bodyMeshName" or name == "profile" then setHeightBoneNames(true) end
+end)
+
 local function setCurrentHeadBone(value)
 	print("Setting current head bone to index " .. value)
 	if #boneList < value then
@@ -484,19 +632,31 @@ local function setCurrentHeadBone(value)
 	end
 end
 
-local function setBoneNames()
-	local mesh = pawnModule.getBodyMesh()
-	if mesh ~= nil then
-		boneList = uevrUtils.getBoneNames(mesh)
-		if boneList ~= nil and #boneList > 0 then
-			configui.setSelections(widgetPrefix .. "headBones", boneList)
+-- Like the height bone list: follow the body mesh, which can be missing right after a reset or a profile change, and
+-- select the profile's saved head bone by name. Writing the name at the saved index would take a bone from whatever
+-- skeleton is current (e.g. the hippogriff's) and save it into the profile.
+local headBoneMesh = nil
+local function setBoneNames(force)
+	local mesh = uevrUtils.getValid(pawnModule.getBodyMesh())
+	if not force and mesh == headBoneMesh then return end
+	headBoneMesh = mesh
+	if mesh == nil then return end
+	boneList = uevrUtils.getBoneNames(mesh) or {}
+	if #boneList == 0 then return end
+	configui.setSelections(widgetPrefix .. "headBones", boneList)
+	local params = paramManager and paramManager:getAllActiveProfileParams() or configDefaults
+	for i, name in ipairs(boneList) do
+		if name == params.headBoneName then
+			configui.setValue(widgetPrefix .. "headBones", i, true)
+			break
 		end
 	end
-	local currentHeadBoneIndex = configui.getValue(widgetPrefix .. "headBones")
-	if currentHeadBoneIndex~= nil and currentHeadBoneIndex > 1 then
-		setCurrentHeadBone(currentHeadBoneIndex)
-	end
 end
+
+setInterval(1000, function() setBoneNames(false) end)
+uevrUtils.registerUEVRCallback("on_pawn_param_change", function(name)
+	if name == "bodyMeshName" or name == "profile" then setBoneNames(true) end
+end)
 
 local function updateUIState(key)
     local exKey = widgetPrefix .. key
@@ -571,11 +731,11 @@ end)
 
 configui.onUpdate(widgetPrefix .. "useRootOffset", function(value)
 	updateSetting("useRootOffset", value)
-	configui.hideWidget(widgetPrefix .. "rootOffset", not value)
+	configui.hideWidget(widgetPrefix .. "useRootOffset_group", not value)
 end)
 
 configui.onCreate(widgetPrefix .. "useRootOffset", function(value)
-	configui.hideWidget(widgetPrefix .. "rootOffset", not value)
+	configui.hideWidget(widgetPrefix .. "useRootOffset_group", not value)
 end)
 
 configui.onUpdate(widgetPrefix .. "rootOffset", function(value)
@@ -610,6 +770,14 @@ end)
 
 configui.onUpdate(widgetPrefix .. "overridePlayerControllerRollValue", function(value)
 	updateSetting("overridePlayerControllerRollValue", tonumber(value) or 0)
+end)
+
+configui.onUpdate(widgetPrefix .. "firstEyeIndex", function(value)
+	if value ~= 1 and value ~= 2 and value ~= 3 then return end
+	if value ~= 1 then
+		updateSetting("firstStereoViewIndex", value - 2)
+	end
+	updateSetting("autoDetectEyeIndices", value == 1)
 end)
 
 configui.onUpdate(widgetPrefix .. "headBones", function(value)
@@ -653,6 +821,10 @@ end)
 
 configui.onUpdate(widgetPrefix .. "pawnRotationModeDisableInEarlyUpdate", function(value)
 	updateSetting("pawnRotationModeDisableInEarlyUpdate", value)
+end)
+
+configui.onUpdate(widgetPrefix .. "pawnRotationModeUseRootPitchRoll", function(value)
+	updateSetting("pawnRotationModeUseRootPitchRoll", value)
 end)
 
 configui.onUpdate(widgetPrefix .. "optimizeBodyLocationCalculations", function(value)
@@ -777,7 +949,8 @@ end)
 -- end)
 
 uevrUtils.registerLevelChangeCallback(function(level)
-	setBoneNames()
+	setBoneNames(true)
+	setHeightBoneNames(true)
 end)
 
 function M.getConfigurationWidgets(options)
@@ -798,7 +971,12 @@ function M.showConfiguration(saveFileName, options)
 end
 
 local function setUIValue(key, value)
-	if key == "aimCamera" then
+	if key == "autoDetectEyeIndices" or key == "firstStereoViewIndex" then
+		configDefaults[key] = value
+		configui.setValue(widgetPrefix .. "firstEyeIndex", getFirstEyeIndexSelection(configDefaults), true)
+	elseif key == "heightBoneName" then
+		setHeightBoneSelection(value)
+	elseif key == "aimCamera" then
 		--select from the list
 		--setPawnCameraList(value, true)
 		setSelectedPawnCamera(value, true)
@@ -807,12 +985,15 @@ local function setUIValue(key, value)
 		configui.setValue(widgetPrefix .. key, value, true)
 	end
 	updateUIState(key)
+	if heightDefaults[key] ~= nil then updateHeightUIState() end
 end
 
 local function updateUI(params)
+	configDefaults = params
 	for key, value in pairs(params) do
 		setUIValue(key, value)
 	end
+	configui.setValue(widgetPrefix .. "firstEyeIndex", getFirstEyeIndexSelection(params), true)
 end
 
 function M.init(m_paramManager)
@@ -820,9 +1001,13 @@ function M.init(m_paramManager)
     configDefaults = m_paramManager and m_paramManager:getAllActiveProfileParams() or {}
 	paramManager = m_paramManager
     M.showConfiguration(configFileName)
+	configui.setValue(widgetPrefix .. "firstEyeIndex", getFirstEyeIndexSelection(configDefaults), true)
+	syncHeightUI(configDefaults)
 
 	paramManager:initProfileHandler(widgetPrefix, function(profileParams)
 		updateUI(profileParams)
+		syncHeightUI(profileParams)
+		setBoneNames(true)
 		setPawnCameraList(profileParams["aimCamera"], true)
 	end)
 

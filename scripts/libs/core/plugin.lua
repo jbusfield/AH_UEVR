@@ -53,6 +53,25 @@
             end
         end)
 
+        -- ############# Filtered outputs ##############
+        --   Only the named outputs are converted and returned, which is much faster for large out structs.
+        --   Pass {} to return none: result is {} on success, nil on error.
+        -- ##############################################
+        local result = plugin.executeFunctionWithOutputs(kismet_system_library, "SphereOverlapComponents", {"ReturnValue"}, uevrUtils.get_world(), location, radius, objectTypes, classFilter, ignoreActors, foundComponents)
+
+        -- ############# Handles ##############
+        --   Keep a large struct or array output native and pass it, with changes, into another call without JSON conversion.
+        --   "ReturnValue.Field" outputs return single fields; "OutHits.Field" returns that field per array element.
+        --   handleParam(handle, changes, index) takes element index (1-based) of a kept array.
+        --   Handles are single use (array elements once each) and expire after about a second.
+        -- ##############################################
+        local trace = plugin.executeFunctionWithHandle(kismet_system_library, "BoxTraceMultiByProfile", "OutHits", {"ReturnValue", "OutHits.HitObjectHandle"}, world, start, finish, halfSize, orientation, profileName, false, ignoreActors, 0, {}, true)
+        local gen = trace and plugin.executeFunctionWithHandle(generator, "GenerateHitInfo", "ReturnValue", {"ReturnValue.TargetActor"}, weapon, plugin.handleParam(trace.handle, nil, 1))
+        if gen then
+            plugin.executeFunctionWithOutputs(abilityComp, "Impact", {}, plugin.handleParam(gen.handle, { ImpactLocation = { X = 0, Y = 0, Z = 0 } }))
+        end
+        if trace then plugin.releaseHandle(trace.handle) end -- frees the elements not taken
+
         -- ############# GetProperty example ##############
         --   This is what the API version of ActionMappings looks like
         --      TArray<struct FInputActionKeyMapping>         ActionMappings;                                    // 0x0090(0x0010)(Edit, ZeroConstructor, Config, NativeAccessSpecifierPrivate)
@@ -97,7 +116,6 @@
 local M = {}
 
 M.showDebug = false
-
 local pendingExecuteFunctionCallbacks = {}
 
 local function guid()
@@ -343,6 +361,19 @@ function M.executeFunctionAsync(callerObject, functionName, ...)
 end
 
 function M.executeFunction(callerObject, functionName, ...)
+    return M.executeFunctionWithOutputs(callerObject, functionName, nil, ...)
+end
+
+-- outputs: names of the outputs to return, e.g. {"ReturnValue"}; {} returns none (result is {} on success, nil on error)
+function M.executeFunctionWithOutputs(callerObject, functionName, outputs, ...)
+    return M.executeFunctionWithHandle(callerObject, functionName, nil, outputs, ...)
+end
+
+-- keep: name of a struct or array output (e.g. "ReturnValue", "OutHits") to keep native instead of converting; result.handle identifies it.
+-- outputs: as in executeFunctionWithOutputs; "ReturnValue.Field" returns a single field of a struct output,
+-- "OutHits.Field" returns that field for each element of a struct array.
+-- Pass the handle to a later call with M.handleParam. Handles are single use and expire after about a second.
+function M.executeFunctionWithHandle(callerObject, functionName, keep, outputs, ...)
     if callerObject == nil then
         print("[plugin]Error: executeFunction callerObject is nil")
         return nil
@@ -356,6 +387,8 @@ function M.executeFunction(callerObject, functionName, ...)
 		debug = M.showDebug,
 		caller_object = callerObject:get_address(),
 		function_name = functionName,
+		outputs = outputs,
+		keep = keep,
 		params = argsArray
 	}
     if M.showDebug then print("\n############################\nExecuteFunction dispatching for function:\n", functionName, json.dump_string(data)) end
@@ -375,6 +408,24 @@ function M.executeFunction(callerObject, functionName, ...)
     local result = AsyncRegistry[callID].finalResult
     AsyncRegistry[callID] = nil
     return result
+end
+
+-- Argument that takes the kept value for handle, with changes applied to the named fields only.
+-- index (1-based, like the Lua list from an "OutHits.Field" output) takes one struct element of a kept array;
+-- each element can be taken once and the array handle stays live for its other elements.
+function M.handleParam(handle, changes, index)
+    local param = {}
+    for key, value in pairs(changes or {}) do param[key] = value end
+    param["$handle"] = handle
+    if index ~= nil then param["$index"] = index - 1 end
+    return param
+end
+
+-- Frees a handle that will not be used. Optional; unused handles expire on their own.
+function M.releaseHandle(handle)
+    if handle ~= nil then
+        uevr.api:dispatch_custom_event("ReleaseHandle", json.dump_string({ handle = handle }))
+    end
 end
 
 function M.getProperty(callerObject, propertyName)
@@ -564,6 +615,33 @@ function M.addComponent(actorObject, componentClass)
     AsyncRegistry[callID] = nil
     if type(result) == "table" then
         return result.component
+    end
+    return nil
+end
+
+-- UEVR's Lua binds no get_aim_pose/get_grip_pose, so the plugin reads both poses natively.
+-- hand is "left" or "right". Returns the aim rotation relative to the grip pose
+-- ({X, Y, Z, W}, aim = grip * offset), or nil while either pose is untracked.
+function M.getControllerAimOffset(hand)
+    if hand ~= "left" and hand ~= "right" then
+        print("[plugin]Error: getControllerAimOffset hand must be left or right")
+        return nil
+    end
+
+    local callID = "GetControllerAimOffset_" .. guid()
+    AsyncRegistry[callID] = {
+        completed = false,
+        finalResult = nil,
+        registeredCallback = nil,
+        delayedCleanup = false
+    }
+
+    uevr.api:dispatch_custom_event(callID, json.dump_string({ debug = M.showDebug, hand = hand }))
+
+    local result = AsyncRegistry[callID].finalResult
+    AsyncRegistry[callID] = nil
+    if type(result) == "table" then
+        return result.offset
     end
     return nil
 end
