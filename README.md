@@ -8,7 +8,9 @@ A VR first persion mod for UEVR when playing Atomic Heart
 - Physical gestures for melee combat
 - Option to attach the UI to head movement
 - Weapon reload and grip animations
-- Physical gunstock support
+- Virtual and Physical gunstock support
+- Physical Driving
+- In-game tutorial
 
 ## How to use
 Both the left and right hands are used extensively in Atomic Heart. The reticle will follow whichever hand is currently the active controlling hand. To switch which hand is actively being controlled, grip with either hand. Once the reticle is following that hand you can then perform that hand's actions (firing a weapon, casting a spell, grabbing an item, etc)
